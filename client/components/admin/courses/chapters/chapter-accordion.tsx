@@ -1,0 +1,70 @@
+"use client";
+
+import { Chapter } from "@/types/chapter";
+import { useState } from "react";
+import type { DraggableAttributes } from "@dnd-kit/core";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import { ChapterAccordionItem } from "./chapter-accordion-item";
+import ChapterDrawer from "./chapter-drawer";
+
+interface ChapterAccordionProps {
+  chapter: Chapter;
+  index: number;
+  activeId: number | null;
+  courseId: number;
+  setActiveId: (id: number) => void;
+  onTooglePublish: (id: number, isPublished: boolean) => void;
+  onDelete: (id: number) => void;
+  viewType: string;
+  dragHandle?: {
+    attributes: DraggableAttributes;
+    listeners: SyntheticListenerMap;
+  };
+}
+
+export default function ChapterAccordion({
+  chapter,
+  activeId,
+  setActiveId,
+  courseId,
+  index,
+  onTooglePublish,
+  onDelete,
+  viewType,
+  dragHandle,
+}: ChapterAccordionProps) {
+  const [open, setOpen] = useState(false);
+  const [editingChapter, setEditingChapter] = useState<Chapter>(chapter);
+  if (!chapter) return null;
+
+  const isTemp = chapter.isTemp;
+  const isPublishedView = viewType === "published";
+
+  const handleEdit = (chapter: Chapter) => {
+    setEditingChapter(chapter);
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <ChapterAccordionItem
+        chapter={chapter}
+        index={index}
+        activeId={activeId}
+        setActiveId={setActiveId}
+        onTooglePublish={onTooglePublish}
+        isPublishedView={isPublishedView}
+        isTemp={isTemp}
+        onDelete={onDelete}
+        dragHandle={dragHandle}
+        onEdit={handleEdit}
+      />
+      <ChapterDrawer
+        courseId={courseId}
+        open={open}
+        onClose={() => setOpen(false)}
+        chapter={editingChapter}
+      />
+    </>
+  );
+}

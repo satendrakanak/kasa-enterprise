@@ -1,0 +1,77 @@
+import ArticlesSection from "@/components/articles/articles-section";
+import Faculty from "@/components/courses/faculty";
+import HowItWorks from "@/components/courses/how-it-works";
+import PopularCourses from "@/components/courses/popular-courses";
+import StatsTimeline from "@/components/courses/stats-timeline";
+import WhyJoinOurCourses from "@/components/courses/why-join-our-courses";
+import Hero from "@/components/sliders/hero";
+import { getErrorMessage } from "@/lib/error-handler";
+import { articleServerService } from "@/services/articles/article.server";
+import { courseServerService } from "@/services/courses/course.server";
+import { testimonialServerService } from "@/services/testimonials/testimonial.server";
+import { userServerService } from "@/services/users/user.server";
+import { Article } from "@/types/article";
+import { Course } from "@/types/course";
+import { Testimonial } from "@/types/testimonial";
+import { FeaturedTestimonialsSection } from "@/components/testimonials/featured-testimonials-section";
+import { User } from "@/types/user";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  path: "/",
+  title: "Wellness & Nutrition Courses",
+  description:
+    "Explore practical health, wellness, Ayurveda, and nutrition courses designed for modern learners.",
+});
+
+export default async function Home() {
+  let courses: Course[] = [];
+  try {
+    const response = await courseServerService.getPopularCourses();
+    courses = response.data;
+  } catch (error) {
+    const message = getErrorMessage(error);
+    throw new Error(message);
+  }
+
+  let articles: Article[] = [];
+  try {
+    const response = await articleServerService.getAll();
+    articles = response.data;
+  } catch (error) {
+    const message = getErrorMessage(error);
+    throw new Error(message);
+  }
+
+  let testimonials: Testimonial[] = [];
+  try {
+    const response = await testimonialServerService.getFeatured(6);
+    testimonials = response.data;
+  } catch (error) {
+    const message = getErrorMessage(error);
+    throw new Error(message);
+  }
+
+  let faculties: User[] = [];
+  try {
+    const response = await userServerService.getFaculties();
+    faculties = response.data;
+  } catch (error) {
+    const message = getErrorMessage(error);
+    throw new Error(message);
+  }
+  return (
+    <div>
+      <Hero courses={courses} />
+      <StatsTimeline />
+      <WhyJoinOurCourses />
+      <PopularCourses courses={courses} />
+      <HowItWorks />
+      <FeaturedTestimonialsSection testimonials={testimonials} />
+
+      <Faculty faculties={faculties} />
+
+      <ArticlesSection articles={articles} />
+    </div>
+  );
+}
