@@ -14,7 +14,7 @@ The client handles the complete user interface for students, faculty, and admins
 
 ### User Dashboard
 
-![User Dashboard](../screenshots/user-dashboard.jpg)
+![User Dashboard](../screenshots/user-dashboard-page-1.jpg)
 
 ### Admin Dashboard
 

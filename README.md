@@ -14,7 +14,7 @@ It is designed as a production-style LMS platform with separate role-based dashb
 
 ### User Dashboard
 
-![User Dashboard](./screenshots/user-dashboard.jpg)
+![User Dashboard](./screenshots/user-dashboard-page-1.jpg)
 
 ### Admin Dashboard
 
