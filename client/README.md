@@ -1,36 +1,316 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Code With Kasa - Client
 
-## Getting Started
+This is the frontend application of **Code With Kasa**, a full-stack Learning Management System built with **Next.js**, **React**, **TypeScript**, and **Tailwind CSS**.
 
-First, run the development server:
+The client handles the complete user interface for students, faculty, and admins.
+
+---
+
+## Preview
+
+### Home Page
+
+![Home Page](../screenshots/home-page-1.jpg)
+
+### User Dashboard
+
+![User Dashboard](../screenshots/user-dashboard.jpg)
+
+### Admin Dashboard
+
+![Admin Dashboard](../screenshots/admin-dashboard-light-1.jpg)
+
+### Courses Dashboard
+
+![Courses Dashboard](../screenshots/courses-dashboard.jpg)
+
+### Single Course Page
+
+![Single Course Page](../screenshots/single-course-page-1.jpg)
+
+### Learning Player
+
+![Learning Player](../screenshots/learn-screen-player.jpg)
+
+### Orders Dashboard
+
+![Orders Dashboard](../screenshots/orders-dashboard.jpg)
+
+### Role Management
+
+![Role Management](../screenshots/role-management-dashboard.jpg)
+
+---
+
+## Frontend Overview
+
+The frontend provides a modern, responsive, role-based LMS interface. It includes public pages, authentication pages, student dashboard pages, admin dashboard pages, course pages, learning screens, article pages, and management dashboards.
+
+The UI is designed to support different user roles with protected routes and separate dashboard experiences.
+
+---
+
+## Features
+
+### Public Pages
+
+- Home page
+- Course listing
+- Course details page
+- Articles page
+- Single article page
+- Contact page
+- Testimonials section
+- Responsive layout
+
+---
+
+### Student UI
+
+- Student login and registration
+- User dashboard
+- Profile page
+- Settings page
+- Browse courses
+- View course details
+- Purchase courses
+- Access purchased courses
+- Watch course lessons
+- Learning player
+- Course overview screen
+- Course exams screen
+- Course reviews screen
+- Track learning progress
+- View certificates
+- View purchase/order history
+
+---
+
+### Admin UI
+
+- Admin dashboard
+- Courses dashboard
+- Course create/edit pages
+- Categories dashboard
+- Orders dashboard
+- Coupons dashboard
+- Refunds dashboard
+- Role management dashboard
+- Roles-permission dashboard
+- Permission library dashboard
+- Course reviews dashboard
+- Contact leads dashboard
+- Client testimonials dashboard
+- Email templates dashboard
+- Site settings dashboard
+- Tags dashboard
+- Articles management pages
+
+---
+
+### Faculty UI
+
+- Faculty dashboard
+- Assigned course management
+- Lesson/content management
+- Exam management
+- Student progress view
+- Course review visibility
+
+---
+
+### Authentication & Authorization UI
+
+- Login pages
+- Register pages
+- Token-based frontend auth
+- Role-based redirects
+- Protected dashboard routes
+- Separate UI handling for Admin, Faculty, and Student
+
+---
+
+## Tech Stack
+
+- Next.js
+- React.js
+- TypeScript
+- Tailwind CSS
+- Axios
+- Component-based architecture
+- Responsive UI
+- Role-based protected routes
+- Dashboard-based layout system
+
+---
+
+## Folder Structure
+
+```txt
+client/
+  app/ or pages/
+  components/
+  hooks/
+  lib/
+  services/
+  utils/
+  public/
+  package.json
+  README.md
+```
+
+> Folder names may vary depending on the actual project structure.
+
+---
+
+## Installation
+
+```bash
+cd client
+npm install
+```
+
+---
+
+## Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Client will run on:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```txt
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Build for Production
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Start Production Build
 
-## Deploy on Vercel
+```bash
+npm start
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Environment Variables
+
+Create a `.env` file inside the `client/` folder.
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+Also keep a public example file:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+File name:
+
+```txt
+client/.env.example
+```
+
+---
+
+## Backend Connection
+
+The frontend communicates with the backend API using:
+
+```env
+NEXT_PUBLIC_API_URL
+```
+
+Make sure the backend server is running before testing API-based pages such as login, dashboard, orders, coupons, course purchase, exams, progress, and admin modules.
+
+---
+
+## Main Frontend Sections
+
+```txt
+Home
+Courses
+Single Course
+Articles
+Single Article
+Contact
+Login
+Register
+User Dashboard
+Admin Dashboard
+Courses Dashboard
+Course Edit
+Learning Player
+Learning Overview
+Learning Exams
+Learning Reviews
+Orders
+Coupons
+Refunds
+Roles
+Permissions
+Categories
+Testimonials
+Contact Leads
+Email Templates
+Site Settings
+Tags
+```
+
+---
+
+## Screenshot References
+
+```txt
+../screenshots/home-page-1.jpg
+../screenshots/home-page-2.jpg
+../screenshots/articles-page.jpg
+../screenshots/single-article-page.jpg
+../screenshots/contact-us-page.jpg
+
+../screenshots/user-dashboard.jpg
+../screenshots/user-dashboard-page-1.jpg
+../screenshots/user-dashboard-profile-page.jpg
+../screenshots/user-dashboard-settings-pgae.jpg
+../screenshots/user-dashboard-certificate-page.jpg
+
+../screenshots/admin-dashboard-light-1.jpg
+../screenshots/admin-dashboard-dark.jpg
+../screenshots/courses-dashboard.jpg
+../screenshots/orders-dashboard.jpg
+../screenshots/coupons-dashboard.jpg
+../screenshots/role-management-dashboard.jpg
+../screenshots/permission-library-dashboard.jpg
+```
+
+---
+
+## Important Notes
+
+- Do not push `.env` files to GitHub.
+- Do not push `node_modules`.
+- Do not push `.next`.
+- Keep reusable components organized.
+- Keep API calls inside service/helper files.
+- Keep dashboard sections separated by role.
+- Keep protected routes properly handled.
+- Keep UI responsive for different screen sizes.
+
+---
+
+## Author
+
+**Satendra Kanak**
+
+GitHub: [@satendrakanak](https://github.com/satendrakanak)

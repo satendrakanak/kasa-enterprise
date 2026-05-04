@@ -1,98 +1,432 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Code With Kasa - Server
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This is the backend application of **Code With Kasa**, a full-stack Learning Management System built with **NestJS**, **Node.js**, **TypeScript**, and **PostgreSQL**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The server handles authentication, authorization, users, courses, lessons, orders, coupons, refunds, exams, progress tracking, roles, permissions, logs, and complete LMS business logic.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Backend Overview
 
-## Project setup
+The backend follows a modular NestJS architecture. Each major feature is managed using dedicated modules, controllers, services, DTOs, guards, and business logic layers.
 
-```bash
-$ npm install
+It provides REST APIs for the frontend client and powers the complete LMS platform.
+
+---
+
+## Features
+
+### Authentication & Authorization
+
+- User registration
+- User login
+- JWT-based authentication
+- Role-based access control
+- Protected APIs
+- Admin, Faculty, and Student roles
+- Guards for protected routes
+- Secure token-based access
+
+---
+
+### User Management
+
+- Manage students
+- Manage faculty
+- Manage admins
+- Update user details
+- Role-based user permissions
+- User status management
+- Profile-related APIs
+
+---
+
+### Course Management
+
+- Create courses
+- Update courses
+- Delete courses
+- View courses
+- Manage course details
+- Manage course content
+- Course category handling
+- Faculty-course handling
+- Course review support
+
+---
+
+### Lesson & Learning Management
+
+- Create lessons
+- Update lessons
+- Delete lessons
+- Manage course-wise lessons
+- Track lesson completion
+- Control lesson access after purchase
+- Maintain learning progress
+- Track course completion
+
+---
+
+### Orders & Purchase System
+
+- Course purchase handling
+- Order creation
+- Order records
+- User-wise purchased courses
+- Purchase history
+- Admin order monitoring
+- Refund-related management
+
+---
+
+### Coupon System
+
+- Create coupons
+- Update coupons
+- Validate coupons
+- Apply discounts
+- Manage coupon status
+- Track coupon usage
+
+---
+
+### Exam System
+
+- Create exams
+- Manage exam questions
+- Student exam attempts
+- Result calculation
+- Exam history
+- Student-wise result tracking
+
+---
+
+### Role & Permission System
+
+- Role management
+- Permission management
+- Role-permission mapping
+- Admin-level access control
+- Protected API access using guards
+
+---
+
+### Content Management
+
+- Article/blog management
+- Single article data
+- Category management
+- Tags management
+- Testimonials management
+- Contact leads management
+- Email templates management
+- Site settings management
+
+---
+
+### Logs & Activity
+
+- User activity logs
+- Purchase/order logs
+- Learning logs
+- Admin monitoring logs
+- Platform history records
+- System activity tracking
+
+---
+
+## Tech Stack
+
+- NestJS
+- Node.js
+- TypeScript
+- PostgreSQL
+- JWT Authentication
+- REST API Architecture
+- Guards
+- DTOs
+- Pipes
+- Modules
+- Controllers
+- Services
+- Role-Based Access Control
+
+---
+
+## Folder Structure
+
+```txt
+server/
+  src/
+    auth/
+    users/
+    courses/
+    lessons/
+    categories/
+    orders/
+    purchases/
+    coupons/
+    refunds/
+    exams/
+    progress/
+    reviews/
+    articles/
+    contact/
+    testimonials/
+    email-templates/
+    roles/
+    permissions/
+    settings/
+    logs/
+    common/
+    main.ts
+    app.module.ts
+  package.json
+  README.md
 ```
 
-## Compile and run the project
+> Folder names may vary depending on the actual project structure.
+
+---
+
+## Installation
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cd server
+npm install
 ```
 
-## Run tests
+---
+
+## Run Development Server
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start:dev
 ```
 
-## Deployment
+Server will run on:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+```txt
+http://localhost:5000
+```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+---
+
+## Build for Production
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run build
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## Start Production Server
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+npm run start:prod
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## Environment Variables
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Create a `.env` file inside the `server/` folder.
 
-## Stay in touch
+```env
+PORT=5000
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_USER=postgres
+DATABASE_PASSWORD=your_postgres_password
+DATABASE_NAME=codewithkasa
 
-## License
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRE=7d
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+CLIENT_URL=http://localhost:3000
+```
+
+Also keep a public example file:
+
+```env
+PORT=5000
+
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_USER=postgres
+DATABASE_PASSWORD=your_postgres_password
+DATABASE_NAME=codewithkasa
+
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRE=7d
+
+CLIENT_URL=http://localhost:3000
+```
+
+File name:
+
+```txt
+server/.env.example
+```
+
+---
+
+## API Modules
+
+Main API modules:
+
+```txt
+/api/auth
+/api/users
+/api/courses
+/api/lessons
+/api/categories
+/api/orders
+/api/purchases
+/api/coupons
+/api/refunds
+/api/exams
+/api/progress
+/api/reviews
+/api/articles
+/api/contact
+/api/testimonials
+/api/email-templates
+/api/roles
+/api/permissions
+/api/settings
+/api/logs
+/api/admin
+/api/faculty
+/api/student
+```
+
+---
+
+## Role-Based Access
+
+### Student Access
+
+Students can:
+
+- View courses
+- Purchase courses
+- Access purchased courses
+- Watch lessons
+- Track progress
+- Attempt exams
+- View purchase history
+- View exam results
+- Manage profile
+
+---
+
+### Faculty Access
+
+Faculty can:
+
+- Manage assigned courses
+- Manage lessons
+- Manage course content
+- Manage exams
+- Track student progress
+- View course-related activity
+
+---
+
+### Admin Access
+
+Admin can:
+
+- Manage users
+- Manage students
+- Manage faculty
+- Manage courses
+- Manage lessons
+- Manage orders
+- Manage purchases
+- Manage coupons
+- Manage refunds
+- Manage exams
+- Manage categories
+- Manage articles
+- Manage testimonials
+- Manage contact leads
+- Manage email templates
+- Manage roles
+- Manage permissions
+- Manage site settings
+- Manage logs
+- View platform activity
+
+---
+
+## API Testing
+
+You can test APIs using:
+
+- Postman
+- Thunder Client
+- Insomnia
+
+Base URL:
+
+```txt
+http://localhost:5000
+```
+
+---
+
+## Production Notes
+
+Before deployment:
+
+- Set production PostgreSQL database credentials.
+- Set a strong JWT secret.
+- Configure CORS for the deployed frontend URL.
+- Never expose `.env` files.
+- Use HTTPS in production.
+- Check all protected routes.
+- Verify role-based guards.
+- Test auth, courses, orders, coupons, exams, progress, roles, permissions, and admin APIs.
+
+---
+
+## Important Notes
+
+- Do not push `.env` files to GitHub.
+- Do not push `node_modules`.
+- Keep modules clean and separated.
+- Keep DTOs and validations organized.
+- Keep guards and role checks properly applied.
+- Keep database credentials private.
+- Use `.env.example` for public reference.
+- Keep business logic inside services.
+- Keep route handlers clean inside controllers.
+
+---
+
+## Related Screenshots
+
+Frontend and dashboard screenshots are available in the root `screenshots/` folder:
+
+```txt
+../screenshots/admin-dashboard-light-1.jpg
+../screenshots/orders-dashboard.jpg
+../screenshots/coupons-dashboard.jpg
+../screenshots/refunds-dashboard.jpg
+../screenshots/role-management-dashboard.jpg
+../screenshots/roles-permission-dashboard.jpg
+../screenshots/permission-library-dashboard.jpg
+../screenshots/site-settings-dashboard-1.jpg
+```
+
+---
+
+## Author
+
+**Satendra Kanak**
+
+GitHub: [@satendrakanak](https://github.com/satendrakanak)
