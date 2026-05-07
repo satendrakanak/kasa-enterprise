@@ -4,18 +4,7 @@ import { Clock3, UserRound } from "lucide-react";
 
 import { RefundRequest } from "@/types/order";
 import { RefundStatusBadge } from "./refund-status-badge";
-
-function formatEventDate(value?: string | null) {
-  if (!value) return "NA";
-
-  return new Date(value).toLocaleString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import { formatDateTime } from "@/utils/formate-date";
 
 function formatAction(value: string) {
   return value
@@ -45,7 +34,7 @@ export function RefundTimeline({
             </p>
 
             <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              Requested on {formatEventDate(refundRequest.createdAt)}
+              Requested on {formatDateTime(refundRequest.createdAt)}
             </p>
           </div>
         </div>
@@ -85,7 +74,7 @@ export function RefundTimeline({
 
                         <span className="text-muted-foreground/45">•</span>
 
-                        <span>{formatEventDate(log.createdAt)}</span>
+                        <span>{formatDateTime(log.createdAt)}</span>
                       </div>
                     </div>
 

@@ -62,7 +62,7 @@ export class OrdersController {
   }
 
   @Post(':id/retry')
-  async retryPayment(@Param('id') orderId: number) {
+  async retryPayment(@Param('id', ParseIntPipe) orderId: number) {
     return this.ordersService.retryPayment(orderId);
   }
 
@@ -99,7 +99,10 @@ export class OrdersController {
       throw new BadRequestException('Missing signature');
     }
 
-    return await this.ordersService.handleWebhook(req.body, signature);
+    return await this.ordersService.handleWebhook(
+      req.body as Buffer,
+      signature,
+    );
   }
 
   @Patch(':id/status')

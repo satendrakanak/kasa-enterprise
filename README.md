@@ -53,7 +53,7 @@ Full infrastructure and CI/CD notes are in [docs/INFRA_AND_DEPLOYMENT.md](./docs
 
 ### Coupons Dashboard
 
-![Coupons Dashboard](./screenshots/coupons-dashboard.jpg)
+![Coupons Dashboard](./screenshots/coupons-dashboard-1.jpg)
 
 ### Role Management
 
@@ -266,7 +266,7 @@ screenshots/
 
   categories-dashboard.jpg
   orders-dashboard.jpg
-  coupons-dashboard.jpg
+  coupons-dashboard-1.jpg
   refunds-dashboard.jpg
   role-management-dashboard.jpg
   roles-permission-dashboard.jpg
@@ -323,7 +323,7 @@ npm run start:dev
 Server will run on:
 
 ```txt
-http://localhost:5000
+http://localhost:8000
 ```
 
 ---
@@ -337,7 +337,7 @@ Create `.env` files inside both `client/` and `server/` folders.
 ### Client `.env`
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ---
@@ -345,7 +345,7 @@ NEXT_PUBLIC_API_URL=http://localhost:5000
 ### Server `.env`
 
 ```env
-PORT=5000
+PORT=8000
 
 DATABASE_HOST=localhost
 DATABASE_PORT=5432

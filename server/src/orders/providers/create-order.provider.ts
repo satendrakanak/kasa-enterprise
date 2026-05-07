@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateOrderDto } from '../dtos/create-order.dto';
 import { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
 import { CoursesService } from 'src/courses/providers/courses.service';
@@ -50,6 +54,10 @@ export class CreateOrderProvider {
     private readonly usersService: UsersService,
   ) {}
   async create(createOrderDto: CreateOrderDto, user: ActiveUserData) {
+    if (!user?.sub) {
+      throw new UnauthorizedException('Please sign in before checkout');
+    }
+
     const courseIds = createOrderDto.items.map((i) => i.courseId);
 
     // 🔥 1. Fetch courses

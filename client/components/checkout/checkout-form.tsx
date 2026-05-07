@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "../ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 import { useLocation } from "@/hooks/use-location";
 import { useUserCountry } from "@/context/user-country-context";
 
@@ -48,44 +48,69 @@ export const CheckoutForm = () => {
   const cityValue = watch("city");
 
   useEffect(() => {
-    if (userCountry && countries.length > 0 && !selectedCountry) {
-      const country = countries.find(
-        (item) => item.countryCode === userCountry,
+    if (!countries.length) return;
+
+    const defaultCountry =
+      countries.find((country) => country.countryCode === "IN") ||
+      countries.find((country) => country.name.toLowerCase() === "india") ||
+      countries.find(
+        (country) =>
+          userCountry &&
+          country.countryCode.toLowerCase() === userCountry.toLowerCase(),
       );
 
-      if (country) {
-        selectCountry(country);
-        setValue("country", country.name);
-      }
+    if (
+      !defaultCountry ||
+      countryValue ||
+      (selectedCountry && selectedCountry.id !== defaultCountry.id)
+    ) {
+      return;
     }
-  }, [countries, selectedCountry, setValue, selectCountry, userCountry]);
+
+    selectCountry(defaultCountry);
+    setValue("country", defaultCountry.name, {
+      shouldDirty: false,
+      shouldValidate: true,
+    });
+  }, [
+    countries,
+    countryValue,
+    selectedCountry,
+    selectCountry,
+    setValue,
+    userCountry,
+  ]);
 
   useEffect(() => {
-    if (!countryValue || selectedCountry || countries.length === 0) return;
+    if (!countryValue || !countries.length) return;
 
-    const country = countries.find((item) => item.name === countryValue);
+    const country = countries.find(
+      (item) => item.name.toLowerCase() === countryValue.toLowerCase(),
+    );
 
-    if (country) {
+    if (country && selectedCountry?.id !== country.id) {
       selectCountry(country);
-      setValue("country", country.name);
     }
-  }, [countries, countryValue, selectedCountry, selectCountry, setValue]);
+  }, [countries, countryValue, selectedCountry, selectCountry]);
 
   useEffect(() => {
-    if (!stateValue || selectedState || states.length === 0) return;
+    if (!stateValue || !states.length) return;
 
-    const state = states.find((item) => item.name === stateValue);
+    const state = states.find(
+      (item) => item.name.toLowerCase() === stateValue.toLowerCase(),
+    );
 
-    if (state) {
+    if (state && selectedState?.id !== state.id) {
       selectState(state);
-      setValue("state", state.name);
     }
-  }, [selectedState, selectState, setValue, stateValue, states]);
+  }, [selectedState, selectState, stateValue, states]);
 
   useEffect(() => {
-    if (!cityValue || cities.length === 0) return;
+    if (!cityValue || !cities.length) return;
 
-    const city = cities.find((item) => item.name === cityValue);
+    const city = cities.find(
+      (item) => item.name.toLowerCase() === cityValue.toLowerCase(),
+    );
 
     if (city) {
       selectCity(city);
@@ -99,7 +124,7 @@ export const CheckoutForm = () => {
     "min-h-24 resize-none rounded-2xl border-border bg-muted px-4 py-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none transition focus-visible:border-primary focus-visible:ring-primary";
 
   const selectTriggerClass =
-    "h-12! rounded-2xl border-border bg-muted px-4 text-sm text-foreground shadow-none transition focus:ring-primary data-[placeholder]:text-muted-foreground";
+    "!h-12 rounded-2xl border-border bg-muted px-4 text-sm text-foreground shadow-none transition focus:ring-primary data-[placeholder]:text-muted-foreground";
 
   const selectContentClass = "border-border bg-popover text-popover-foreground";
 
@@ -134,6 +159,7 @@ export const CheckoutForm = () => {
               render={({ field }) => (
                 <Input
                   {...field}
+                  value={field.value || ""}
                   placeholder="First name"
                   className={inputClass}
                 />
@@ -154,6 +180,7 @@ export const CheckoutForm = () => {
               render={({ field }) => (
                 <Input
                   {...field}
+                  value={field.value || ""}
                   placeholder="Last name"
                   className={inputClass}
                 />
@@ -176,6 +203,7 @@ export const CheckoutForm = () => {
               render={({ field }) => (
                 <Input
                   {...field}
+                  value={field.value || ""}
                   type="email"
                   placeholder="Email address"
                   className={inputClass}
@@ -197,6 +225,7 @@ export const CheckoutForm = () => {
               render={({ field }) => (
                 <Input
                   {...field}
+                  value={field.value || ""}
                   placeholder="Phone number"
                   className={inputClass}
                 />
@@ -218,6 +247,7 @@ export const CheckoutForm = () => {
             render={({ field }) => (
               <Textarea
                 {...field}
+                value={field.value || ""}
                 placeholder="House number, street, area"
                 className={textareaClass}
               />
@@ -240,18 +270,18 @@ export const CheckoutForm = () => {
                 <Select
                   value={field.value || ""}
                   onValueChange={(value) => {
-                    field.onChange(value);
-
                     const country = countries.find(
                       (item) => item.name === value,
                     );
 
+                    field.onChange(value);
+
                     if (country) {
                       selectCountry(country);
-                      setValue("country", country.name);
-                      setValue("state", "");
-                      setValue("city", "");
                     }
+
+                    setValue("state", "", { shouldValidate: true });
+                    setValue("city", "", { shouldValidate: true });
                   }}
                 >
                   <SelectTrigger className={selectTriggerClass}>
@@ -283,18 +313,18 @@ export const CheckoutForm = () => {
               render={({ field }) => (
                 <Select
                   value={field.value || ""}
+                  disabled={!selectedCountry}
                   onValueChange={(value) => {
-                    field.onChange(value);
-
                     const state = states.find((item) => item.name === value);
+
+                    field.onChange(value);
 
                     if (state) {
                       selectState(state);
-                      setValue("state", state.name);
-                      setValue("city", "");
                     }
+
+                    setValue("city", "", { shouldValidate: true });
                   }}
-                  disabled={!selectedCountry}
                 >
                   <SelectTrigger className={selectTriggerClass}>
                     <SelectValue placeholder="Select state" />
@@ -327,17 +357,16 @@ export const CheckoutForm = () => {
               render={({ field }) => (
                 <Select
                   value={field.value || ""}
+                  disabled={!selectedState}
                   onValueChange={(value) => {
-                    field.onChange(value);
-
                     const city = cities.find((item) => item.name === value);
+
+                    field.onChange(value);
 
                     if (city) {
                       selectCity(city);
-                      setValue("city", city.name);
                     }
                   }}
-                  disabled={!selectedState}
                 >
                   <SelectTrigger className={selectTriggerClass}>
                     <SelectValue placeholder="Select city" />
@@ -359,22 +388,23 @@ export const CheckoutForm = () => {
 
           <Field>
             <FieldLabel className="text-sm font-semibold text-card-foreground">
-              Postal code
+              Pincode
             </FieldLabel>
 
             <Controller
-              name="postalCode"
+              name="pincode"
               control={control}
               render={({ field }) => (
                 <Input
                   {...field}
-                  placeholder="Postal code"
+                  value={field.value || ""}
+                  placeholder="Pincode"
                   className={inputClass}
                 />
               )}
             />
 
-            <FieldError errors={[errors.postalCode]} />
+            <FieldError errors={[errors.pincode]} />
           </Field>
         </div>
       </FieldGroup>

@@ -22,6 +22,7 @@ import { authService } from "@/services/auth.service";
 import { GuestCheckoutVerificationDialog } from "./guest-checkout-verification-dialog";
 import { orderClientService } from "@/services/orders/order.client";
 import Container from "../container";
+import { Order } from "@/types/order";
 
 interface CheckoutClientProps {
   gateways: Gateway[];
@@ -36,6 +37,7 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
     typeof checkoutSchema
   > | null>(null);
   const [isGuestVerifying, setIsGuestVerifying] = useState(false);
+  const [retryOrder, setRetryOrder] = useState<Order | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -71,6 +73,8 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
           ? orders.find((order) => order.id === retryOrderId)
           : orders[0];
 
+        setRetryOrder(isRetryFlow ? matchedOrder || null : null);
+
         if (!matchedOrder?.billingAddress) return;
 
         const address = matchedOrder.billingAddress;
@@ -81,7 +85,7 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
           email: address.email || user.email || "",
           phoneNumber: address.phoneNumber || user.phoneNumber || "",
           address: address.address || "",
-          country: address.country || "",
+          country: address.country || "India",
           state: address.state || "",
           city: address.city || "",
           pincode: address.pincode || "",
@@ -100,7 +104,7 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
       return;
     }
 
-    if (!cartItems.length) {
+    if (!isRetryFlow && !cartItems.length) {
       toast.error("Cart is empty");
       return;
     }
@@ -206,7 +210,7 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
     );
   }
 
-  if (!cartItems || cartItems.length === 0) {
+  if (!isRetryFlow && (!cartItems || cartItems.length === 0)) {
     return (
       <div className="relative min-h-screen bg-background py-12 md:py-16">
         <div className="pointer-events-none absolute inset-0">
@@ -295,7 +299,7 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
 
                   <CheckoutForm />
 
-                  <CheckoutItems />
+                  <CheckoutItems retryOrder={retryOrder} />
                 </div>
 
                 <aside className="lg:sticky lg:top-28">
@@ -305,6 +309,8 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
                     gateways={gateways}
                     selectedGateway={selectedGateway}
                     onSelectGateway={setSelectedGateway}
+                    isRetryFlow={isRetryFlow}
+                    retryOrder={retryOrder}
                   />
                 </aside>
               </div>

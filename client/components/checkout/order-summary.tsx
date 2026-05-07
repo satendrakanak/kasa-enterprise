@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
 import { Gateway } from "@/types/settings";
 import { SummaryRow } from "./summary-row";
+import { Order } from "@/types/order";
 
 interface OrderSummaryProps {
   isSubmitting: boolean;
@@ -15,25 +16,31 @@ interface OrderSummaryProps {
   gateways: Gateway[];
   selectedGateway: Gateway | null;
   onSelectGateway: (gateway: Gateway) => void;
+  isRetryFlow?: boolean;
+  retryOrder?: Order | null;
 }
 
 export const OrderSummary = ({
   isSubmitting,
   isValid,
   gateways,
+  isRetryFlow = false,
   onSelectGateway,
+  retryOrder,
   selectedGateway,
 }: OrderSummaryProps) => {
   const { cartItems, autoDiscount, manualDiscount, finalAmount, manualCoupon } =
     useCartStore();
 
-  const originalPrice = cartItems.reduce((acc, item) => acc + item.price, 0);
+  const retryTotalAmount = retryOrder ? Number(retryOrder.totalAmount) : 0;
+  const originalPrice = isRetryFlow
+    ? retryTotalAmount
+    : cartItems.reduce((acc, item) => acc + item.price, 0);
 
-  const totalDiscount = autoDiscount + manualDiscount;
-  const finalPrice = Math.max(
-    totalDiscount > 0 ? finalAmount : originalPrice,
-    0,
-  );
+  const totalDiscount = isRetryFlow ? 0 : autoDiscount + manualDiscount;
+  const finalPrice = isRetryFlow
+    ? retryTotalAmount
+    : Math.max(totalDiscount > 0 ? finalAmount : originalPrice, 0);
 
   const gstRate = 0.18;
   const basePrice = Math.round(finalPrice / (1 + gstRate));
@@ -54,7 +61,8 @@ export const OrderSummary = ({
     isSubmitting ||
     !isValid ||
     !isPaymentGatewayAvailable ||
-    cartItems.length === 0 ||
+    (isRetryFlow && !retryOrder) ||
+    (!isRetryFlow && cartItems.length === 0) ||
     (hasMultipleGateways && !selectedGateway);
 
   return (
@@ -238,7 +246,11 @@ export const OrderSummary = ({
         )}
       </Button>
 
-      {cartItems.length === 0 ? (
+      {isRetryFlow ? (
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Retrying your existing order
+        </p>
+      ) : cartItems.length === 0 ? (
         <p className="mt-4 text-center text-xs text-muted-foreground">
           Your cart is empty
         </p>

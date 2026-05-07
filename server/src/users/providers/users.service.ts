@@ -194,27 +194,38 @@ export class UsersService {
   }
 
   async getFacultyProfile(id: number): Promise<User> {
-    const user = await this.userRepository.findOne({
-      where: { id },
-      relations: [
-        'roles',
-        'profile',
-        'facultyProfile',
-        'avatar',
-        'coverImage',
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.roles', 'roles')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('user.facultyProfile', 'facultyProfile')
+      .leftJoinAndSelect('user.avatar', 'avatar')
+      .leftJoinAndSelect('user.coverImage', 'coverImage')
+
+      // ✅ only published taught courses
+      .leftJoinAndSelect(
+        'user.taughtCourses',
         'taughtCourses',
-        'taughtCourses.image',
-        'taughtCourses.faculties',
-        'taughtCourses.faculties.avatar',
-        'taughtCourses.createdBy',
-      ],
-    });
+        'taughtCourses.isPublished = :isPublished',
+        { isPublished: true },
+      )
+
+      .leftJoinAndSelect('taughtCourses.image', 'taughtCoursesImage')
+      .leftJoinAndSelect('taughtCourses.faculties', 'taughtCoursesFaculties')
+      .leftJoinAndSelect(
+        'taughtCoursesFaculties.avatar',
+        'taughtCoursesFacultiesAvatar',
+      )
+      .leftJoinAndSelect('taughtCourses.createdBy', 'taughtCoursesCreatedBy')
+      .where('user.id = :id', { id })
+      .getOne();
 
     if (!user || !user.roles.some((role) => role.name === 'faculty')) {
       throw new NotFoundException('Faculty not found');
     }
 
     const mappedUser = this.mediaFileMappingService.mapUser(user);
+
     mappedUser.taughtCourses =
       mappedUser.taughtCourses?.map((course) =>
         this.mediaFileMappingService.mapCourse(course),

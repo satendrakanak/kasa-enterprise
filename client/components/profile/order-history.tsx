@@ -23,6 +23,7 @@ import { Course } from "@/types/course";
 import { CourseProgressBar } from "@/components/courses/course-progress-bar";
 import { RefundRequestDialog } from "./refunds/refund-request-dialog";
 import { RefundTimeline } from "@/components/refunds/refund-timeline";
+import { formatDate } from "@/utils/formate-date";
 
 interface OrderHistoryProps {
   orders: Order[];
@@ -437,16 +438,6 @@ function getLatestRefundRequest(refundRequests: RefundRequest[]) {
   return [...refundRequests].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   )[0];
-}
-
-function formatDate(value?: string | Date | null) {
-  if (!value) return "NA";
-
-  return new Date(value).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 function formatPrice(value: number) {

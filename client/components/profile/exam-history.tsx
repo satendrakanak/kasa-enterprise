@@ -11,6 +11,7 @@ import {
 
 import { ExamHistoryRecord } from "@/types/exam";
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/utils/formate-date";
 
 export function ExamHistory({ records }: { records: ExamHistoryRecord[] }) {
   return (
@@ -97,10 +98,7 @@ export function ExamHistory({ records }: { records: ExamHistoryRecord[] }) {
                   </p>
 
                   <p className="mt-1 text-sm font-semibold text-card-foreground">
-                    {new Date(record.lastAttemptedAt).toLocaleString("en-IN", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
+                    {formatDateTime(record.lastAttemptedAt)}
                   </p>
                 </div>
 

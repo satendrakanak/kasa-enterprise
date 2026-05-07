@@ -4,9 +4,16 @@ import { ShoppingBag } from "lucide-react";
 
 import { useCartStore } from "@/store/cart-store";
 import { CartItemCard } from "../cart/cart-item-card";
+import { Order } from "@/types/order";
 
-export const CheckoutItems = () => {
+interface CheckoutItemsProps {
+  retryOrder?: Order | null;
+}
+
+export const CheckoutItems = ({ retryOrder }: CheckoutItemsProps) => {
   const cartItems = useCartStore((state) => state.cartItems);
+  const retryItems = retryOrder?.items || [];
+  const itemCount = retryOrder ? retryItems.length : cartItems.length;
 
   return (
     <section className="academy-card p-5 md:p-6">
@@ -17,9 +24,7 @@ export const CheckoutItems = () => {
           </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            {cartItems.length > 1
-              ? `${cartItems.length} courses`
-              : `${cartItems.length} course`}{" "}
+            {itemCount > 1 ? `${itemCount} courses` : `${itemCount} course`}{" "}
             selected for checkout.
           </p>
         </div>
@@ -30,9 +35,23 @@ export const CheckoutItems = () => {
       </div>
 
       <div className="space-y-5">
-        {cartItems.map((item) => (
-          <CartItemCard key={item.id} item={item} />
-        ))}
+        {retryOrder
+          ? retryItems.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-2xl border border-border bg-muted/40 p-4"
+              >
+                <p className="font-semibold text-card-foreground">
+                  {item.course.title}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Retry payment for this course
+                </p>
+              </div>
+            ))
+          : cartItems.map((item) => (
+              <CartItemCard key={item.id} item={item} />
+            ))}
       </div>
     </section>
   );

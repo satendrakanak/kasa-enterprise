@@ -21,14 +21,18 @@ export class BillingAddressDto {
   address!: string;
 
   @IsString()
+  @IsNotEmpty()
   country!: string;
 
   @IsString()
+  @IsNotEmpty()
   state!: string;
 
   @IsString()
+  @IsNotEmpty()
   city!: string;
 
   @IsString()
+  @IsNotEmpty()
   pincode!: string;
 }

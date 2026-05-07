@@ -138,10 +138,10 @@ export class SettingsService {
     if (!config) throw new NotFoundException('Payment gateway not configured');
 
     return {
-      keyId: this.cryptoService.decrypt(config.keyIdEnc),
-      keySecret: this.cryptoService.decrypt(config.keySecretEnc),
+      keyId: this.decryptGatewaySecret(config.keyIdEnc),
+      keySecret: this.decryptGatewaySecret(config.keySecretEnc),
       webhookSecret: config.webhookSecretEnc
-        ? this.cryptoService.decrypt(config.webhookSecretEnc)
+        ? this.decryptGatewaySecret(config.webhookSecretEnc)
         : null,
       webhookUrl: config.webhookUrl || null,
       mode: config.mode,
@@ -154,7 +154,7 @@ export class SettingsService {
     });
 
     return config?.webhookSecretEnc
-      ? this.cryptoService.decrypt(config.webhookSecretEnc)
+      ? this.decryptGatewaySecret(config.webhookSecretEnc)
       : null;
   }
 
@@ -171,7 +171,7 @@ export class SettingsService {
     }
 
     return {
-      keyId: this.cryptoService.decrypt(config.keyIdEnc),
+      keyId: this.decryptGatewaySecret(config.keyIdEnc),
     };
   }
 
@@ -472,7 +472,7 @@ export class SettingsService {
       isActive: gateway.isActive,
       keyIdPreview: this.maskSecret(
         gateway.keyIdEnc
-          ? this.cryptoService.decrypt(gateway.keyIdEnc)
+          ? this.decryptGatewaySecret(gateway.keyIdEnc)
           : undefined,
       ),
       hasKeySecret: Boolean(gateway.keySecretEnc),
@@ -487,6 +487,16 @@ export class SettingsService {
     if (!value) return null;
     if (value.length <= 6) return '******';
     return `${value.slice(0, 6)}****${value.slice(-4)}`;
+  }
+
+  private decryptGatewaySecret(payload: string) {
+    try {
+      return this.cryptoService.decrypt(payload);
+    } catch {
+      throw new BadRequestException(
+        'Payment gateway credentials could not be decrypted. Please verify APP_ENCRYPTION_KEY or re-save the payment gateway credentials from admin settings.',
+      );
+    }
   }
 
   private getDefaultSiteSettings() {

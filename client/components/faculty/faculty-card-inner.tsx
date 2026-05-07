@@ -87,11 +87,6 @@ export function FacultyCardInner({ faculty }: FacultyCardInnerProps) {
           {name || "Faculty"}
         </h3>
 
-        <div className="absolute bottom-3 left-3 right-3">
-          <span className="line-clamp-1 inline-flex max-w-full rounded-full border border-white/20 bg-black/25 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
-            {designation}
-          </span>
-        </div>
         <div className="mt-4 flex items-center justify-between gap-3">
           {socials.length > 0 ? (
             <div className="flex min-w-0 flex-wrap items-center gap-2">

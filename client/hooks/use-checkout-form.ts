@@ -13,7 +13,7 @@ export const useCheckoutForm = (user: User | null) => {
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
       address: "",
-      country: "",
+      country: "India",
       city: "",
       state: "",
       pincode: "",

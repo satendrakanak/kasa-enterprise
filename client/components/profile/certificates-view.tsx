@@ -7,6 +7,7 @@ import { Certificate } from "@/types/certificate";
 import { slugify } from "@/utils/slugify";
 import { downloadRemoteFile } from "@/lib/download-file";
 import { Button } from "@/components/ui/button";
+import { formatDateTime } from "@/utils/formate-date";
 
 interface CertificatesViewProps {
   certificates: Certificate[];
@@ -114,14 +115,7 @@ export function CertificatesView({ certificates }: CertificatesViewProps) {
 
                 <InfoBox
                   label="Issued On"
-                  value={new Date(certificate.issuedAt).toLocaleDateString(
-                    "en-IN",
-                    {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    },
-                  )}
+                  value={formatDateTime(certificate.issuedAt)}
                 />
               </div>
 

@@ -1,13 +1,16 @@
 import * as z from "zod";
 
 export const checkoutSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email(),
-  phoneNumber: z.string().min(10),
-  country: z.string().min(1),
-  state: z.string().min(1),
-  city: z.string().min(1),
-  address: z.string().min(1),
-  pincode: z.string().min(4),
+  firstName: z.string().trim().min(1, "First name is required"),
+  lastName: z.string().trim().min(1, "Last name is required"),
+  email: z.string().trim().email("Enter a valid email address"),
+  phoneNumber: z
+    .string()
+    .trim()
+    .min(10, "Enter a valid phone number"),
+  country: z.string().trim().min(1, "Country is required"),
+  state: z.string().trim().min(1, "State is required"),
+  city: z.string().trim().min(1, "City is required"),
+  address: z.string().trim().min(5, "Address is required"),
+  pincode: z.string().trim().min(4, "Enter a valid pincode"),
 });
