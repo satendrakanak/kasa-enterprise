@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsNumber,
@@ -17,6 +18,7 @@ export class ReviewRefundRequestDto {
   decision!: RefundDecision;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   @Min(1)
   approvedAmount?: number;

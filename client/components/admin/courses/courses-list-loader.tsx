@@ -1,22 +1,15 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
 import { Course } from "@/types/course";
+import { DateRangeValue } from "@/lib/date-range";
+import { CoursesList } from "./courses-list";
 
-const CoursesList = dynamic(
-  () => import("./courses-list").then((mod) => mod.CoursesList),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-6">
-        <div className="h-56 animate-pulse rounded-[28px] border border-slate-100 bg-slate-100/70" />
-        <div className="h-96 animate-pulse rounded-[28px] border border-slate-100 bg-white" />
-      </div>
-    ),
-  },
-);
-
-export function CoursesListLoader({ courses }: { courses: Course[] }) {
-  return <CoursesList courses={courses} />;
+export function CoursesListLoader({
+  courses,
+  dateRange,
+}: {
+  courses: Course[];
+  dateRange: DateRangeValue;
+}) {
+  return <CoursesList courses={courses} dateRange={dateRange} />;
 }

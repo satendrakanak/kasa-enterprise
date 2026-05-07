@@ -1,14 +1,21 @@
 "use client";
 
 import { useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CircleCheck, IndianRupee, ReceiptText } from "lucide-react";
 
 import { getOrderColumns } from "./order-columns";
 import { Order, OrderStatus } from "@/types/order";
 import { AdminResourceDashboard } from "@/components/admin/shared/admin-resource-dashboard";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
+import {
+  DateRangeValue,
+  updateDateRangeSearchParams,
+} from "@/lib/date-range";
 
 interface OrdersListProps {
   orders: Order[];
+  dateRange: DateRangeValue;
 }
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
@@ -17,13 +24,21 @@ const currencyFormatter = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 0,
 });
 
-export const OrdersList = ({ orders }: OrdersListProps) => {
+export const OrdersList = ({ orders, dateRange }: OrdersListProps) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const columns = useMemo(() => getOrderColumns(), []);
   const paidOrders = orders.filter((order) => order.status === OrderStatus.PAID);
   const totalRevenue = paidOrders.reduce(
     (sum, order) => sum + Number(order.totalAmount || 0),
     0,
   );
+
+  const handleDateRangeApply = (nextRange: DateRangeValue) => {
+    const params = updateDateRangeSearchParams(searchParams, nextRange);
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <AdminResourceDashboard
@@ -55,6 +70,7 @@ export const OrdersList = ({ orders }: OrdersListProps) => {
           icon: IndianRupee,
         },
       ]}
+      actions={<DateRangeFilter value={dateRange} onChange={handleDateRangeApply} />}
       exportFileName="orders-export.xlsx"
       mapExportRow={(order) => ({
         ID: order.id,

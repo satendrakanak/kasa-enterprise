@@ -10,10 +10,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 import { Coupon } from "@/types/coupon";
+import { formatDate } from "@/utils/formate-date";
 
 export const getCouponColumns = (
   onDelete: (coupon: Coupon) => void,
@@ -87,15 +87,13 @@ export const getCouponColumns = (
   {
     accessorKey: "createdAt",
     header: "Created",
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("en-GB"),
+    cell: ({ row }) => formatDate(row.original.createdAt),
   },
 
   // ✅ Actions
   {
     id: "actions",
     cell: ({ row }) => {
-      const router = useRouter();
       const coupon = row.original;
 
       return (
@@ -107,12 +105,14 @@ export const getCouponColumns = (
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => router.push(`/admin/coupons/${coupon.id}`)}
-              className="cursor-pointer flex items-center gap-2"
-            >
-              <Pencil className="size-4" />
-              Edit
+            <DropdownMenuItem asChild>
+              <Link
+                href={`/admin/coupons/${coupon.id}`}
+                className="cursor-pointer flex items-center gap-2"
+              >
+                <Pencil className="size-4" />
+                Edit
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"

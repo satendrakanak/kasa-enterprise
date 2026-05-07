@@ -6,10 +6,12 @@ import { PaginationQueryDto } from 'src/common/pagination/dtos/pagination-query.
 class GetUsersBaseDto {
   @IsDate()
   @IsOptional()
+  @Type(() => Date)
   startDate?: Date;
 
   @IsDate()
   @IsOptional()
+  @Type(() => Date)
   endDate?: Date;
 
   @IsOptional()

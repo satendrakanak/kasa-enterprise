@@ -22,6 +22,7 @@ import { CouponsService } from 'src/coupons/providers/coupons.service';
 import { MediaFileMappingService } from 'src/common/media-file-mapping/providers/media-file-mapping.service';
 import { UpdateOrderStatusByAdminProvider } from './update-order-status-by-admin.provider';
 import { FailedPaymentDetails } from '../interfaces/failed-payment-details.interface';
+import { DateRangeQueryDto } from 'src/common/dtos/date-range-query.dto';
 
 @Injectable()
 export class OrdersService {
@@ -78,29 +79,41 @@ export class OrdersService {
     private readonly updateOrderStatusByAdminProvider: UpdateOrderStatusByAdminProvider,
   ) {}
 
-  async findAll(): Promise<Order[]> {
-    return await this.orderRepository.find({
-      relations: [
-        'items',
-        'items.course',
-        'items.course.image',
-        'user',
-        'refundRequests',
-        'refundRequests.requester',
-        'refundRequests.reviewedBy',
-        'refundRequests.logs',
-        'refundRequests.logs.actor',
-      ],
-      order: {
-        createdAt: 'DESC',
-        refundRequests: {
-          createdAt: 'DESC',
-          logs: {
-            createdAt: 'ASC',
-          },
+  async findAll(query?: DateRangeQueryDto): Promise<Order[]> {
+    const orderQuery = this.orderRepository
+      .createQueryBuilder('orders')
+      .leftJoinAndSelect('orders.items', 'items')
+      .leftJoinAndSelect('items.course', 'course')
+      .leftJoinAndSelect('course.image', 'courseImage')
+      .leftJoinAndSelect('orders.user', 'user')
+      .leftJoinAndSelect('orders.refundRequests', 'refundRequests')
+      .leftJoinAndSelect('refundRequests.requester', 'refundRequester')
+      .leftJoinAndSelect('refundRequests.reviewedBy', 'refundReviewer')
+      .leftJoinAndSelect('refundRequests.logs', 'refundLogs')
+      .leftJoinAndSelect('refundLogs.actor', 'refundLogActor')
+      .orderBy('orders.createdAt', 'DESC')
+      .addOrderBy('refundRequests.createdAt', 'DESC')
+      .addOrderBy('refundLogs.createdAt', 'ASC');
+
+    if (query?.startDate) {
+      orderQuery.andWhere(
+        'COALESCE(orders.paidAt, orders.createdAt) >= :startDate',
+        {
+          startDate: query.startDate,
         },
-      },
-    });
+      );
+    }
+
+    if (query?.endDate) {
+      orderQuery.andWhere(
+        'COALESCE(orders.paidAt, orders.createdAt) <= :endDate',
+        {
+          endDate: query.endDate,
+        },
+      );
+    }
+
+    return await orderQuery.getMany();
   }
 
   async findOneById(id: number): Promise<Order> {
@@ -279,22 +292,40 @@ export class OrdersService {
     );
   }
 
-  async findUserOrders(userId: number) {
-    const orders = await this.orderRepository.find({
-      where: { user: { id: userId } },
-      relations: [
-        'items',
-        'items.course',
-        'items.course.image',
-        'user',
-        'refundRequests',
-        'refundRequests.requester',
-        'refundRequests.reviewedBy',
-        'refundRequests.logs',
-        'refundRequests.logs.actor',
-      ],
-      order: { createdAt: 'DESC' },
-    });
+  async findUserOrders(userId: number, query?: DateRangeQueryDto) {
+    const orderQuery = this.orderRepository
+      .createQueryBuilder('orders')
+      .leftJoinAndSelect('orders.items', 'items')
+      .leftJoinAndSelect('items.course', 'course')
+      .leftJoinAndSelect('course.image', 'courseImage')
+      .leftJoinAndSelect('orders.user', 'user')
+      .leftJoinAndSelect('orders.refundRequests', 'refundRequests')
+      .leftJoinAndSelect('refundRequests.requester', 'refundRequester')
+      .leftJoinAndSelect('refundRequests.reviewedBy', 'refundReviewer')
+      .leftJoinAndSelect('refundRequests.logs', 'refundLogs')
+      .leftJoinAndSelect('refundLogs.actor', 'refundLogActor')
+      .where('user.id = :userId', { userId })
+      .orderBy('orders.createdAt', 'DESC');
+
+    if (query?.startDate) {
+      orderQuery.andWhere(
+        'COALESCE(orders.paidAt, orders.createdAt) >= :startDate',
+        {
+          startDate: query.startDate,
+        },
+      );
+    }
+
+    if (query?.endDate) {
+      orderQuery.andWhere(
+        'COALESCE(orders.paidAt, orders.createdAt) <= :endDate',
+        {
+          endDate: query.endDate,
+        },
+      );
+    }
+
+    const orders = await orderQuery.getMany();
 
     return Promise.all(
       orders.map((order) => this.mediaFileMappingService.mapOrder(order)),

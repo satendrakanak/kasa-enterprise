@@ -1,12 +1,12 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsEmail,
   IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsPhoneNumber,
   IsString,
   Matches,
   MaxLength,
@@ -54,6 +54,10 @@ export class CreateUserDto {
   @IsArray()
   @IsNumber({}, { each: true })
   roleIds?: number[];
+
+  @IsOptional()
+  @IsBoolean()
+  canRequestRefund?: boolean;
 
   @IsString()
   @IsNotEmpty()

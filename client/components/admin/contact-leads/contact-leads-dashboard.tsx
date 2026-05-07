@@ -33,6 +33,7 @@ import { DataTableContent } from "@/components/admin/data-table/data-table-conte
 import { DataTablePagination } from "@/components/admin/data-table/data-table-pagination";
 import { contactLeadClientService } from "@/services/contact-leads/contact-lead.client";
 import { getErrorMessage } from "@/lib/error-handler";
+import { formatDateTime } from "@/utils/formate-date";
 
 const statusOptions: Array<"all" | ContactLeadStatus> = [
   "all",
@@ -114,11 +115,7 @@ export function ContactLeadsDashboard({ leads }: { leads: ContactLead[] }) {
       {
         accessorKey: "createdAt",
         header: "Received",
-        cell: ({ row }) =>
-          new Date(row.original.createdAt).toLocaleString("en-IN", {
-            dateStyle: "medium",
-            timeStyle: "short",
-          }),
+        cell: ({ row }) => formatDateTime(row.original.createdAt),
       },
       {
         accessorKey: "status",

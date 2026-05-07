@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Testimonial } from "@/types/testimonial";
+import { formatDate } from "@/utils/formate-date";
 
 export const getTestimonialColumns = (
   onEdit: (testimonial: Testimonial) => void,
@@ -40,12 +41,6 @@ export const getTestimonialColumns = (
     header: "Person",
     cell: ({ row }) => {
       const testimonial = row.original;
-      const meta = [
-        testimonial.designation ? `${testimonial.designation},` : null,
-        testimonial.company,
-      ]
-        .filter(Boolean)
-        .join("\n");
 
       return (
         <div
@@ -144,8 +139,7 @@ export const getTestimonialColumns = (
   {
     accessorKey: "createdAt",
     header: "Created",
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("en-GB"),
+    cell: ({ row }) => formatDate(row.original.createdAt),
   },
   {
     id: "actions",

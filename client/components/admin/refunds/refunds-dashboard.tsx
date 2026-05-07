@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { CircleDollarSign, Clock3, ShieldCheck } from "lucide-react";
 import { AdminResourceDashboard } from "@/components/admin/shared/admin-resource-dashboard";
@@ -8,6 +9,12 @@ import { RefundStatusBadge } from "@/components/refunds/refund-status-badge";
 import { RefundRequest, RefundRequestStatus } from "@/types/order";
 import { Button } from "@/components/ui/button";
 import { RefundReviewDialog } from "./refund-review-dialog";
+import { formatDateTime } from "@/utils/formate-date";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
+import {
+  DateRangeValue,
+  updateDateRangeSearchParams,
+} from "@/lib/date-range";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -17,10 +24,17 @@ const currencyFormatter = new Intl.NumberFormat("en-IN", {
 
 export function RefundsDashboard({
   refundRequests,
+  dateRange,
 }: {
   refundRequests: RefundRequest[];
+  dateRange: DateRangeValue;
 }) {
-  const [selectedRefund, setSelectedRefund] = useState<RefundRequest | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [selectedRefund, setSelectedRefund] = useState<RefundRequest | null>(
+    null,
+  );
 
   const columns = useMemo<ColumnDef<RefundRequest>[]>(
     () => [
@@ -59,9 +73,12 @@ export function RefundsDashboard({
         cell: ({ row }) => (
           <div className="min-w-0">
             <p className="font-medium text-slate-900 dark:text-white">
-              {row.original.requester?.firstName} {row.original.requester?.lastName}
+              {row.original.requester?.firstName}{" "}
+              {row.original.requester?.lastName}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{row.original.requester?.email}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {row.original.requester?.email}
+            </p>
           </div>
         ),
       },
@@ -70,12 +87,16 @@ export function RefundsDashboard({
         cell: ({ row }) => (
           <div className="text-sm">
             <p className="font-semibold text-slate-900 dark:text-white">
-              {currencyFormatter.format(Number(row.original.requestedAmount || 0))}
+              {currencyFormatter.format(
+                Number(row.original.requestedAmount || 0),
+              )}
             </p>
             {row.original.approvedAmount ? (
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Approved:{" "}
-                {currencyFormatter.format(Number(row.original.approvedAmount || 0))}
+                {currencyFormatter.format(
+                  Number(row.original.approvedAmount || 0),
+                )}
               </p>
             ) : null}
           </div>
@@ -85,7 +106,10 @@ export function RefundsDashboard({
         accessorKey: "status",
         header: "Status",
         cell: ({ row }) => (
-          <RefundStatusBadge status={row.original.status} className="text-[10px]" />
+          <RefundStatusBadge
+            status={row.original.status}
+            className="text-[10px]"
+          />
         ),
       },
       {
@@ -93,13 +117,7 @@ export function RefundsDashboard({
         header: "Created",
         cell: ({ row }) => (
           <div className="text-sm text-slate-600 dark:text-slate-300">
-            {new Date(row.original.createdAt).toLocaleString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}
+            {formatDateTime(row.original.createdAt)}
           </div>
         ),
       },
@@ -133,6 +151,11 @@ export function RefundsDashboard({
         sum + Number(request.approvedAmount || request.requestedAmount || 0),
       0,
     );
+
+  const handleDateRangeApply = (nextRange: DateRangeValue) => {
+    const params = updateDateRangeSearchParams(searchParams, nextRange);
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <>
@@ -169,11 +192,13 @@ export function RefundsDashboard({
             icon: CircleDollarSign,
           },
         ]}
+        actions={<DateRangeFilter value={dateRange} onChange={handleDateRangeApply} />}
         exportFileName="refund-requests.xlsx"
         mapExportRow={(request) => ({
           RefundID: request.id,
           OrderID: request.order?.id ?? "",
-          Customer: `${request.requester?.firstName ?? ""} ${request.requester?.lastName ?? ""}`.trim(),
+          Customer:
+            `${request.requester?.firstName ?? ""} ${request.requester?.lastName ?? ""}`.trim(),
           Email: request.requester?.email ?? "",
           Status: request.status,
           RequestedAmount: request.requestedAmount,

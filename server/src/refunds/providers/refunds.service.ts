@@ -12,6 +12,7 @@ import { OrderStatus } from 'src/orders/enums/orderStatus.enum';
 import { PaymentsService } from 'src/payments/providers/payments.service';
 import { User } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
+import { DateRangeQueryDto } from 'src/common/dtos/date-range-query.dto';
 import { CreateRefundRequestDto } from '../dtos/create-refund-request.dto';
 import {
   RefundDecision,
@@ -42,26 +43,34 @@ export class RefundsService {
     private readonly enrollmentsService: EnrollmentsService,
   ) {}
 
-  async findAllAdmin() {
-    return this.refundRequestRepository.find({
-      relations: [
-        'order',
-        'order.items',
-        'order.items.course',
-        'order.items.course.image',
-        'order.user',
-        'requester',
-        'reviewedBy',
-        'logs',
-        'logs.actor',
-      ],
-      order: {
-        createdAt: 'DESC',
-        logs: {
-          createdAt: 'ASC',
-        },
-      },
-    });
+  async findAllAdmin(query?: DateRangeQueryDto) {
+    const refundQuery = this.refundRequestRepository
+      .createQueryBuilder('refundRequest')
+      .leftJoinAndSelect('refundRequest.order', 'order')
+      .leftJoinAndSelect('order.items', 'items')
+      .leftJoinAndSelect('items.course', 'course')
+      .leftJoinAndSelect('course.image', 'courseImage')
+      .leftJoinAndSelect('order.user', 'orderUser')
+      .leftJoinAndSelect('refundRequest.requester', 'requester')
+      .leftJoinAndSelect('refundRequest.reviewedBy', 'reviewedBy')
+      .leftJoinAndSelect('refundRequest.logs', 'logs')
+      .leftJoinAndSelect('logs.actor', 'logActor')
+      .orderBy('refundRequest.createdAt', 'DESC')
+      .addOrderBy('logs.createdAt', 'ASC');
+
+    if (query?.startDate) {
+      refundQuery.andWhere('refundRequest.createdAt >= :startDate', {
+        startDate: query.startDate,
+      });
+    }
+
+    if (query?.endDate) {
+      refundQuery.andWhere('refundRequest.createdAt <= :endDate', {
+        endDate: query.endDate,
+      });
+    }
+
+    return refundQuery.getMany();
   }
 
   async findMine(userId: number) {
@@ -168,6 +177,12 @@ export class RefundsService {
 
     if (!requester) {
       throw new NotFoundException('User not found');
+    }
+
+    if (!requester.canRequestRefund) {
+      throw new BadRequestException(
+        'Refund request access is not enabled for this account',
+      );
     }
 
     const refundRequest = this.refundRequestRepository.create({

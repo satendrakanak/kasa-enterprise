@@ -1,7 +1,6 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EmailTemplate } from "@/types/email-template";
+import { formatDate } from "@/utils/formate-date";
 
 export function getEmailTemplateColumns(
   onEdit: (template: EmailTemplate) => void,
@@ -69,7 +69,7 @@ export function getEmailTemplateColumns(
       header: "Updated",
       cell: ({ row }) => (
         <span className="text-sm text-slate-500 dark:text-slate-400">
-          {format(new Date(row.original.updatedAt), "dd MMM yyyy")}
+          {formatDate(row.original.updatedAt)}
         </span>
       ),
     },

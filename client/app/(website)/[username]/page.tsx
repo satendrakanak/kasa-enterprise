@@ -7,7 +7,6 @@ import {
   BookOpenCheck,
   ClipboardCheck,
   Globe,
-  MapPin,
   Trophy,
 } from "lucide-react";
 import { FaInstagram, FaLinkedinIn } from "react-icons/fa";
@@ -19,6 +18,7 @@ import ProgressChart from "@/components/profile/progress-chart";
 import { cn } from "@/lib/utils";
 import { userServerService } from "@/services/users/user.server";
 import { Course } from "@/types/course";
+import { formatDate } from "@/utils/formate-date";
 
 type PageProps = {
   params: Promise<{ username: string }>;
@@ -242,15 +242,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
                           </p>
 
                           <p className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
-                            Issued{" "}
-                            {new Date(certificate.issuedAt).toLocaleDateString(
-                              "en-IN",
-                              {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              },
-                            )}
+                            Issued {formatDate(certificate.issuedAt)}
                           </p>
                         </div>
                       </div>

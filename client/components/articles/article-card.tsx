@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays } from "lucide-react";
 
 import { Article } from "@/types/article";
+import { formatDate } from "@/utils/formate-date";
 
 interface ArticleCardProps {
   article: Article;
@@ -14,11 +15,7 @@ export function ArticleCard({ article }: ArticleCardProps) {
   const category = article.categories?.[0]?.name;
 
   const publishedDate = article.publishedAt
-    ? new Date(article.publishedAt).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
+    ? formatDate(article.publishedAt)
     : "Draft";
 
   return (

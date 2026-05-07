@@ -75,7 +75,7 @@ export function DataTableContent<TData>({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-[rgba(17,27,46,0.96)]">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToVerticalAxis]}
@@ -85,7 +85,7 @@ export function DataTableContent<TData>({
       >
         <Table>
           {/* 🔥 HEADER */}
-          <TableHeader className="sticky top-0 z-10 bg-sidebar-primary dark:bg-[rgba(49,26,25,0.96)]">
+          <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur supports-backdrop-filter:bg-muted/60">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -117,7 +117,7 @@ export function DataTableContent<TData>({
               <TableRow>
                 <TableCell
                   colSpan={table.getAllColumns().length} // 🔥 FIX
-                  className="h-24 text-center text-slate-500 dark:text-slate-400"
+                  className="h-24 text-center text-muted-foreground"
                 >
                   No results.
                 </TableCell>

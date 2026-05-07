@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { BookOpen, Eye, Sparkles } from "lucide-react";
 
@@ -16,18 +17,26 @@ import {
   DeleteSelectedButton,
 } from "@/components/admin/shared/admin-resource-dashboard";
 import { getErrorMessage } from "@/lib/error-handler";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
+import {
+  DateRangeValue,
+  updateDateRangeSearchParams,
+} from "@/lib/date-range";
 
 interface CoursesListProps {
   courses: Course[];
+  dateRange: DateRangeValue;
 }
 
-export const CoursesList = ({ courses }: CoursesListProps) => {
+export const CoursesList = ({ courses, dateRange }: CoursesListProps) => {
   const [deleteItem, setDeleteItem] = useState<Course | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const columns = useMemo(
     () =>
@@ -84,6 +93,11 @@ export const CoursesList = ({ courses }: CoursesListProps) => {
     }
   };
 
+  const handleDateRangeApply = (nextRange: DateRangeValue) => {
+    const params = updateDateRangeSearchParams(searchParams, nextRange);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <>
       <AdminResourceDashboard
@@ -112,11 +126,14 @@ export const CoursesList = ({ courses }: CoursesListProps) => {
           },
         ]}
         actions={
-          <AddButton
-            title="Add Course"
-            redirectPath="/admin/courses"
-            FormComponent={CreateCourseForm}
-          />
+          <>
+            <AddButton
+              title="Add Course"
+              redirectPath="/admin/courses"
+              FormComponent={CreateCourseForm}
+            />
+            <DateRangeFilter value={dateRange} onChange={handleDateRangeApply} />
+          </>
         }
         selectedActions={(selectedRows) => (
           <DeleteSelectedButton

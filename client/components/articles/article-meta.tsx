@@ -3,14 +3,11 @@
 import { CalendarDays, Clock, UserRound } from "lucide-react";
 
 import { Article } from "@/types/article";
+import { formatDate } from "@/utils/formate-date";
 
 export function ArticleMeta({ article }: { article: Article }) {
   const publishedDate = article.publishedAt
-    ? new Date(article.publishedAt).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
+    ? formatDate(article.publishedAt)
     : null;
 
   return (

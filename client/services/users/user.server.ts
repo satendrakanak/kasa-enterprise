@@ -17,6 +17,8 @@ const buildUsersQuery = (params?: UsersQueryParams) => {
   if (params?.search) searchParams.set("search", params.search);
   if (params?.roleId) searchParams.set("roleId", String(params.roleId));
   if (params?.includeDeleted) searchParams.set("includeDeleted", "true");
+  if (params?.startDate) searchParams.set("startDate", params.startDate);
+  if (params?.endDate) searchParams.set("endDate", params.endDate);
 
   const query = searchParams.toString();
   return query ? `?${query}` : "";

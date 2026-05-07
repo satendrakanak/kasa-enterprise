@@ -14,6 +14,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 import { Role, User } from "@/types/user";
+import { formatDate } from "@/utils/formate-date";
 
 export const getUserColumns = (
   onDelete: (user: User) => void,
@@ -149,8 +150,7 @@ export const getUserColumns = (
   {
     accessorKey: "createdAt",
     header: "Created",
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("en-GB"),
+    cell: ({ row }) => formatDate(row.original.createdAt),
   },
 
   // ✅ Actions

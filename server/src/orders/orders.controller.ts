@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { OrdersService } from './providers/orders.service';
@@ -19,6 +20,7 @@ import { AuthType } from 'src/auth/enums/auth-type.enum';
 import type { Request } from 'express';
 import { Order } from './order.entity';
 import { OrderStatus } from './enums/orderStatus.enum';
+import { DateRangeQueryDto } from 'src/common/dtos/date-range-query.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -32,14 +34,17 @@ export class OrdersController {
 
   // 🔥 Get All Orders
   @Get()
-  async findAll(): Promise<Order[]> {
-    return await this.ordersService.findAll();
+  async findAll(@Query() query: DateRangeQueryDto): Promise<Order[]> {
+    return await this.ordersService.findAll(query);
   }
 
   // 🔥 Get My Orders
   @Get('my-orders')
-  async getMyOrders(@ActiveUser() user: ActiveUserData): Promise<Order[]> {
-    return await this.ordersService.findUserOrders(user.sub);
+  async getMyOrders(
+    @ActiveUser() user: ActiveUserData,
+    @Query() query: DateRangeQueryDto,
+  ): Promise<Order[]> {
+    return await this.ordersService.findUserOrders(user.sub, query);
   }
 
   @Get(':id')

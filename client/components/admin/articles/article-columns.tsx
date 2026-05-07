@@ -15,6 +15,7 @@ import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 import { Category } from "@/types/category";
 import { Article } from "@/types/article";
+import { formatDate } from "@/utils/formate-date";
 
 export const getArticleColumns = (
   onDelete: (article: Article) => void,
@@ -111,8 +112,7 @@ export const getArticleColumns = (
   {
     accessorKey: "createdAt",
     header: "Created",
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("en-GB"),
+    cell: ({ row }) => formatDate(row.original.createdAt),
   },
 
   // ✅ Actions

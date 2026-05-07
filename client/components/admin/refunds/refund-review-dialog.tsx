@@ -29,7 +29,7 @@ import { RefundStatusBadge } from "@/components/refunds/refund-status-badge";
 import { getErrorMessage } from "@/lib/error-handler";
 
 const reviewSchema = z.object({
-  approvedAmount: z.number().min(0).optional(),
+  approvedAmount: z.coerce.number().min(0).optional(),
   adminNote: z.string().max(2000).optional(),
 });
 
@@ -80,12 +80,15 @@ export function RefundReviewDialog({
       setIsSubmitting(true);
       await refundClientService.review(refundRequest.id, {
         decision,
-        approvedAmount: values.approvedAmount,
+        approvedAmount:
+          decision === RefundDecision.APPROVE
+            ? values.approvedAmount
+            : undefined,
         adminNote: values.adminNote,
       });
       toast.success(
         decision === RefundDecision.APPROVE
-          ? "Refund approved and sent to gateway."
+          ? "Refund approval submitted. Check the timeline for gateway status."
           : "Refund request rejected.",
       );
       onOpenChange(false);
@@ -123,8 +126,8 @@ export function RefundReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(960px,calc(100vw-2rem))] max-w-4xl! dark:border-white/10 dark:bg-[rgba(11,18,32,0.98)] dark:text-slate-100">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[min(92vh,820px)] w-[min(960px,calc(100vw-2rem))] max-w-4xl! flex-col overflow-hidden p-0 dark:border-white/10 dark:bg-[rgba(11,18,32,0.98)] dark:text-slate-100">
+        <DialogHeader className="shrink-0 px-6 pt-6">
           <DialogTitle className="text-slate-950 dark:text-white">
             Review refund request #{refundRequest.id}
           </DialogTitle>
@@ -135,7 +138,7 @@ export function RefundReviewDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid min-h-0 flex-1 gap-5 overflow-y-auto px-6 py-5 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50/70 p-5 dark:border-white/10 dark:bg-white/6">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -231,7 +234,7 @@ export function RefundReviewDialog({
           </div>
         </div>
 
-        <DialogFooter className="border-t border-slate-100 pt-4 dark:border-white/10">
+        <DialogFooter className="shrink-0 border-t border-slate-100 px-6 py-4 dark:border-white/10">
           {canSync ? (
             <Button
               type="button"

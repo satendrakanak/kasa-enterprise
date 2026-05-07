@@ -1,8 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
 import { Order } from "@/types/order";
+import { formatDateTime } from "@/utils/formate-date";
 
 interface OrderHeaderProps {
   order: Order;
@@ -39,7 +39,7 @@ export const OrderHeader = ({ order }: OrderHeaderProps) => {
             </Badge>
 
             <p className="text-sm text-muted-foreground">
-              {format(new Date(order.createdAt), "dd MMM yyyy, hh:mm a")}
+              {formatDateTime(order.createdAt)}
             </p>
           </div>
         </div>

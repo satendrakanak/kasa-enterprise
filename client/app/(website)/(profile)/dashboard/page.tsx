@@ -8,8 +8,23 @@ import { orderServerService } from "@/services/orders/order.server";
 import { Order } from "@/types/order";
 import { courseExamsServerService } from "@/services/course-exams/course-exams.server";
 import { ExamHistoryRecord } from "@/types/exam";
+import {
+  getDateRangeFromSearchParams,
+  getServerDateRangeQuery,
+} from "@/lib/date-range";
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const dateRange = getDateRangeFromSearchParams(resolvedSearchParams);
+  const rangeParams = new URLSearchParams(getServerDateRangeQuery(dateRange));
+  const rangeQuery = {
+    startDate: rangeParams.get("startDate") || undefined,
+    endDate: rangeParams.get("endDate") || undefined,
+  };
   const session = await getSession();
   if (!session) return null;
   let stats = {
@@ -31,8 +46,8 @@ export default async function DashboardPage() {
         userServerService.getDashboardStats(session.id),
         userServerService.getEnrolledCourses(session.id),
         userServerService.getWeeklyProgress(session.id),
-        orderServerService.getMine(),
-        courseExamsServerService.getMyHistory(),
+        orderServerService.getMine(rangeQuery),
+        courseExamsServerService.getMyHistory(rangeQuery),
       ]);
 
     stats = statsRes.data;
@@ -63,6 +78,8 @@ export default async function DashboardPage() {
         weeklyProgress={weeklyProgress}
         orders={orders}
         examHistory={examHistory}
+        user={session}
+        dateRange={dateRange}
       />
     </div>
   );

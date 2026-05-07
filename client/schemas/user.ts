@@ -6,4 +6,5 @@ export const userBasicSchema = z.object({
   username: z.string().min(1, "Username is required"),
   email: z.string().email(),
   phoneNumber: z.string().min(10),
+  canRequestRefund: z.boolean().optional(),
 });

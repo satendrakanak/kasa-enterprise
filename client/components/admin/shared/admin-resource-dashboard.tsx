@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ColumnDef,
   getCoreRowModel,
@@ -23,34 +23,7 @@ type StatItem = {
   icon: LucideIcon;
 };
 
-export function exportRowsToWorkbook<TData>(
-  rows: TData[],
-  fileName: string,
-  mapRow: (row: TData) => Record<string, unknown>,
-) {
-  const worksheet = XLSX.utils.json_to_sheet(rows.map(mapRow));
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Export");
-  XLSX.writeFile(workbook, fileName);
-}
-
-export function AdminResourceDashboard<TData extends { id: number | string }>({
-  eyebrow,
-  title,
-  description,
-  data,
-  columns,
-  stats,
-  searchPlaceholder,
-  searchFields,
-  getRowId,
-  actions,
-  selectedActions,
-  exportFileName,
-  mapExportRow,
-  emptyTitle = "No records found",
-  emptyDescription = "Data will appear here once it is available.",
-}: {
+type AdminResourceDashboardProps<TData extends { id: number | string }> = {
   eyebrow: string;
   title: string;
   description: string;
@@ -66,7 +39,53 @@ export function AdminResourceDashboard<TData extends { id: number | string }>({
   mapExportRow: (row: TData) => Record<string, unknown>;
   emptyTitle?: string;
   emptyDescription?: string;
-}) {
+};
+
+export function exportRowsToWorkbook<TData>(
+  rows: TData[],
+  fileName: string,
+  mapRow: (row: TData) => Record<string, unknown>,
+) {
+  const worksheet = XLSX.utils.json_to_sheet(rows.map(mapRow));
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Export");
+  XLSX.writeFile(workbook, fileName);
+}
+
+export function AdminResourceDashboard<TData extends { id: number | string }>({
+  ...props
+}: AdminResourceDashboardProps<TData>) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <AdminResourceDashboardSkeleton />;
+  }
+
+  return <AdminResourceDashboardInner {...props} />;
+}
+
+function AdminResourceDashboardInner<TData extends { id: number | string }>({
+  eyebrow,
+  title,
+  description,
+  data,
+  columns,
+  stats,
+  searchPlaceholder,
+  searchFields,
+  getRowId,
+  actions,
+  selectedActions,
+  exportFileName,
+  mapExportRow,
+  emptyTitle = "No records found",
+  emptyDescription = "Data will appear here once it is available.",
+}: AdminResourceDashboardProps<TData>) {
   const [search, setSearch] = useState("");
 
   const filteredData = useMemo(() => {
@@ -115,7 +134,8 @@ export function AdminResourceDashboard<TData extends { id: number | string }>({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {actions}
             <Button
               variant="outline"
               className="rounded-2xl dark:border-white/10 dark:bg-white/8 dark:text-slate-100 dark:hover:bg-white/10"
@@ -127,7 +147,6 @@ export function AdminResourceDashboard<TData extends { id: number | string }>({
               <Download className="size-4" />
               Export
             </Button>
-            {actions}
           </div>
         </div>
 
@@ -205,6 +224,28 @@ export function AdminResourceDashboard<TData extends { id: number | string }>({
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function AdminResourceDashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <section className="rounded-[28px] border border-(--brand-100) bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[rgba(17,27,46,0.96)]">
+        <div className="h-6 w-32 animate-pulse rounded-full bg-slate-200 dark:bg-white/10" />
+        <div className="mt-5 h-9 w-64 animate-pulse rounded-xl bg-slate-200 dark:bg-white/10" />
+        <div className="mt-3 h-4 max-w-xl animate-pulse rounded bg-slate-200 dark:bg-white/10" />
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {[0, 1, 2].map((item) => (
+            <div
+              key={item}
+              className="h-28 animate-pulse rounded-3xl border border-slate-100 bg-slate-100 dark:border-white/10 dark:bg-white/8"
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="h-96 animate-pulse rounded-[28px] border border-slate-100 bg-white shadow-sm dark:border-white/10 dark:bg-[rgba(17,27,46,0.96)]" />
     </div>
   );
 }

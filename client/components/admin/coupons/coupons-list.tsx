@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { BadgePercent, CircleCheck, TicketPercent } from "lucide-react";
 
@@ -16,18 +16,26 @@ import {
   DeleteSelectedButton,
 } from "@/components/admin/shared/admin-resource-dashboard";
 import { getErrorMessage } from "@/lib/error-handler";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
+import {
+  DateRangeValue,
+  updateDateRangeSearchParams,
+} from "@/lib/date-range";
 
 interface CouponsListProps {
   coupons: Coupon[];
+  dateRange: DateRangeValue;
 }
 
-export const CouponsList = ({ coupons }: CouponsListProps) => {
+export const CouponsList = ({ coupons, dateRange }: CouponsListProps) => {
   const [deleteItem, setDeleteItem] = useState<Coupon | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const columns = useMemo(
     () =>
@@ -72,6 +80,11 @@ export const CouponsList = ({ coupons }: CouponsListProps) => {
     }
   };
 
+  const handleDateRangeApply = (nextRange: DateRangeValue) => {
+    const params = updateDateRangeSearchParams(searchParams, nextRange);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <>
       <AdminResourceDashboard
@@ -101,11 +114,14 @@ export const CouponsList = ({ coupons }: CouponsListProps) => {
           },
         ]}
         actions={
-          <AddButton
-            title="Add Coupon"
-            redirectPath="/admin/coupons"
-            FormComponent={CreateCouponForm}
-          />
+          <>
+            <AddButton
+              title="Add Coupon"
+              redirectPath="/admin/coupons"
+              FormComponent={CreateCouponForm}
+            />
+            <DateRangeFilter value={dateRange} onChange={handleDateRangeApply} />
+          </>
         }
         selectedActions={(selectedRows) => (
           <DeleteSelectedButton

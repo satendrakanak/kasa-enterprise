@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { facultyReviewClientService } from "@/services/faculty-reviews/faculty-review.client";
 import { FacultyReview, FacultyReviewSummary } from "@/types/faculty-review";
 import { User } from "@/types/user";
+import { formatDate } from "@/utils/formate-date";
 
 const emptySummary: FacultyReviewSummary = {
   average: 0,
@@ -267,14 +268,7 @@ export function FacultyReviewsSection({ faculty }: { faculty: User }) {
                         </p>
 
                         <p className="text-xs text-muted-foreground">
-                          {new Date(review.createdAt).toLocaleDateString(
-                            "en-GB",
-                            {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            },
-                          )}
+                          {formatDate(review.createdAt)}
                         </p>
                       </div>
                     </div>

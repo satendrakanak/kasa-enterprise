@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { Order, OrderStatus } from "@/types/order";
+import { formatDateTime } from "@/utils/formate-date";
 
 // 🎨 Status color helper
 const getStatusVariant = (status: OrderStatus) => {
@@ -120,17 +121,8 @@ export const getOrderColumns = (): ColumnDef<Order>[] => [
   {
     accessorKey: "createdAt",
     header: "Created",
-    cell: ({ row }) => {
-      const date = new Date(row.original.createdAt);
-
-      return (
-        <div className="text-sm">
-          <p>{date.toLocaleDateString("en-GB")}</p>
-          <p className="text-xs text-gray-500 dark:text-slate-400">
-            {date.toLocaleTimeString("en-IN")}
-          </p>
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <div className="text-sm">{formatDateTime(row.original.createdAt)}</div>
+    ),
   },
 ];

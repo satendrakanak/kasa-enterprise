@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -115,6 +116,12 @@ export class UsersController {
     @ActiveUser() user: ActiveUserData,
     @Body() patchUserDto: PatchUserDto,
   ): Promise<User> {
+    if (patchUserDto.canRequestRefund !== undefined) {
+      throw new BadRequestException(
+        'Refund access can only be updated by admin',
+      );
+    }
+
     return await this.usersService.update(user.sub, patchUserDto);
   }
 
@@ -131,7 +138,6 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProfileDto: UpdateProfileDto,
   ): Promise<User> {
-    console;
     return await this.usersService.updateUserProfile(id, updateProfileDto);
   }
 

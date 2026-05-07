@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ActiveUser } from 'src/auth/decorators/active-user.decorator';
 import type { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
@@ -14,6 +15,7 @@ import {
   ReviewRefundRequestDto,
 } from './dtos/review-refund-request.dto';
 import { RefundsService } from './providers/refunds.service';
+import { DateRangeQueryDto } from 'src/common/dtos/date-range-query.dto';
 
 @Controller('refund-requests')
 export class RefundsController {
@@ -25,8 +27,8 @@ export class RefundsController {
   }
 
   @Get('admin')
-  async findAllAdmin() {
-    return this.refundsService.findAllAdmin();
+  async findAllAdmin(@Query() query: DateRangeQueryDto) {
+    return this.refundsService.findAllAdmin(query);
   }
 
   @Get(':id')

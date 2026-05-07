@@ -27,7 +27,11 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <OrderHistory orders={orders} enrolledCourses={enrolledCourses} />
+      <OrderHistory
+        orders={orders}
+        enrolledCourses={enrolledCourses}
+        canRequestRefund={session.canRequestRefund}
+      />
     </div>
   );
 }

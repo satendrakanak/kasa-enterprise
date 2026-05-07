@@ -98,28 +98,36 @@ export class CoursesService {
      * 🔥 NO PAGINATION (website case)
      */
     if (getCoursesDto.isPublished) {
-      const courses = await this.courseRepository.find({
-        where: {
-          isPublished: true,
-        },
-        relations: [
-          'createdBy',
-          'updatedBy',
-          'image',
-          'video',
-          'categories',
-          'faculties',
-          'tags',
-          'chapters',
-          'chapters.lectures',
-          'chapters.lectures.video',
-          'chapters.lectures.attachments',
-          'chapters.lectures.attachments.file',
-        ],
-        order: {
-          createdAt: 'DESC',
-        },
-      });
+      const courseQuery = this.courseRepository
+        .createQueryBuilder('course')
+        .leftJoinAndSelect('course.createdBy', 'createdBy')
+        .leftJoinAndSelect('course.updatedBy', 'updatedBy')
+        .leftJoinAndSelect('course.image', 'image')
+        .leftJoinAndSelect('course.video', 'video')
+        .leftJoinAndSelect('course.categories', 'categories')
+        .leftJoinAndSelect('course.faculties', 'faculties')
+        .leftJoinAndSelect('course.tags', 'tags')
+        .leftJoinAndSelect('course.chapters', 'chapters')
+        .leftJoinAndSelect('chapters.lectures', 'lectures')
+        .leftJoinAndSelect('lectures.video', 'lectureVideo')
+        .leftJoinAndSelect('lectures.attachments', 'attachments')
+        .leftJoinAndSelect('attachments.file', 'attachmentFile')
+        .where('course.isPublished = :isPublished', { isPublished: true })
+        .orderBy('course.createdAt', 'DESC');
+
+      if (getCoursesDto.startDate) {
+        courseQuery.andWhere('course.createdAt >= :startDate', {
+          startDate: getCoursesDto.startDate,
+        });
+      }
+
+      if (getCoursesDto.endDate) {
+        courseQuery.andWhere('course.createdAt <= :endDate', {
+          endDate: getCoursesDto.endDate,
+        });
+      }
+
+      const courses = await courseQuery.getMany();
 
       const mapped = this.mediaFileMappingService.mapCourses(courses);
       if (!user) {
@@ -153,18 +161,32 @@ export class CoursesService {
     /**
      * 🔥 PAGINATION (admin case)
      */
-    const result = await this.paginationProvider.paginateQuery(
+    const queryBuilder = this.courseRepository
+      .createQueryBuilder('course')
+      .leftJoinAndSelect('course.image', 'image')
+      .leftJoinAndSelect('course.categories', 'categories')
+      .leftJoinAndSelect('course.tags', 'tags')
+      .leftJoinAndSelect('course.faculties', 'faculties')
+      .orderBy('course.createdAt', 'DESC');
+
+    if (getCoursesDto.startDate) {
+      queryBuilder.andWhere('course.createdAt >= :startDate', {
+        startDate: getCoursesDto.startDate,
+      });
+    }
+
+    if (getCoursesDto.endDate) {
+      queryBuilder.andWhere('course.createdAt <= :endDate', {
+        endDate: getCoursesDto.endDate,
+      });
+    }
+
+    const result = await this.paginationProvider.paginateQueryBuilder(
       {
         limit: getCoursesDto.limit ?? 10,
         page: getCoursesDto.page ?? 1,
       },
-      this.courseRepository,
-      {
-        relations: ['image', 'categories', 'tags', 'faculties'],
-        order: {
-          createdAt: 'DESC',
-        },
-      },
+      queryBuilder,
     );
 
     result.data = this.mediaFileMappingService.mapCourses(result.data);

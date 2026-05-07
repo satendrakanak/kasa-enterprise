@@ -14,6 +14,7 @@ import {
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { formatDate } from "@/utils/formate-date";
 
 export const courseColumns: ColumnDef<Course>[] = [
   // ✅ Select
@@ -100,8 +101,7 @@ export const courseColumns: ColumnDef<Course>[] = [
   {
     accessorKey: "createdAt",
     header: "Created",
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("en-GB"),
+    cell: ({ row }) => formatDate(row.original.createdAt),
   },
 
   // ✅ Actions

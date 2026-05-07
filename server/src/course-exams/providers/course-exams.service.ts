@@ -12,6 +12,7 @@ import { Lecture } from 'src/lectures/lecture.entity';
 import { UserProgres } from 'src/user-progress/user-progres.entity';
 import { User } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
+import { DateRangeQueryDto } from 'src/common/dtos/date-range-query.dto';
 import { CourseExamAccessOverride } from '../course-exam-access-override.entity';
 import { UpsertCourseExamAccessOverrideDto } from '../dtos/upsert-course-exam-access-override.dto';
 import { SubmitCourseExamAttemptDto } from '../dtos/submit-course-exam-attempt.dto';
@@ -43,12 +44,34 @@ export class CourseExamsService {
     private readonly courseExamAttemptRepository: Repository<CourseExamAttempt>,
   ) {}
 
-  async getMyHistory(userId: number) {
-    const attempts = await this.courseExamAttemptRepository.find({
-      where: { user: { id: userId } },
-      relations: ['course'],
-      order: { submittedAt: 'DESC', createdAt: 'DESC' },
-    });
+  async getMyHistory(userId: number, query?: DateRangeQueryDto) {
+    const attemptsQuery = this.courseExamAttemptRepository
+      .createQueryBuilder('attempt')
+      .leftJoinAndSelect('attempt.course', 'course')
+      .leftJoin('attempt.user', 'user')
+      .where('user.id = :userId', { userId })
+      .orderBy('attempt.submittedAt', 'DESC')
+      .addOrderBy('attempt.createdAt', 'DESC');
+
+    if (query?.startDate) {
+      attemptsQuery.andWhere(
+        'COALESCE(attempt.submittedAt, attempt.createdAt) >= :startDate',
+        {
+          startDate: query.startDate,
+        },
+      );
+    }
+
+    if (query?.endDate) {
+      attemptsQuery.andWhere(
+        'COALESCE(attempt.submittedAt, attempt.createdAt) <= :endDate',
+        {
+          endDate: query.endDate,
+        },
+      );
+    }
+
+    const attempts = await attemptsQuery.getMany();
 
     const grouped = new Map<
       number,

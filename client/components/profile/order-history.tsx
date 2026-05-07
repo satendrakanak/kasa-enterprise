@@ -30,6 +30,7 @@ interface OrderHistoryProps {
   enrolledCourses?: Course[];
   limit?: number;
   showViewAll?: boolean;
+  canRequestRefund?: boolean;
 }
 
 const REFUND_WINDOW_DAYS = 7;
@@ -40,6 +41,7 @@ export function OrderHistory({
   enrolledCourses = [],
   limit,
   showViewAll = false,
+  canRequestRefund: hasRefundAccess = false,
 }: OrderHistoryProps) {
   const [refundDialogOrderId, setRefundDialogOrderId] = useState<number | null>(
     null,
@@ -124,6 +126,7 @@ export function OrderHistory({
               [OrderStatus.PAID, OrderStatus.REFUND_FAILED].includes(
                 order.status,
               ) &&
+              hasRefundAccess &&
               isWithinRefundWindow &&
               isProgressAllowedForRefund &&
               (!latestRefundRequest ||
@@ -320,7 +323,8 @@ export function OrderHistory({
 
                     {!canRequestRefund &&
                     !latestRefundRequest &&
-                    order.status === OrderStatus.PAID ? (
+                    order.status === OrderStatus.PAID &&
+                    hasRefundAccess ? (
                       <RefundBlockedNote
                         isWithinRefundWindow={isWithinRefundWindow}
                         isProgressAllowedForRefund={isProgressAllowedForRefund}

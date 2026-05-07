@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatDate } from "@/utils/formate-date";
 
 export const DateRangeTimePicker = ({
   value,
@@ -58,8 +58,10 @@ export const DateRangeTimePicker = ({
         <Button variant="outline" className="w-full justify-start">
           {range?.from
             ? range.to
-              ? `${format(range.from, "PPP")} - ${format(range.to, "PPP")}`
-              : format(range.from, "PPP")
+              ? `${formatDate(range.from.toISOString())} - ${formatDate(
+                  range.to.toISOString(),
+                )}`
+              : formatDate(range.from.toISOString())
             : "Pick date range"}
         </Button>
       </PopoverTrigger>

@@ -54,6 +54,7 @@ export type User = {
   avatar: FileType | null;
   coverImage: FileType | null;
   avatarUrl: string | null;
+  canRequestRefund: boolean;
 
   roles?: Role[];
 
@@ -84,6 +85,7 @@ export type UpdateUserPayload = {
   avatarId?: number;
   coverImageId?: number;
   roleIds?: number[];
+  canRequestRefund?: boolean;
 };
 
 export type UpdateProfilePayload = {
@@ -125,6 +127,8 @@ export type UsersQueryParams = {
   search?: string;
   roleId?: number;
   includeDeleted?: boolean;
+  startDate?: string;
+  endDate?: string;
 };
 
 export type ChangePasswordPayload = {

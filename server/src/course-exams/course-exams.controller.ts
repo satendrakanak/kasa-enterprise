@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ActiveUser } from 'src/auth/decorators/active-user.decorator';
 import type { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
+import { DateRangeQueryDto } from 'src/common/dtos/date-range-query.dto';
 import { UpsertCourseExamAccessOverrideDto } from './dtos/upsert-course-exam-access-override.dto';
 import { SubmitCourseExamAttemptDto } from './dtos/submit-course-exam-attempt.dto';
 import { CourseExamsService } from './providers/course-exams.service';
@@ -10,8 +19,11 @@ export class CourseExamsController {
   constructor(private readonly courseExamsService: CourseExamsService) {}
 
   @Get('my-history')
-  getMyHistory(@ActiveUser() user: ActiveUserData) {
-    return this.courseExamsService.getMyHistory(user.sub);
+  getMyHistory(
+    @ActiveUser() user: ActiveUserData,
+    @Query() query: DateRangeQueryDto,
+  ) {
+    return this.courseExamsService.getMyHistory(user.sub, query);
   }
 
   @Get('admin-overview')

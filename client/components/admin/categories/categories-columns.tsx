@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatDate } from "@/utils/formate-date";
 
 export const getCategoriesColumns = (
   onEdit: (category: Category) => void,
@@ -88,8 +89,7 @@ export const getCategoriesColumns = (
   {
     accessorKey: "createdAt",
     header: "Created",
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("en-GB"),
+    cell: ({ row }) => formatDate(row.original.createdAt),
   },
   {
     id: "actions",

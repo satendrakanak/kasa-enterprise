@@ -12,6 +12,7 @@ import {
   CourseExamAttempt,
   CourseExamLearnerPayload,
 } from "@/types/course";
+import { formatDateTime } from "@/utils/formate-date";
 
 interface CourseExamSectionProps {
   course: Course;
@@ -725,7 +726,7 @@ function AttemptSummaryCard({ attempt }: { attempt: CourseExamAttempt }) {
           <p className="mt-2 text-sm text-muted-foreground">
             Score {attempt.score}/{attempt.maxScore} • {attempt.percentage}% •{" "}
             {attempt.submittedAt
-              ? new Date(attempt.submittedAt).toLocaleString()
+              ? formatDateTime(attempt.submittedAt)
               : "Awaiting evaluation"}
           </p>
         </div>

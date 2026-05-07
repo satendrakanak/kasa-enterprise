@@ -89,6 +89,9 @@ export class User {
   @Column({ nullable: true, type: 'timestamptz' })
   emailVerified?: Date;
 
+  @Column({ type: 'boolean', default: false })
+  canRequestRefund!: boolean;
+
   @OneToMany(() => Category, (category) => category.createdBy)
   categories!: Category[];
 

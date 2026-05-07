@@ -139,11 +139,12 @@ export const CartSummary = () => {
         </div>
 
         <p className="text-sm font-semibold text-card-foreground">
-          30-Day Money-Back Guarantee
+          Refunds Reviewed By Team
         </p>
 
         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-          Not satisfied? Get a full refund within 30 days.
+          Eligible refund requests are enabled by support and reviewed as per
+          policy.
         </p>
       </div>
     </aside>

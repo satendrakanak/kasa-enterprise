@@ -5,8 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { SubmitButton } from "@/components/submit-button";
-import { Field, FieldGroup, FieldError } from "@/components/ui/field";
+import { Field, FieldError } from "@/components/ui/field";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { getErrorMessage } from "@/lib/error-handler";
@@ -30,6 +31,7 @@ export const UserBasicInfoForm = ({ user }: UserBasicInfoFormProps) => {
       email: user.email || "",
       phoneNumber: user.phoneNumber || "",
       username: user.username || "",
+      canRequestRefund: user.canRequestRefund ?? false,
     },
   });
 
@@ -110,6 +112,29 @@ export const UserBasicInfoForm = ({ user }: UserBasicInfoFormProps) => {
                   <Input {...field} placeholder="Phone Number" />
                   <FieldError errors={[fieldState.error]} />
                 </Field>
+              )}
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-border bg-muted/50 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-card-foreground">
+                Refund Request Access
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Allow this user to initiate refund requests from their orders.
+              </p>
+            </div>
+
+            <Controller
+              name="canRequestRefund"
+              control={form.control}
+              render={({ field }) => (
+                <Switch
+                  checked={Boolean(field.value)}
+                  onCheckedChange={field.onChange}
+                  className="cursor-pointer"
+                />
               )}
             />
           </div>

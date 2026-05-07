@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Award,
   BarChart3,
@@ -15,9 +16,16 @@ import { StatCard } from "./stat-card";
 import { OrderHistory } from "./order-history";
 import { ExamHistory } from "./exam-history";
 import { Course } from "@/types/course";
-import { DashboardStats, WeeklyProgress } from "@/types/user";
+import { DashboardStats, User, WeeklyProgress } from "@/types/user";
 import { Order } from "@/types/order";
 import { ExamHistoryRecord } from "@/types/exam";
+import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
+import { DateRangeValue, updateDateRangeSearchParams } from "@/lib/date-range";
+
+const ProgressChart = dynamic(
+  () => import("@/components/profile/progress-chart"),
+  { ssr: false },
+);
 
 interface DashboardClientProps {
   stats: DashboardStats;
@@ -25,6 +33,8 @@ interface DashboardClientProps {
   weeklyProgress: WeeklyProgress[];
   orders: Order[];
   examHistory: ExamHistoryRecord[];
+  user: User;
+  dateRange: DateRangeValue;
 }
 
 export default function DashboardClient({
@@ -33,14 +43,24 @@ export default function DashboardClient({
   weeklyProgress,
   orders,
   examHistory,
+  user,
+  dateRange,
 }: DashboardClientProps) {
-  const ProgressChart = dynamic(
-    () => import("@/components/profile/progress-chart"),
-    { ssr: false },
-  );
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const handleDateRangeApply = (nextRange: DateRangeValue) => {
+    const params = updateDateRangeSearchParams(searchParams, nextRange);
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   return (
     <div className="space-y-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <DateRangeFilter value={dateRange} onChange={handleDateRangeApply} />
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatCard
           icon={BookOpenCheck}
@@ -136,6 +156,7 @@ export default function DashboardClient({
           enrolledCourses={courses}
           limit={2}
           showViewAll
+          canRequestRefund={user.canRequestRefund}
         />
       </section>
 

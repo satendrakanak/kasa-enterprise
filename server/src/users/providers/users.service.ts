@@ -172,6 +172,18 @@ export class UsersService {
       );
     }
 
+    if (getUsersDto.startDate) {
+      queryBuilder.andWhere('user.createdAt >= :startDate', {
+        startDate: getUsersDto.startDate,
+      });
+    }
+
+    if (getUsersDto.endDate) {
+      queryBuilder.andWhere('user.createdAt <= :endDate', {
+        endDate: getUsersDto.endDate,
+      });
+    }
+
     const result = await this.paginationProvider.paginateQueryBuilder(
       {
         limit: getUsersDto.limit,
