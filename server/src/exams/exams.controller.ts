@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseIntPipe,
@@ -31,7 +32,11 @@ export class ExamsController {
   constructor(private readonly examsService: ExamsService) {}
 
   @Get('question-bank/categories')
-  findCategories(@Query() query: GetQuestionBankCategoriesDto) {
+  findCategories(
+    @Query() query: GetQuestionBankCategoriesDto,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'view_question_bank');
     return this.examsService.findCategories(query);
   }
 
@@ -40,6 +45,7 @@ export class ExamsController {
     @Body() dto: CreateQuestionBankCategoryDto,
     @ActiveUser() user: ActiveUserData,
   ) {
+    this.assertPermission(user, 'create_question_category');
     return this.examsService.createCategory(dto, user?.sub);
   }
 
@@ -47,17 +53,27 @@ export class ExamsController {
   updateCategory(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateQuestionBankCategoryDto,
+    @ActiveUser() user: ActiveUserData,
   ) {
+    this.assertPermission(user, 'update_question_category');
     return this.examsService.updateCategory(id, dto);
   }
 
   @Delete('question-bank/categories/:id')
-  deleteCategory(@Param('id', ParseIntPipe) id: number) {
+  deleteCategory(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'delete_question_category');
     return this.examsService.deleteCategory(id);
   }
 
   @Get('question-bank/questions')
-  findQuestions(@Query() query: GetQuestionsDto) {
+  findQuestions(
+    @Query() query: GetQuestionsDto,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'view_question_bank');
     return this.examsService.findQuestions(query);
   }
 
@@ -66,6 +82,7 @@ export class ExamsController {
     @Body() dto: CreateQuestionDto,
     @ActiveUser() user: ActiveUserData,
   ) {
+    this.assertPermission(user, 'create_question');
     return this.examsService.createQuestion(dto, user?.sub);
   }
 
@@ -75,17 +92,25 @@ export class ExamsController {
     @Body() dto: UpdateQuestionDto,
     @ActiveUser() user: ActiveUserData,
   ) {
+    this.assertPermission(user, 'update_question');
     return this.examsService.updateQuestion(id, dto, user?.sub);
   }
 
   @Delete('question-bank/questions/:id')
-  deleteQuestion(@Param('id', ParseIntPipe) id: number) {
+  deleteQuestion(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'delete_question');
     return this.examsService.deleteQuestion(id);
   }
 
   @Get()
-  findExams(@Query() query: GetExamsDto) {
-    return this.examsService.findExams(query);
+  findExams(@Query() query: GetExamsDto, @ActiveUser() user: ActiveUserData) {
+    this.assertPermission(user, 'view_exam');
+    return this.examsService.findExams(
+      this.isAdmin(user) ? query : { ...query, facultyId: user.sub },
+    );
   }
 
   @Get('course/:courseId/learner')
@@ -120,34 +145,92 @@ export class ExamsController {
   }
 
   @Get(':id')
-  findExamById(@Param('id', ParseIntPipe) id: number) {
+  findExamById(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'view_exam');
+    if (!this.isAdmin(user)) {
+      return this.examsService.findExamByIdForUser(id, user);
+    }
+
     return this.examsService.findExamById(id);
   }
 
   @Post()
   createExam(@Body() dto: CreateExamDto, @ActiveUser() user: ActiveUserData) {
-    return this.examsService.createExam(dto, user?.sub);
+    this.assertPermission(user, 'create_exam');
+    const payload = this.canAssignExamFaculty(user)
+      ? dto
+      : { ...dto, facultyIds: user?.sub ? [user.sub] : [] };
+
+    return this.examsService.createExam(payload, user?.sub);
   }
 
   @Patch(':id')
-  updateExam(
+  async updateExam(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateExamDto,
     @ActiveUser() user: ActiveUserData,
   ) {
-    return this.examsService.updateExam(id, dto, user?.sub);
+    this.assertPermission(user, 'update_exam');
+    if (this.canAssignExamFaculty(user)) {
+      return this.examsService.updateExam(id, dto, user?.sub);
+    }
+
+    const { facultyIds: _facultyIds, ...payload } = dto;
+    await this.examsService.assertCanManageExam(id, user);
+    return this.examsService.updateExam(id, payload, user?.sub);
   }
 
   @Patch(':id/question-rules')
   replaceQuestionRules(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ReplaceExamQuestionRulesDto,
+    @ActiveUser() user: ActiveUserData,
   ) {
+    this.assertPermission(user, 'manage_exam_rules');
+    if (!this.isAdmin(user)) {
+      return this.examsService
+        .assertCanManageExam(id, user)
+        .then(() => this.examsService.replaceQuestionRules(id, dto));
+    }
+
     return this.examsService.replaceQuestionRules(id, dto);
   }
 
   @Delete(':id')
-  deleteExam(@Param('id', ParseIntPipe) id: number) {
+  async deleteExam(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'delete_exam');
+    if (!this.isAdmin(user)) {
+      await this.examsService.assertCanManageExam(id, user);
+    }
+
     return this.examsService.deleteExam(id);
+  }
+
+  private isAdmin(user?: ActiveUserData) {
+    return Boolean(user?.roles?.includes('admin'));
+  }
+
+  private canAssignExamFaculty(user?: ActiveUserData) {
+    return (
+      this.isAdmin(user) || Boolean(user?.permissions?.includes('assign_exam_faculty'))
+    );
+  }
+
+  private hasPermission(user: ActiveUserData | undefined, permission: string) {
+    return Boolean(user?.permissions?.includes(permission));
+  }
+
+  private assertPermission(user: ActiveUserData | undefined, permission: string) {
+    if (this.isAdmin(user) || this.hasPermission(user, permission)) {
+      return;
+    }
+
+    throw new ForbiddenException(`Missing permission: ${permission}`);
   }
 }

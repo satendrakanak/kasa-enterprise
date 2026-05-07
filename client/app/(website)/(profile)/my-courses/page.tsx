@@ -6,6 +6,9 @@ import { getSession } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/error-handler";
 import { userServerService } from "@/services/users/user.server";
 import { Course } from "@/types/course";
+import { facultyWorkspaceServer } from "@/services/faculty/faculty-workspace.server";
+import type { FacultyClassSession } from "@/types/faculty-workspace";
+import { UpcomingClasses } from "@/components/profile/upcoming-classes";
 
 export default async function MyCoursesPage() {
   const session = await getSession();
@@ -13,10 +16,15 @@ export default async function MyCoursesPage() {
   if (!session) return null;
 
   let enrolledCourses: Course[] = [];
+  let upcomingClasses: FacultyClassSession[] = [];
 
   try {
-    const response = await userServerService.getEnrolledCourses(session.id);
-    enrolledCourses = response.data;
+    const [coursesResponse, classesResponse] = await Promise.all([
+      userServerService.getEnrolledCourses(session.id),
+      facultyWorkspaceServer.getMySessions(),
+    ]);
+    enrolledCourses = coursesResponse.data;
+    upcomingClasses = classesResponse;
   } catch (error: unknown) {
     throw new Error(getErrorMessage(error));
   }
@@ -48,6 +56,10 @@ export default async function MyCoursesPage() {
             </div>
           ) : null}
         </div>
+      </div>
+
+      <div className="academy-card p-5 md:p-6">
+        <UpcomingClasses sessions={upcomingClasses} />
       </div>
 
       {enrolledCourses.length === 0 ? (

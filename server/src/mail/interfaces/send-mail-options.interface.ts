@@ -11,6 +11,7 @@ export interface SendEmailJobData {
   subject: string;
   html: string;
   attachments?: MailAttachment[];
+  delayMs?: number;
 }
 
 export interface MailAttachment {

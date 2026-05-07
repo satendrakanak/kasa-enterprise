@@ -45,12 +45,14 @@ type ExamQuestionRulesEditorProps = {
   exam: Exam;
   questions: Question[];
   categories: QuestionBankCategory[];
+  questionBankHref?: string;
 };
 
 export function ExamQuestionRulesEditor({
   exam,
   questions,
   categories,
+  questionBankHref = "/admin/exams/questions",
 }: ExamQuestionRulesEditorProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -329,7 +331,7 @@ export function ExamQuestionRulesEditor({
                     {filteredQuestions.length} visible
                   </Badge>
                   <Button asChild type="button" variant="secondary" size="sm">
-                    <Link href="/admin/exams/questions">
+                    <Link href={questionBankHref}>
                       <Plus className="size-4" />
                       Manage Questions
                     </Link>
@@ -442,7 +444,7 @@ export function ExamQuestionRulesEditor({
                       size="sm"
                       className="mt-4"
                     >
-                      <Link href="/admin/exams/questions">
+                      <Link href={questionBankHref}>
                         <Plus className="size-4" />
                         Add Matching Question
                       </Link>

@@ -30,9 +30,16 @@ import { Exam, ExamStatus } from "@/types/exam";
 type ExamActionsProps = {
   exam: Exam;
   compact?: boolean;
+  detailBasePath?: string;
+  afterDeleteHref?: string;
 };
 
-export function ExamActions({ exam, compact = false }: ExamActionsProps) {
+export function ExamActions({
+  exam,
+  compact = false,
+  detailBasePath = "/admin/exams",
+  afterDeleteHref = "/admin/exams",
+}: ExamActionsProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -63,7 +70,7 @@ export function ExamActions({ exam, compact = false }: ExamActionsProps) {
       await examClientService.deleteExam(exam.id);
       toast.success("Exam deleted");
       setDeleteOpen(false);
-      router.push("/admin/exams");
+      router.push(afterDeleteHref);
       router.refresh();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
@@ -89,13 +96,13 @@ export function ExamActions({ exam, compact = false }: ExamActionsProps) {
         <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
           <DropdownMenuItem asChild>
-            <Link href={`/admin/exams/${exam.id}`}>
+            <Link href={`${detailBasePath}/${exam.id}`}>
               <Eye className="size-4" />
               View / edit
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href={`/admin/exams/${exam.id}#settings`}>
+            <Link href={`${detailBasePath}/${exam.id}#settings`}>
               <Pencil className="size-4" />
               Settings
             </Link>

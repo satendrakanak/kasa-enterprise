@@ -39,6 +39,13 @@ export class GenerateTokensProvider {
 
   public async generateTokens(user: User) {
     const roles = user.roles?.map((r) => r.name) || [];
+    const permissions = [
+      ...new Set(
+        user.roles?.flatMap((role) =>
+          (role.permissions ?? []).map((permission) => permission.name),
+        ) ?? [],
+      ),
+    ];
     const [accessToken, refreshToken] = await Promise.all([
       //generate access token
       this.signToken<Partial<ActiveUserData>>(
@@ -47,6 +54,7 @@ export class GenerateTokensProvider {
         {
           email: user.email,
           roles,
+          permissions,
         },
       ),
 

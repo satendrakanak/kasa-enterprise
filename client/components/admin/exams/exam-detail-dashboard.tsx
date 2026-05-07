@@ -15,10 +15,15 @@ import { ExamStatusBadge } from "./exam-status-badge";
 
 type ExamDetailDashboardProps = {
   exam: Exam;
-  courses: Course[];
+  courses: Pick<Course, "id" | "title">[];
   faculties: User[];
   questions: Question[];
   categories: QuestionBankCategory[];
+  backHref?: string;
+  backLabel?: string;
+  detailBasePath?: string;
+  questionBankHref?: string;
+  hideFacultySelector?: boolean;
 };
 
 export function ExamDetailDashboard({
@@ -27,6 +32,11 @@ export function ExamDetailDashboard({
   faculties,
   questions,
   categories,
+  backHref = "/admin/exams",
+  backLabel = "Exams",
+  detailBasePath = "/admin/exams",
+  questionBankHref = "/admin/exams/questions",
+  hideFacultySelector = false,
 }: ExamDetailDashboardProps) {
   const ruleCount = exam.questionRules?.length ?? 0;
 
@@ -35,9 +45,9 @@ export function ExamDetailDashboard({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <Button asChild variant="outline" size="sm" className="mb-4">
-            <Link href="/admin/exams">
+            <Link href={backHref}>
               <ArrowLeft className="size-4" />
-              Exams
+              {backLabel}
             </Link>
           </Button>
           <div className="flex flex-wrap items-center gap-3">
@@ -52,7 +62,11 @@ export function ExamDetailDashboard({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ExamActions exam={exam} />
+          <ExamActions
+            exam={exam}
+            detailBasePath={detailBasePath}
+            afterDeleteHref={backHref}
+          />
         </div>
       </div>
 
@@ -86,6 +100,7 @@ export function ExamDetailDashboard({
             exam={exam}
             courses={courses}
             faculties={faculties}
+            hideFacultySelector={hideFacultySelector}
           />
         </TabsContent>
         <TabsContent value="rules">
@@ -93,6 +108,7 @@ export function ExamDetailDashboard({
             exam={exam}
             questions={questions}
             categories={categories}
+            questionBankHref={questionBankHref}
           />
         </TabsContent>
       </Tabs>

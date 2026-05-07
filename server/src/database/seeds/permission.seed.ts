@@ -55,6 +55,23 @@ export async function seedPermissions(dataSource: DataSource) {
     'delete_email_template',
     'manage_users',
     'approve_faculty',
+    'view_exam',
+    'create_exam',
+    'update_exam',
+    'delete_exam',
+    'manage_exam_rules',
+    'grade_exam_attempt',
+    'assign_exam_faculty',
+    'view_question_bank',
+    'create_question',
+    'update_question',
+    'delete_question',
+    'create_question_category',
+    'update_question_category',
+    'delete_question_category',
+    'view_faculty_workspace',
+    'manage_faculty_batches',
+    'manage_faculty_calendar',
   ];
 
   for (const name of permissions) {

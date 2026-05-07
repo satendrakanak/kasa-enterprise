@@ -50,6 +50,18 @@ export function canAccessAdmin(user: User | null | undefined): boolean {
   );
 }
 
+export function canAccessFaculty(user: User | null | undefined): boolean {
+  return (
+    hasRole(user, "admin") ||
+    hasRole(user, "faculty") ||
+    hasPermission(user, "view_faculty_workspace")
+  );
+}
+
+export function canAssignExamFaculty(user: User | null | undefined): boolean {
+  return hasRole(user, "admin") || hasPermission(user, "assign_exam_faculty");
+}
+
 export function isSystemRole(roleName: string) {
   return ["student", "faculty", "admin"].includes(roleName);
 }

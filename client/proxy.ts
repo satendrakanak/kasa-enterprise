@@ -3,6 +3,7 @@ import {
   adminRoutePrefix,
   authRoutes,
   DEFAULT_LOGIN_REDIRECT,
+  facultyRoutePrefix,
   protectedRoutes,
   publicRoutes,
 } from "./routes";
@@ -31,6 +32,7 @@ export function proxy(request: NextRequest) {
   const isPublicRoute = matchRoute(publicRoutes, pathname);
   const isAuthRoute = matchRoute(authRoutes, pathname);
   const isAdminRoute = pathname.startsWith(adminRoutePrefix);
+  const isFacultyRoute = pathname.startsWith(facultyRoutePrefix);
   const isProtectedRoute = matchRoute(protectedRoutes, pathname);
   const isLearningRoute =
     pathname.startsWith("/course/") &&
@@ -59,7 +61,7 @@ export function proxy(request: NextRequest) {
   // =========================
   // 🚫 3. Admin + known private routes → no token
   // =========================
-  if ((isAdminRoute || isProtectedRoute || isLearningRoute) && !token) {
+  if ((isAdminRoute || isFacultyRoute || isProtectedRoute || isLearningRoute) && !token) {
     const loginUrl = new URL("/auth/sign-in", request.url);
     loginUrl.searchParams.set(
       "callbackUrl",
@@ -71,7 +73,7 @@ export function proxy(request: NextRequest) {
   // =========================
   // 🟢 4. Public website routes → allow
   // =========================
-  if (isPublicRoute && !isAdminRoute && !isLearningRoute) {
+  if (isPublicRoute && !isAdminRoute && !isFacultyRoute && !isLearningRoute) {
     return response;
   }
 

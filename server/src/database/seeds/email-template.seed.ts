@@ -306,6 +306,58 @@ const templates = [
       `,
     }),
   },
+  {
+    templateName: 'faculty_class_student_reminder',
+    subject: 'Reminder: {{sessionTitle}} starts soon',
+    body: brandShell({
+      eyebrow: 'Class reminder',
+      title: '{{sessionTitle}} starts soon',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">Hi {{name}}, this is a {{reminderLabel}} reminder for your upcoming class in <strong>{{courseTitle}}</strong>.</p>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:18px;margin:22px 0">
+          <p style="margin:0 0 8px;color:#111827;font-weight:700">{{batchName}}</p>
+          <p style="margin:0;color:#475569">Class time: {{startsAt}}</p>
+          <p style="margin:8px 0 0;color:#475569">Location: {{location}}</p>
+        </div>
+        ${button('Join class', '{{meetingUrl}}')}
+      `,
+    }),
+  },
+  {
+    templateName: 'faculty_class_teacher_reminder',
+    subject: 'Teacher reminder: {{sessionTitle}} starts soon',
+    body: brandShell({
+      eyebrow: 'Faculty reminder',
+      title: '{{sessionTitle}} is coming up',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">Hi {{name}}, this is a {{reminderLabel}} reminder for your scheduled class.</p>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:18px;margin:22px 0">
+          <p style="margin:0 0 8px;color:#111827;font-weight:700">{{courseTitle}}</p>
+          <p style="margin:0;color:#475569">Batch: {{batchName}}</p>
+          <p style="margin:8px 0 0;color:#475569">Class time: {{startsAt}}</p>
+          <p style="margin:8px 0 0;color:#475569">Location: {{location}}</p>
+        </div>
+        ${button('Open class link', '{{meetingUrl}}')}
+      `,
+    }),
+  },
+  {
+    templateName: 'faculty_class_reminder',
+    subject: 'Reminder: {{sessionTitle}} starts soon',
+    body: brandShell({
+      eyebrow: 'Class reminder',
+      title: '{{sessionTitle}} starts soon',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">Hi {{name}}, this is a {{reminderLabel}} reminder for your upcoming class in <strong>{{courseTitle}}</strong>.</p>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:18px;margin:22px 0">
+          <p style="margin:0 0 8px;color:#111827;font-weight:700">{{batchName}}</p>
+          <p style="margin:0;color:#475569">Class time: {{startsAt}}</p>
+          <p style="margin:8px 0 0;color:#475569">Location: {{location}}</p>
+        </div>
+        ${button('Join class', '{{meetingUrl}}')}
+      `,
+    }),
+  },
 ];
 
 export async function seedEmailTemplates(dataSource: DataSource) {

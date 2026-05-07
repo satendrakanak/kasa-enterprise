@@ -21,6 +21,8 @@ import { Order } from "@/types/order";
 import { ExamHistoryRecord } from "@/types/exam";
 import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
 import { DateRangeValue, updateDateRangeSearchParams } from "@/lib/date-range";
+import type { FacultyClassSession } from "@/types/faculty-workspace";
+import { UpcomingClasses } from "./upcoming-classes";
 
 const ProgressChart = dynamic(
   () => import("@/components/profile/progress-chart"),
@@ -35,6 +37,7 @@ interface DashboardClientProps {
   examHistory: ExamHistoryRecord[];
   user: User;
   dateRange: DateRangeValue;
+  upcomingClasses: FacultyClassSession[];
 }
 
 export default function DashboardClient({
@@ -45,6 +48,7 @@ export default function DashboardClient({
   examHistory,
   user,
   dateRange,
+  upcomingClasses,
 }: DashboardClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -100,6 +104,10 @@ export default function DashboardClient({
       </div>
 
       <ProgressChart weeklyProgress={weeklyProgress} />
+
+      <section className="academy-card p-5 md:p-6">
+        <UpcomingClasses sessions={upcomingClasses} limit={3} />
+      </section>
 
       <section className="academy-card p-5 md:p-6">
         <div className="mb-5 flex flex-col gap-2 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">

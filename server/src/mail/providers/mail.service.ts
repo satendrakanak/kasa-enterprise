@@ -48,6 +48,7 @@ export class MailService {
   async sendMail(data: SendEmailJobData): Promise<void> {
     try {
       await this.mailQueue.add('send-email', data, {
+        delay: data.delayMs && data.delayMs > 0 ? data.delayMs : undefined,
         attempts: 3,
         backoff: {
           type: 'exponential',

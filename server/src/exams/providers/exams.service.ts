@@ -14,6 +14,7 @@ import { Lecture } from 'src/lectures/lecture.entity';
 import { UserProgres } from 'src/user-progress/user-progres.entity';
 import { User } from 'src/users/user.entity';
 import { In, LessThan, Not, Repository } from 'typeorm';
+import type { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
 import { CreateExamDto } from '../dtos/create-exam.dto';
 import { CreateQuestionBankCategoryDto } from '../dtos/create-question-bank-category.dto';
 import { CreateQuestionDto } from '../dtos/create-question.dto';
@@ -354,6 +355,57 @@ export class ExamsService {
     }
 
     return exam;
+  }
+
+  async findExamByIdForUser(id: number, user: ActiveUserData): Promise<Exam> {
+    await this.assertCanManageExam(id, user);
+    return this.findExamById(id);
+  }
+
+  async assertCanManageExam(id: number, user: ActiveUserData): Promise<void> {
+    if (user.roles?.includes('admin')) {
+      return;
+    }
+
+    const hasExamPermission = user.permissions?.some((permission) =>
+      [
+        'view_exam',
+        'create_exam',
+        'update_exam',
+        'delete_exam',
+        'manage_exam_rules',
+        'grade_exam_attempt',
+      ].includes(permission),
+    );
+
+    if (!user.roles?.includes('faculty') && !hasExamPermission) {
+      throw new ForbiddenException('Only assigned faculty can manage this exam');
+    }
+
+    const exam = await this.examRepository.findOne({
+      where: { id },
+      relations: {
+        faculties: true,
+        courses: {
+          faculties: true,
+        },
+      },
+    });
+
+    if (!exam) {
+      throw new NotFoundException('Exam not found');
+    }
+
+    const assignedDirectly = exam.faculties?.some(
+      (faculty) => faculty.id === user.sub,
+    );
+    const assignedByCourse = exam.courses?.some((course) =>
+      course.faculties?.some((faculty) => faculty.id === user.sub),
+    );
+
+    if (!assignedDirectly && !assignedByCourse) {
+      throw new ForbiddenException('You can only manage assigned exams');
+    }
   }
 
   async getCourseExamForLearner(courseId: number, userId: number) {

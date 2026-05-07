@@ -12,6 +12,8 @@ import {
   getDateRangeFromSearchParams,
   getServerDateRangeQuery,
 } from "@/lib/date-range";
+import { facultyWorkspaceServer } from "@/services/faculty/faculty-workspace.server";
+import type { FacultyClassSession } from "@/types/faculty-workspace";
 
 type DashboardPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -39,15 +41,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   let weeklyProgress: WeeklyProgress[] = [];
   let orders: Order[] = [];
   let examHistory: ExamHistoryRecord[] = [];
+  let upcomingClasses: FacultyClassSession[] = [];
 
   try {
-    const [statsRes, coursesRes, weeklyProgressRes, ordersRes, examHistoryRes] =
+    const [
+      statsRes,
+      coursesRes,
+      weeklyProgressRes,
+      ordersRes,
+      examHistoryRes,
+      upcomingClassesRes,
+    ] =
       await Promise.all([
         userServerService.getDashboardStats(session.id),
         userServerService.getEnrolledCourses(session.id),
         userServerService.getWeeklyProgress(session.id),
         orderServerService.getMine(rangeQuery),
         courseExamsServerService.getMyHistory(rangeQuery),
+        facultyWorkspaceServer.getMySessions(),
       ]);
 
     stats = statsRes.data;
@@ -55,6 +66,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     weeklyProgress = weeklyProgressRes.data;
     orders = ordersRes.data;
     examHistory = examHistoryRes.data;
+    upcomingClasses = upcomingClassesRes;
   } catch (error: unknown) {
     const message = getErrorMessage(error);
     throw new Error(message);
@@ -80,6 +92,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         examHistory={examHistory}
         user={session}
         dateRange={dateRange}
+        upcomingClasses={upcomingClasses}
       />
     </div>
   );

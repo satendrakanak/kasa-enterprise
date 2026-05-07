@@ -7,4 +7,7 @@ export interface ActiveUserData {
 
   //Roles of the user
   roles: string[];
+
+  // Permissions assigned through roles
+  permissions?: string[];
 }

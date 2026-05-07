@@ -23,14 +23,16 @@ import { User } from "@/types/user";
 
 type ExamSettingsFormProps = {
   exam: Exam;
-  courses: Course[];
+  courses: Pick<Course, "id" | "title">[];
   faculties: User[];
+  hideFacultySelector?: boolean;
 };
 
 export function ExamSettingsForm({
   exam,
   courses,
   faculties,
+  hideFacultySelector = false,
 }: ExamSettingsFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState(exam.title);
@@ -122,7 +124,7 @@ export function ExamSettingsForm({
         overallFeedback: overallFeedback || undefined,
         correctAnswerVisibility,
         courseIds: selectedCourseIds,
-        facultyIds: selectedFacultyIds,
+        facultyIds: hideFacultySelector ? undefined : selectedFacultyIds,
       });
       toast.success("Exam updated");
       router.refresh();
@@ -218,17 +220,19 @@ export function ExamSettingsForm({
                 toggleId(id, selectedCourseIds, setSelectedCourseIds)
               }
             />
-            <SelectionPanel
-              title="Assigned Faculties"
-              items={faculties.map((faculty) => ({
-                id: faculty.id,
-                label: `${faculty.firstName} ${faculty.lastName ?? ""}`.trim(),
-              }))}
-              selectedIds={selectedFacultyIds}
-              onToggle={(id) =>
-                toggleId(id, selectedFacultyIds, setSelectedFacultyIds)
-              }
-            />
+            {hideFacultySelector ? null : (
+              <SelectionPanel
+                title="Assigned Faculties"
+                items={faculties.map((faculty) => ({
+                  id: faculty.id,
+                  label: `${faculty.firstName} ${faculty.lastName ?? ""}`.trim(),
+                }))}
+                selectedIds={selectedFacultyIds}
+                onToggle={(id) =>
+                  toggleId(id, selectedFacultyIds, setSelectedFacultyIds)
+                }
+              />
+            )}
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">

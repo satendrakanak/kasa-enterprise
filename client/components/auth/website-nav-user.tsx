@@ -7,6 +7,7 @@ import {
   Award,
   BookOpen,
   ClipboardCheck,
+  GraduationCap,
   LayoutDashboard,
   Loader,
   LogOut,
@@ -29,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSession } from "@/context/session-context";
 import { apiClient } from "@/lib/api/client";
+import { canAccessAdmin, canAccessFaculty } from "@/lib/access-control";
 import { getErrorMessage } from "@/lib/error-handler";
 import { getUserAvatarUrl } from "@/lib/user-avatar";
 
@@ -136,6 +138,20 @@ export const WebsiteNavUser = () => {
             icon={LayoutDashboard}
             label="Dashboard"
           />
+          {canAccessAdmin(user) ? (
+            <NavMenuItem
+              href="/admin/dashboard"
+              icon={LayoutDashboard}
+              label="Admin Dashboard"
+            />
+          ) : null}
+          {canAccessFaculty(user) ? (
+            <NavMenuItem
+              href="/faculty/dashboard"
+              icon={GraduationCap}
+              label="Faculty Dashboard"
+            />
+          ) : null}
           <NavMenuItem href="/profile" icon={User} label="Profile" />
           <NavMenuItem href="/my-courses" icon={BookOpen} label="My Courses" />
           <NavMenuItem href="/exams" icon={ClipboardCheck} label="Exams" />

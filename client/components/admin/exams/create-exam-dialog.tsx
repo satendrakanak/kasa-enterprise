@@ -35,10 +35,14 @@ import { User } from "@/types/user";
 type CreateExamDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  courses: Course[];
+  courses: Pick<Course, "id" | "title">[];
   faculties: User[];
   questions: Question[];
   categories: QuestionBankCategory[];
+  defaultCourseIds?: number[];
+  defaultFacultyIds?: number[];
+  afterCreateBasePath?: string;
+  hideFacultySelector?: boolean;
 };
 
 export function CreateExamDialog({
@@ -48,6 +52,10 @@ export function CreateExamDialog({
   faculties,
   questions,
   categories,
+  defaultCourseIds = [],
+  defaultFacultyIds = [],
+  afterCreateBasePath,
+  hideFacultySelector = false,
 }: CreateExamDialogProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -57,8 +65,10 @@ export function CreateExamDialog({
   const [passingPercentage, setPassingPercentage] = useState("40");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [attemptLimit, setAttemptLimit] = useState("1");
-  const [selectedCourseIds, setSelectedCourseIds] = useState<number[]>([]);
-  const [selectedFacultyIds, setSelectedFacultyIds] = useState<number[]>([]);
+  const [selectedCourseIds, setSelectedCourseIds] =
+    useState<number[]>(defaultCourseIds);
+  const [selectedFacultyIds, setSelectedFacultyIds] =
+    useState<number[]>(defaultFacultyIds);
   const [randomizeQuestions, setRandomizeQuestions] = useState(true);
   const [shuffleOptions, setShuffleOptions] = useState(true);
   const [fullscreenRequired, setFullscreenRequired] = useState(false);
@@ -77,7 +87,7 @@ export function CreateExamDialog({
 
     try {
       setIsSaving(true);
-      await examClientService.createExam({
+      const response = await examClientService.createExam({
         title,
         description: description || undefined,
         instructions: instructions || undefined,
@@ -100,8 +110,11 @@ export function CreateExamDialog({
       setTitle("");
       setDescription("");
       setInstructions("");
-      setSelectedCourseIds([]);
-      setSelectedFacultyIds([]);
+      setSelectedCourseIds(defaultCourseIds);
+      setSelectedFacultyIds(defaultFacultyIds);
+      if (afterCreateBasePath) {
+        router.push(`${afterCreateBasePath}/${response.data.id}`);
+      }
       router.refresh();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
@@ -203,15 +216,17 @@ export function CreateExamDialog({
               selectedIds={selectedCourseIds}
               onToggle={(id) => toggleId(id, selectedCourseIds, setSelectedCourseIds)}
             />
-            <SelectionPanel
-              title="Assign Faculties"
-              items={faculties.map((faculty) => ({
-                id: faculty.id,
-                label: `${faculty.firstName} ${faculty.lastName ?? ""}`.trim(),
-              }))}
-              selectedIds={selectedFacultyIds}
-              onToggle={(id) => toggleId(id, selectedFacultyIds, setSelectedFacultyIds)}
-            />
+            {hideFacultySelector ? null : (
+              <SelectionPanel
+                title="Assign Faculties"
+                items={faculties.map((faculty) => ({
+                  id: faculty.id,
+                  label: `${faculty.firstName} ${faculty.lastName ?? ""}`.trim(),
+                }))}
+                selectedIds={selectedFacultyIds}
+                onToggle={(id) => toggleId(id, selectedFacultyIds, setSelectedFacultyIds)}
+              />
+            )}
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">

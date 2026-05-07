@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
+  BookOpen,
   ChevronsUpDown,
+  ClipboardCheck,
   ExternalLink,
+  GraduationCap,
   LayoutDashboard,
   Loader,
   LogOut,
@@ -34,20 +37,13 @@ import {
 } from "@/components/ui/sidebar";
 import { useSession } from "@/context/session-context";
 import { apiClient } from "@/lib/api/client";
+import { canAccessAdmin, canAccessFaculty } from "@/lib/access-control";
 import { getErrorMessage } from "@/lib/error-handler";
 import { getUserAvatarUrl, getUserDisplayName } from "@/lib/user-avatar";
 
 type NavUserProps = {
   variant?: "sidebar" | "navbar";
 };
-
-const menuItems = [
-  { href: "/admin", label: "Admin dashboard", icon: LayoutDashboard },
-  { href: "/admin/users", label: "Manage users", icon: UserRound },
-  { href: "/admin/settings/access-control", label: "Roles & permissions", icon: ShieldCheck },
-  { href: "/admin/settings/site", label: "Site settings", icon: Settings },
-  { href: "/", label: "View website", icon: ExternalLink },
-];
 
 export function NavUser({ variant = "sidebar" }: NavUserProps) {
   const [loading, setLoading] = useState(false);
@@ -60,6 +56,32 @@ export function NavUser({ variant = "sidebar" }: NavUserProps) {
   const displayName = getUserDisplayName(user);
   const avatarUrl = getUserAvatarUrl(user);
   const initials = `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase();
+  const menuItems = [
+    ...(canAccessAdmin(user)
+      ? [
+          { href: "/admin", label: "Admin dashboard", icon: LayoutDashboard },
+          { href: "/admin/users", label: "Manage users", icon: UserRound },
+          {
+            href: "/admin/settings/access-control",
+            label: "Roles & permissions",
+            icon: ShieldCheck,
+          },
+          { href: "/admin/settings/site", label: "Site settings", icon: Settings },
+        ]
+      : []),
+    ...(canAccessFaculty(user)
+      ? [
+          {
+            href: "/faculty/dashboard",
+            label: "Faculty dashboard",
+            icon: GraduationCap,
+          },
+          { href: "/faculty/courses", label: "Faculty courses", icon: BookOpen },
+          { href: "/faculty/exams", label: "Faculty exams", icon: ClipboardCheck },
+        ]
+      : []),
+    { href: "/", label: "View website", icon: ExternalLink },
+  ];
 
   const handleLogout = async () => {
     try {
