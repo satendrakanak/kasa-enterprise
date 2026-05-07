@@ -48,13 +48,15 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold">Welcome back 👋</h2>
-        <p className="text-gray-500 text-sm">
+        <h2 className="text-2xl font-semibold text-foreground">
+          Welcome back 👋
+        </h2>
+
+        <p className="text-sm text-muted-foreground">
           Keep learning and track your progress
         </p>
       </div>
 
-      {/* 👇 client widget */}
       <DashboardClient
         stats={stats}
         courses={courses}

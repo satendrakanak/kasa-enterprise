@@ -38,34 +38,34 @@ export default function ProgressChart({ weeklyProgress }: ProgressChartProps) {
   const chartMax = Math.max(100, Math.ceil(highestValue / 10) * 10);
 
   return (
-    <div className="h-full rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-5">
+    <div className="academy-card h-full p-4 md:p-5">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700 dark:text-rose-200">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
             Weekly Progress
           </p>
 
-          <h4 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">
+          <h4 className="mt-2 text-lg font-semibold text-card-foreground">
             Your learning rhythm
           </h4>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Progress completed across the current week.
           </p>
         </div>
 
-        <div className="shrink-0 rounded-2xl border border-blue-100 bg-blue-50 px-3 py-2 text-right dark:border-rose-200/20 dark:bg-rose-200/10">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-blue-700 dark:text-rose-200">
+        <div className="shrink-0 rounded-2xl border border-primary/15 bg-primary/10 px-3 py-2 text-right">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
             Peak
           </p>
 
-          <p className="text-lg font-semibold leading-none text-slate-950 dark:text-white">
+          <p className="text-lg font-semibold leading-none text-card-foreground">
             {highestValue}%
           </p>
         </div>
       </div>
 
-      <div className="h-[220px] rounded-2xl border border-slate-100 bg-slate-50/70 p-3 dark:border-white/10 dark:bg-[#0b1628]">
+      <div className="h-55 rounded-2xl border border-border bg-muted/50 p-3">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={chartData}
@@ -79,15 +79,27 @@ export default function ProgressChart({ weeklyProgress }: ProgressChartProps) {
                 x2="0"
                 y2="1"
               >
-                <stop offset="0%" stopColor="#2563eb" stopOpacity={0.35} />
-                <stop offset="65%" stopColor="#38bdf8" stopOpacity={0.12} />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+                <stop
+                  offset="0%"
+                  stopColor="var(--primary)"
+                  stopOpacity={0.35}
+                />
+                <stop
+                  offset="65%"
+                  stopColor="var(--primary)"
+                  stopOpacity={0.12}
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--primary)"
+                  stopOpacity={0}
+                />
               </linearGradient>
             </defs>
 
             <CartesianGrid
               vertical={false}
-              stroke="rgba(148,163,184,0.28)"
+              stroke="color-mix(in oklab, var(--muted-foreground) 24%, transparent)"
               strokeDasharray="4 4"
             />
 
@@ -97,7 +109,7 @@ export default function ProgressChart({ weeklyProgress }: ProgressChartProps) {
               tickLine={false}
               tick={{
                 fontSize: 12,
-                fill: "#94A3B8",
+                fill: "var(--muted-foreground)",
                 fontWeight: 600,
               }}
             />
@@ -109,23 +121,26 @@ export default function ProgressChart({ weeklyProgress }: ProgressChartProps) {
               tickLine={false}
               tick={{
                 fontSize: 11,
-                fill: "#94A3B8",
+                fill: "var(--muted-foreground)",
                 fontWeight: 500,
               }}
               tickFormatter={(value) => `${value}%`}
             />
 
             <Tooltip
-              cursor={{ stroke: "#94A3B8", strokeDasharray: "4 4" }}
+              cursor={{
+                stroke: "var(--muted-foreground)",
+                strokeDasharray: "4 4",
+              }}
               contentStyle={{
                 borderRadius: 18,
-                border: "1px solid rgba(255,255,255,0.10)",
-                boxShadow: "0 20px 45px rgba(2,6,23,0.22)",
-                background: "rgba(2,6,23,0.94)",
-                color: "#F8FAFC",
+                border: "1px solid var(--border)",
+                boxShadow: "var(--shadow-card)",
+                background: "var(--popover)",
+                color: "var(--popover-foreground)",
               }}
               labelStyle={{
-                color: "#F8FAFC",
+                color: "var(--popover-foreground)",
                 fontWeight: 700,
               }}
               formatter={(value) => [`${Number(value || 0)}%`, "Progress"]}
@@ -135,20 +150,20 @@ export default function ProgressChart({ weeklyProgress }: ProgressChartProps) {
             <Area
               type="monotone"
               dataKey="progress"
-              stroke="#2563eb"
+              stroke="var(--primary)"
               strokeWidth={3}
               fill="url(#weekly-progress-fill)"
               dot={{
                 r: 4,
                 strokeWidth: 2,
-                stroke: "#2563eb",
-                fill: "#ffffff",
+                stroke: "var(--primary)",
+                fill: "var(--card)",
               }}
               activeDot={{
                 r: 6,
                 strokeWidth: 2,
-                stroke: "#2563eb",
-                fill: "#ffffff",
+                stroke: "var(--primary)",
+                fill: "var(--card)",
               }}
             />
           </AreaChart>
@@ -156,7 +171,7 @@ export default function ProgressChart({ weeklyProgress }: ProgressChartProps) {
       </div>
 
       {!hasProgress ? (
-        <p className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-4 text-sm leading-6 text-slate-500 dark:border-white/10 dark:bg-[#0b1628] dark:text-slate-400">
+        <p className="mt-4 rounded-2xl border border-dashed border-border bg-muted/50 p-4 text-sm leading-6 text-muted-foreground">
           Start watching lessons this week and your progress trend will appear
           here.
         </p>

@@ -5,9 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Lecture } from './lecture.entity';
 import { CreateLectureProvider } from './providers/create-lecture.provider';
 import { UpdateLectureProvider } from './providers/update-lecture.provider';
+import { Chapter } from 'src/chapters/chapter.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Lecture])],
+  imports: [TypeOrmModule.forFeature([Lecture, Chapter])],
   controllers: [LecturesController],
   providers: [LecturesService, CreateLectureProvider, UpdateLectureProvider],
 })

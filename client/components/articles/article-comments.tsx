@@ -1,13 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getErrorMessage } from "@/lib/error-handler";
-import { getUserAvatarUrl, getUserDisplayName } from "@/lib/user-avatar";
-import { articleCommentClientService } from "@/services/article-comments/article-comment.client";
-import { ArticleComment } from "@/types/article-comment";
-import { useSession } from "@/context/session-context";
+import { useEffect, useState, useTransition } from "react";
 import {
   Heart,
   MessageCircle,
@@ -16,8 +9,17 @@ import {
   Trash2,
   Send,
 } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession } from "@/context/session-context";
+import { getErrorMessage } from "@/lib/error-handler";
+import { getUserAvatarUrl, getUserDisplayName } from "@/lib/user-avatar";
+import { articleCommentClientService } from "@/services/article-comments/article-comment.client";
+import { ArticleComment } from "@/types/article-comment";
+import { formatDateTime } from "@/utils/formate-date";
 
 export function ArticleComments({ articleId }: { articleId: number }) {
   const [comments, setComments] = useState<ArticleComment[]>([]);
@@ -27,6 +29,7 @@ export function ArticleComments({ articleId }: { articleId: number }) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editDrafts, setEditDrafts] = useState<Record<number, string>>({});
   const [isPending, startTransition] = useTransition();
+
   const { user } = useSession();
 
   const isOwner = (comment: ArticleComment) => comment.user.id === user?.id;
@@ -169,51 +172,48 @@ export function ArticleComments({ articleId }: { articleId: number }) {
   };
 
   return (
-    <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-      {/* HEADER */}
-      <div className="mb-6 flex items-start gap-3 border-b border-slate-100 pb-5 dark:border-white/10">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+    <section className="academy-card mt-8 p-5 md:p-6">
+      <div className="mb-6 flex items-start gap-3 border-b border-border pb-5">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
           <MessageCircle className="h-6 w-6" />
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+          <h2 className="text-xl font-semibold text-card-foreground">
             Comments & Discussion
           </h2>
 
-          <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Share your thoughts, like helpful comments, and reply to readers.
           </p>
         </div>
       </div>
 
-      {/* COMMENT FORM */}
-      <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
+      <div className="rounded-3xl border border-border bg-muted/50 p-4">
         <Textarea
           value={content}
           onChange={(event) => setContent(event.target.value)}
           placeholder="Write a thoughtful comment..."
-          className="min-h-28 resize-none border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#07111f] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus-visible:ring-rose-200"
+          className="min-h-28 resize-none border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
         />
 
         <Button
           type="button"
           disabled={isPending}
           onClick={submitComment}
-          className="mt-3 rounded-full bg-blue-600 px-5 font-semibold text-white hover:bg-blue-700 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+          className="mt-3 rounded-full bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary/90"
         >
           <Send className="h-4 w-4" />
           {isPending ? "Posting..." : "Post comment"}
         </Button>
       </div>
 
-      {/* COMMENTS LIST */}
       <div className="mt-6 space-y-4">
         {comments.length ? (
           comments.map((comment) => (
             <article
               key={comment.id}
-              className="rounded-3xl border border-slate-100 bg-white p-4 transition hover:border-blue-100 hover:bg-blue-50/40 dark:border-white/10 dark:bg-[#0b1628] dark:hover:border-rose-200/20 dark:hover:bg-white/[0.045]"
+              className="rounded-3xl border border-border bg-card p-4 transition-colors hover:border-primary/25 hover:bg-primary/5"
             >
               <CommentNode
                 comment={comment}
@@ -258,16 +258,16 @@ export function ArticleComments({ articleId }: { articleId: number }) {
             </article>
           ))
         ) : (
-          <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 p-8 text-center dark:border-white/10 dark:bg-[#0b1628]">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 dark:bg-white/10 dark:text-rose-200">
+          <div className="rounded-3xl border border-dashed border-border bg-muted/50 p-8 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <MessageCircle className="h-6 w-6" />
             </div>
 
-            <p className="text-sm font-semibold text-slate-800 dark:text-white">
+            <p className="text-sm font-semibold text-card-foreground">
               No comments yet
             </p>
 
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Start the discussion by posting the first comment.
             </p>
           </div>
@@ -320,22 +320,16 @@ function CommentNode({
   const likeCount = comment.likedBy?.length || 0;
 
   return (
-    <div
-      className={
-        level ? "mt-4 border-l border-slate-200 pl-4 dark:border-white/10" : ""
-      }
-    >
+    <div className={level ? "mt-4 border-l border-border pl-4" : ""}>
       <div
         className={
-          level
-            ? "rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#07111f]"
-            : ""
+          level ? "rounded-2xl border border-border bg-muted/50 p-4" : undefined
         }
       >
         <CommentHeader comment={comment} />
 
         {!comment.isPublished ? (
-          <p className="mt-3 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-300">
+          <p className="mt-3 inline-flex rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             Waiting for admin approval
           </p>
         ) : null}
@@ -345,7 +339,7 @@ function CommentNode({
             <Textarea
               value={editDrafts[comment.id] || ""}
               onChange={(event) => onEditChange(comment.id, event.target.value)}
-              className="min-h-24 resize-none border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus-visible:ring-rose-200"
+              className="min-h-24 resize-none border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
             />
 
             <div className="mt-3 flex flex-wrap gap-2">
@@ -353,7 +347,7 @@ function CommentNode({
                 size="sm"
                 onClick={() => onUpdate(comment.id)}
                 disabled={isPending}
-                className="rounded-full bg-blue-600 px-4 font-semibold text-white hover:bg-blue-700 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+                className="rounded-full bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90"
               >
                 Save
               </Button>
@@ -362,14 +356,14 @@ function CommentNode({
                 size="sm"
                 variant="outline"
                 onClick={onCancelEdit}
-                className="rounded-full border-slate-200 bg-white px-4 font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+                className="rounded-full border-border bg-background px-4 font-semibold text-foreground hover:bg-muted"
               >
                 Cancel
               </Button>
             </div>
           </div>
         ) : (
-          <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
             {comment.content}
           </p>
         )}
@@ -379,7 +373,7 @@ function CommentNode({
             type="button"
             onClick={() => onToggleLike(comment.id)}
             disabled={isPending}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-500 transition hover:border-blue-100 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-70 dark:border-white/10 dark:bg-white/10 dark:text-slate-300 dark:hover:border-rose-200/20 dark:hover:bg-rose-200/10 dark:hover:text-rose-200"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/25 hover:bg-primary/10 hover:text-primary disabled:opacity-70 cursor-pointer"
           >
             <Heart className="h-4 w-4" />
             {likeCount}
@@ -389,7 +383,7 @@ function CommentNode({
             type="button"
             onClick={() => onToggleReply(comment.id)}
             disabled={isPending}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-500 transition hover:border-blue-100 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-70 dark:border-white/10 dark:bg-white/10 dark:text-slate-300 dark:hover:border-rose-200/20 dark:hover:bg-rose-200/10 dark:hover:text-rose-200"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/25 hover:bg-primary/10 hover:text-primary disabled:opacity-70 cursor-pointer"
           >
             <Reply className="h-4 w-4" />
             Reply
@@ -401,7 +395,7 @@ function CommentNode({
                 type="button"
                 onClick={() => onStartEdit(comment)}
                 disabled={isPending}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-500 transition hover:border-blue-100 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-70 dark:border-white/10 dark:bg-white/10 dark:text-slate-300 dark:hover:border-rose-200/20 dark:hover:bg-rose-200/10 dark:hover:text-rose-200"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/25 hover:bg-primary/10 hover:text-primary disabled:opacity-70 cursor-pointer"
               >
                 <Pencil className="h-4 w-4" />
                 Edit
@@ -411,7 +405,7 @@ function CommentNode({
                 type="button"
                 onClick={() => onDelete(comment.id)}
                 disabled={isPending}
-                className="inline-flex items-center gap-1.5 rounded-full border border-red-100 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-70 dark:border-red-300/20 dark:bg-red-300/10 dark:text-red-300 dark:hover:bg-red-300/15"
+                className="inline-flex items-center gap-1.5 rounded-full border border-destructive/20 bg-destructive/10 px-3 py-1.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive hover:text-white disabled:opacity-70 cursor-pointer"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete
@@ -421,19 +415,19 @@ function CommentNode({
         </div>
 
         {openReplies[comment.id] ? (
-          <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
+          <div className="mt-4 rounded-2xl border border-border bg-muted/50 p-4">
             <Textarea
               value={replyDrafts[comment.id] || ""}
               onChange={(event) =>
                 onReplyChange(comment.id, event.target.value)
               }
               placeholder="Reply to this comment..."
-              className="min-h-24 resize-none border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#07111f] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus-visible:ring-rose-200"
+              className="min-h-24 resize-none border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
             />
 
             <Button
               type="button"
-              className="mt-3 rounded-full bg-blue-600 px-4 font-semibold text-white hover:bg-blue-700 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+              className="mt-3 rounded-full bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90 cursor-pointer"
               disabled={isPending}
               onClick={() => onSubmitReply(comment.id)}
             >
@@ -479,25 +473,19 @@ function CommentHeader({ comment }: { comment: ArticleComment }) {
 
   return (
     <div className="flex items-center gap-3">
-      <Avatar className="h-10 w-10 border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10">
+      <Avatar className="h-10 w-10 border border-border bg-muted">
         <AvatarImage src={getUserAvatarUrl(comment.user)} alt={name} />
 
-        <AvatarFallback className="bg-blue-50 font-semibold text-blue-700 dark:bg-white/10 dark:text-rose-200">
+        <AvatarFallback className="bg-primary/10 font-semibold text-primary">
           {name.charAt(0) || "U"}
         </AvatarFallback>
       </Avatar>
 
       <div className="min-w-0">
-        <p className="truncate font-semibold text-slate-950 dark:text-white">
-          {name}
-        </p>
+        <p className="truncate font-semibold text-card-foreground">{name}</p>
 
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {new Date(comment.createdAt).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })}
+        <p className="text-xs text-muted-foreground">
+          {formatDateTime(comment.createdAt)}
         </p>
       </div>
     </div>

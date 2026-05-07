@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Lecture } from '../lecture.entity';
 import { Repository } from 'typeorm';
 import { PatchLectureDto } from '../dtos/patch-lecture.dto';
+import { Chapter } from 'src/chapters/chapter.entity';
 
 @Injectable()
 export class UpdateLectureProvider {
@@ -16,6 +17,9 @@ export class UpdateLectureProvider {
      */
     @InjectRepository(Lecture)
     private readonly lectureRepository: Repository<Lecture>,
+
+    @InjectRepository(Chapter)
+    private readonly chapterRepository: Repository<Chapter>,
   ) {}
 
   async update(id: number, patchLectureDto: PatchLectureDto): Promise<Lecture> {
@@ -60,6 +64,28 @@ export class UpdateLectureProvider {
       }
 
       lecture.isPublished = isPublished;
+
+      if (lecture.chapter?.id) {
+        const chapter = await this.chapterRepository.findOne({
+          where: { id: lecture.chapter.id },
+          relations: ['lectures'],
+        });
+
+        if (chapter) {
+          const hasPublishedLecture = chapter.lectures.some((l) =>
+            l.id === lecture.id
+              ? isPublished // current updating lecture
+              : l.isPublished,
+          );
+
+          // 🔥 auto unpublish chapter
+          if (!hasPublishedLecture && chapter.isPublished) {
+            chapter.isPublished = false;
+
+            await this.chapterRepository.save(chapter);
+          }
+        }
+      }
     }
 
     return await this.lectureRepository.save(lecture);

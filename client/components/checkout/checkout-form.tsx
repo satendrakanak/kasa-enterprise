@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { MapPin, UserRound } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import {
@@ -11,15 +11,13 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-
 import { Textarea } from "../ui/textarea";
 import { useLocation } from "@/hooks/use-location";
 import { useUserCountry } from "@/context/user-country-context";
@@ -51,7 +49,9 @@ export const CheckoutForm = () => {
 
   useEffect(() => {
     if (userCountry && countries.length > 0 && !selectedCountry) {
-      const country = countries.find((c) => c.countryCode === userCountry);
+      const country = countries.find(
+        (item) => item.countryCode === userCountry,
+      );
 
       if (country) {
         selectCountry(country);
@@ -65,10 +65,10 @@ export const CheckoutForm = () => {
 
     const country = countries.find((item) => item.name === countryValue);
 
-    if (!country) return;
-
-    selectCountry(country);
-    setValue("country", country.name);
+    if (country) {
+      selectCountry(country);
+      setValue("country", country.name);
+    }
   }, [countries, countryValue, selectedCountry, selectCountry, setValue]);
 
   useEffect(() => {
@@ -76,10 +76,10 @@ export const CheckoutForm = () => {
 
     const state = states.find((item) => item.name === stateValue);
 
-    if (!state) return;
-
-    selectState(state);
-    setValue("state", state.name);
+    if (state) {
+      selectState(state);
+      setValue("state", state.name);
+    }
   }, [selectedState, selectState, setValue, stateValue, states]);
 
   useEffect(() => {
@@ -87,30 +87,35 @@ export const CheckoutForm = () => {
 
     const city = cities.find((item) => item.name === cityValue);
 
-    if (!city) return;
-
-    selectCity(city);
+    if (city) {
+      selectCity(city);
+    }
   }, [cities, cityValue, selectCity]);
 
   const inputClass =
-    "h-12 rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-none transition focus-visible:border-blue-600 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:placeholder:text-slate-500 dark:focus-visible:border-rose-200 dark:focus-visible:ring-rose-200";
+    "h-12 rounded-2xl border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none transition focus-visible:border-primary focus-visible:ring-primary";
+
+  const textareaClass =
+    "min-h-24 resize-none rounded-2xl border-border bg-muted px-4 py-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none transition focus-visible:border-primary focus-visible:ring-primary";
 
   const selectTriggerClass =
-    "h-12! rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 shadow-none transition focus:ring-blue-600 data-[placeholder]:text-slate-400 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:focus:ring-rose-200 dark:data-[placeholder]:text-slate-500";
+    "h-12! rounded-2xl border-border bg-muted px-4 text-sm text-foreground shadow-none transition focus:ring-primary data-[placeholder]:text-muted-foreground";
+
+  const selectContentClass = "border-border bg-popover text-popover-foreground";
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-      <div className="mb-6 flex items-start gap-3 border-b border-slate-100 pb-5 dark:border-white/10">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+    <section className="academy-card p-5 md:p-6">
+      <div className="mb-6 flex items-start gap-3 border-b border-border pb-5">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
           <MapPin className="h-5 w-5" />
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+          <h2 className="text-xl font-semibold text-card-foreground">
             Billing Address
           </h2>
 
-          <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Add your billing details exactly as you want them on your invoice.
           </p>
         </div>
@@ -119,7 +124,7 @@ export const CheckoutForm = () => {
       <FieldGroup className="gap-5">
         <div className="grid gap-5 md:grid-cols-2">
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               First name
             </FieldLabel>
 
@@ -139,7 +144,7 @@ export const CheckoutForm = () => {
           </Field>
 
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               Last name
             </FieldLabel>
 
@@ -161,7 +166,7 @@ export const CheckoutForm = () => {
 
         <div className="grid gap-5 md:grid-cols-2">
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               Email address
             </FieldLabel>
 
@@ -182,7 +187,7 @@ export const CheckoutForm = () => {
           </Field>
 
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               Phone number
             </FieldLabel>
 
@@ -203,7 +208,7 @@ export const CheckoutForm = () => {
         </div>
 
         <Field>
-          <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <FieldLabel className="text-sm font-semibold text-card-foreground">
             Full address
           </FieldLabel>
 
@@ -214,7 +219,7 @@ export const CheckoutForm = () => {
               <Textarea
                 {...field}
                 placeholder="House number, street, area"
-                className="min-h-24 resize-none rounded-2xl border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-none transition focus-visible:border-blue-600 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:placeholder:text-slate-500 dark:focus-visible:border-rose-200 dark:focus-visible:ring-rose-200"
+                className={textareaClass}
               />
             )}
           />
@@ -224,7 +229,7 @@ export const CheckoutForm = () => {
 
         <div className="grid gap-5 md:grid-cols-2">
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               Country
             </FieldLabel>
 
@@ -237,7 +242,9 @@ export const CheckoutForm = () => {
                   onValueChange={(value) => {
                     field.onChange(value);
 
-                    const country = countries.find((c) => c.name === value);
+                    const country = countries.find(
+                      (item) => item.name === value,
+                    );
 
                     if (country) {
                       selectCountry(country);
@@ -251,7 +258,7 @@ export const CheckoutForm = () => {
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
 
-                  <SelectContent className="border-slate-200 bg-white dark:border-white/10 dark:bg-[#07111f]">
+                  <SelectContent className={selectContentClass}>
                     {countries.map((country) => (
                       <SelectItem key={country.id} value={country.name}>
                         {country.name}
@@ -266,7 +273,7 @@ export const CheckoutForm = () => {
           </Field>
 
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               State
             </FieldLabel>
 
@@ -279,7 +286,7 @@ export const CheckoutForm = () => {
                   onValueChange={(value) => {
                     field.onChange(value);
 
-                    const state = states.find((s) => s.name === value);
+                    const state = states.find((item) => item.name === value);
 
                     if (state) {
                       selectState(state);
@@ -293,7 +300,7 @@ export const CheckoutForm = () => {
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
 
-                  <SelectContent className="border-slate-200 bg-white dark:border-white/10 dark:bg-[#07111f]">
+                  <SelectContent className={selectContentClass}>
                     {states.map((state) => (
                       <SelectItem key={state.id} value={state.name}>
                         {state.name}
@@ -310,7 +317,7 @@ export const CheckoutForm = () => {
 
         <div className="grid gap-5 md:grid-cols-2">
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               City
             </FieldLabel>
 
@@ -324,7 +331,11 @@ export const CheckoutForm = () => {
                     field.onChange(value);
 
                     const city = cities.find((item) => item.name === value);
-                    if (city) selectCity(city);
+
+                    if (city) {
+                      selectCity(city);
+                      setValue("city", city.name);
+                    }
                   }}
                   disabled={!selectedState}
                 >
@@ -332,7 +343,7 @@ export const CheckoutForm = () => {
                     <SelectValue placeholder="Select city" />
                   </SelectTrigger>
 
-                  <SelectContent className="border-slate-200 bg-white dark:border-white/10 dark:bg-[#07111f]">
+                  <SelectContent className={selectContentClass}>
                     {cities.map((city) => (
                       <SelectItem key={city.id} value={city.name}>
                         {city.name}
@@ -347,39 +358,26 @@ export const CheckoutForm = () => {
           </Field>
 
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-              Pincode
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
+              Postal code
             </FieldLabel>
 
             <Controller
-              name="pincode"
+              name="postalCode"
               control={control}
               render={({ field }) => (
                 <Input
                   {...field}
-                  placeholder="Pincode"
+                  placeholder="Postal code"
                   className={inputClass}
                 />
               )}
             />
 
-            <FieldError errors={[errors.pincode]} />
+            <FieldError errors={[errors.postalCode]} />
           </Field>
         </div>
       </FieldGroup>
-
-      <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-blue-700 dark:bg-white/10 dark:text-rose-200">
-            <UserRound className="h-4 w-4" />
-          </div>
-
-          <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Your billing details will be used for order confirmation,
-            certificate records, and invoice generation.
-          </p>
-        </div>
-      </div>
     </section>
   );
 };

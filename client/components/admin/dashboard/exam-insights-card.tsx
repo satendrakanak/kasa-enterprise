@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminDashboardData } from "@/types/admin-dashboard";
+import { formatDateTime } from "@/utils/formate-date";
 
 export function ExamInsightsCard({ data }: { data: AdminDashboardData }) {
   return (
@@ -90,7 +91,7 @@ export function ExamInsightsCard({ data }: { data: AdminDashboardData }) {
             </h4>
           </div>
 
-        <div className="divide-y divide-slate-100 dark:divide-white/10">
+          <div className="divide-y divide-slate-100 dark:divide-white/10">
             {data.examOverview.recentAttempts.length === 0 ? (
               <div className="px-5 py-8 text-sm text-slate-500 dark:text-slate-400">
                 No exam submissions yet.
@@ -110,13 +111,7 @@ export function ExamInsightsCard({ data }: { data: AdminDashboardData }) {
                     </p>
                     <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                       {attempt.submittedAt
-                        ? new Date(attempt.submittedAt).toLocaleString(
-                            "en-IN",
-                            {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            },
-                          )
+                        ? formatDateTime(attempt.submittedAt)
                         : "Submission pending"}
                     </p>
                   </div>
@@ -131,7 +126,7 @@ export function ExamInsightsCard({ data }: { data: AdminDashboardData }) {
                       </p>
                     </div>
                     <span
-                      className={`inline-flex min-w-[86px] items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${
+                      className={`inline-flex min-w-21.5 items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${
                         attempt.passed
                           ? "bg-emerald-50 text-emerald-700"
                           : "bg-rose-50 text-rose-700"

@@ -135,7 +135,7 @@ export const VideoPlayer = ({ lecture, onNext, onProgressUpdate }: Props) => {
   if (!lecture) return null;
 
   return (
-    <div className="w-full bg-black flex items-center justify-center">
+    <div className="flex w-full items-center justify-center bg-foreground">
       {hasVideo ? (
         <video
           ref={videoRef}
@@ -144,12 +144,12 @@ export const VideoPlayer = ({ lecture, onNext, onProgressUpdate }: Props) => {
           controlsList="nodownload noplaybackrate"
           disablePictureInPicture
           onContextMenu={(e) => e.preventDefault()}
-          className="w-full h-125"
+          className="h-125 w-full object-cover"
         />
       ) : (
         <iframe
           src={`${firstAttachment?.file?.path}#toolbar=0&navpanes=0&scrollbar=0`}
-          className="w-full h-125 bg-white"
+          className="h-125 w-full bg-background"
         />
       )}
     </div>

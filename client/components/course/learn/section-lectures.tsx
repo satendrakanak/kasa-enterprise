@@ -1,12 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { CheckCircle2, FileText, PlayCircle } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { formatDuration, getVideoDuration } from "@/helpers/get-section-stats";
 import { Chapter } from "@/types/chapter";
 import { Lecture } from "@/types/lecture";
-import { CheckCircle2, FileText, PlayCircle } from "lucide-react";
 import { LearnCourseResources } from "./learn-course-resources";
-import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import { formatDuration, getVideoDuration } from "@/helpers/get-section-stats";
 
 interface SectionLecturesProps {
   chapter: Chapter;
@@ -25,7 +26,6 @@ export const SectionLectures = ({
 }: SectionLecturesProps) => {
   const [durationMap, setDurationMap] = useState<Record<number, number>>({});
 
-  // 🔥 load durations
   useEffect(() => {
     const loadDurations = async () => {
       const map: Record<number, number> = {};
@@ -46,14 +46,13 @@ export const SectionLectures = ({
   }, [chapter]);
 
   return (
-    <div className="bg-white">
+    <div className="bg-card">
       {chapter.lectures?.map((lecture: Lecture) => {
         const isActive = currentLecture?.id === lecture.id;
         const isCompleted = lecture.progress?.isCompleted;
 
-        const hasVideo = !!lecture.video?.path;
-        const hasAttachments =
-          lecture.attachments && lecture.attachments.length > 0;
+        const hasVideo = Boolean(lecture.video?.path);
+        const hasAttachments = Boolean(lecture.attachments?.length);
 
         const duration = durationMap[lecture.id];
 
@@ -61,63 +60,59 @@ export const SectionLectures = ({
           <div
             key={lecture.id}
             className={cn(
-              "group px-4 py-3 border-l-4 cursor-pointer transition flex items-start justify-between",
-              {
-                "border-primary bg-primary/10": isActive,
-                "border-transparent hover:bg-gray-50": !isActive,
-              },
+              "group flex cursor-pointer items-start justify-between border-l-4 px-4 py-3 transition-colors",
+              isActive
+                ? "border-primary bg-primary/10"
+                : "border-transparent hover:bg-muted/70",
             )}
           >
-            {/* LEFT */}
             <div
-              className="flex gap-3 flex-1"
+              className="flex flex-1 gap-3"
               onClick={() => onSelectLecture(lecture)}
             >
-              {/* ICON */}
               <div className="mt-1">
                 {isCompleted ? (
-                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
                 ) : hasVideo ? (
-                  <PlayCircle className="w-4 h-4 text-gray-500 group-hover:text-primary transition" />
+                  <PlayCircle className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
                 ) : (
-                  <FileText className="w-4 h-4 text-gray-500" />
+                  <FileText className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
 
-              {/* TEXT */}
-              <div className="flex flex-col">
+              <div className="flex min-w-0 flex-col">
                 <p
                   className={cn(
-                    "text-sm line-clamp-1",
-                    isActive && "text-primary font-medium",
+                    "line-clamp-1 text-sm text-card-foreground",
+                    isActive && "font-semibold text-primary",
                   )}
                 >
                   {lecture.title}
                 </p>
 
-                {/* META */}
-                <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
-                  {hasVideo && duration && (
+                <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                  {hasVideo && duration ? (
                     <span>{formatDuration(duration)}</span>
-                  )}
+                  ) : null}
 
-                  {hasAttachments && <span className="text-gray-300">•</span>}
+                  {hasVideo && duration && hasAttachments ? (
+                    <span className="text-muted-foreground/45">•</span>
+                  ) : null}
 
-                  {hasAttachments && lecture.attachments && (
-                    <span>{lecture.attachments.length} files</span>
-                  )}
+                  {hasAttachments ? (
+                    <span>{lecture.attachments?.length} files</span>
+                  ) : null}
                 </div>
               </div>
             </div>
 
-            {/* RIGHT */}
-            {hasAttachments && (
+            {hasAttachments ? (
               <LearnCourseResources
                 lecture={lecture}
                 openMenu={openMenu}
                 setOpenMenu={setOpenMenu}
               />
-            )}
+            ) : null}
           </div>
         );
       })}

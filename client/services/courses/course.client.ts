@@ -19,6 +19,10 @@ export const courseClientService = {
     withAuthRetry(() =>
       apiClient.patch<ApiResponse<Course>>(`/api/courses/${id}`, data),
     ),
+  duplicate: (id: number) =>
+    withAuthRetry(() =>
+      apiClient.post<ApiResponse<Course>>(`/api/courses/${id}/duplicate`),
+    ),
   delete: (id: number) =>
     withAuthRetry(() =>
       apiClient.delete<ApiResponse<{ message: string }>>(`/api/courses/${id}`),

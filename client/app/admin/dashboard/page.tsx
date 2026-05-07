@@ -22,7 +22,9 @@ function buildDashboardData(
   coupons: Coupon[],
   examOverview: AdminExamOverview,
 ): AdminDashboardData {
-  const paidOrders = orders.filter((order) => order.status === OrderStatus.PAID);
+  const paidOrders = orders.filter(
+    (order) => order.status === OrderStatus.PAID,
+  );
   const enrolledUsers = new Set(
     paidOrders.map((order) => order.user?.id).filter(Boolean),
   ).size;
@@ -32,11 +34,17 @@ function buildDashboardData(
   );
   const totalDiscountGiven = paidOrders.reduce(
     (sum, order) =>
-      sum + Number(order.discount || 0) + Number(order.autoDiscount || 0) + Number(order.manualDiscount || 0),
+      sum +
+      Number(order.discount || 0) +
+      Number(order.autoDiscount || 0) +
+      Number(order.manualDiscount || 0),
     0,
   );
 
-  const monthMap = new Map<string, { month: string; revenue: number; discounts: number; orders: number }>();
+  const monthMap = new Map<
+    string,
+    { month: string; revenue: number; discounts: number; orders: number }
+  >();
   const now = new Date();
   for (let i = MONTHS_TO_SHOW - 1; i >= 0; i -= 1) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -115,18 +123,22 @@ function buildDashboardData(
         0,
       ),
       totalDiscountGiven,
-      averageOrderValue: paidOrders.length ? totalRevenue / paidOrders.length : 0,
+      averageOrderValue: paidOrders.length
+        ? totalRevenue / paidOrders.length
+        : 0,
       totalExamAttempts: examOverview.totalAttempts,
       passedExamAttempts: examOverview.passedAttempts,
       certificatesIssued: examOverview.certificatesIssued,
       averageExamScore: examOverview.averageScore,
     },
     revenueTrend: Array.from(monthMap.values()),
-    orderStatusDistribution: Object.entries(orderStatuses).map(([name, value]) => ({
-      name,
-      value,
-      fill: statusColors[name] || "#94a3b8",
-    })),
+    orderStatusDistribution: Object.entries(orderStatuses).map(
+      ([name, value]) => ({
+        name,
+        value,
+        fill: statusColors[name] || "#94a3b8",
+      }),
+    ),
     topCourses: Array.from(courseStats.values())
       .sort((a, b) => b.sales - a.sales || b.revenue - a.revenue)
       .slice(0, 8),
@@ -156,7 +168,9 @@ function buildDashboardData(
           `${order.user?.firstName || ""} ${order.user?.lastName || ""}`.trim() ||
           order.billingAddress?.firstName ||
           "Customer",
-        courseNames: (order.items || []).map((item) => item.course?.title || "Course"),
+        courseNames: (order.items || []).map(
+          (item) => item.course?.title || "Course",
+        ),
         totalAmount: Number(order.totalAmount || 0),
         status: order.status,
         createdAt: order.createdAt,
@@ -193,14 +207,13 @@ export default async function DashboardPage() {
       coursesResponse,
       couponsResponse,
       examsResponse,
-    ] =
-      await Promise.all([
-        orderServerService.getAll(),
-        userServerService.getAll(),
-        courseServerService.getAllCourses(),
-        couponServerService.getAll(),
-        courseExamsServerService.getAdminOverview(),
-      ]);
+    ] = await Promise.all([
+      orderServerService.getAll(),
+      userServerService.getAll(),
+      courseServerService.getAllCourses(),
+      couponServerService.getAll(),
+      courseExamsServerService.getAdminOverview(),
+    ]);
 
     orders = ordersResponse.data || [];
     users = usersResponse.data.data || [];

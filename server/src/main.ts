@@ -24,7 +24,9 @@ async function bootstrap() {
   /* Configure Swagger */
   const configService = app.get(ConfigService);
 
-  const appUrl = `${configService.get('appConfig.appUrl')}/${configService.get('appConfig.appPort')}`;
+  const appUrl =
+    configService.get<string>('appConfig.appUrl') ??
+    `http://localhost:${configService.get('appConfig.appPort') ?? 8000}`;
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Unitus Backend App API')
@@ -42,10 +44,12 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
+  const frontendUrl = configService.get<string>('appConfig.fronEndUrl');
+
   // enable CORS
   app.enableCors({
-    origin: 'http://localhost:3000', // 🔥 exact frontend
-    credentials: true, // 🔥 MUST
+    origin: frontendUrl,
+    credentials: true,
   });
 
   await app.listen(process.env.APP_PORT ?? 8000);

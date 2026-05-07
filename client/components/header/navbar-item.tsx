@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
@@ -9,11 +9,6 @@ interface NavbarItemProps {
   item: {
     label: string;
     href: string;
-    hasChild?: boolean;
-    children?: {
-      label: string;
-      href: string;
-    }[];
   };
 }
 
@@ -23,28 +18,20 @@ const NavbarItem = ({ item }: NavbarItemProps) => {
   const isActive =
     item.href === "/"
       ? pathname === "/"
-      : pathname === item.href || pathname?.startsWith(`${item.href}/`);
+      : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
   return (
     <Link
       href={item.href}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
-        "group relative inline-flex h-10 items-center justify-center overflow-hidden rounded-full px-4 text-sm font-semibold transition-all duration-300 xl:px-5",
-        "text-slate-700 hover:bg-blue-50 hover:text-blue-700",
-        "dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-white",
+        "inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors xl:px-5",
+        "text-foreground/75 hover:bg-primary/10 hover:text-primary",
         isActive &&
-          "bg-blue-600 text-white shadow-[0_14px_35px_rgba(37,99,235,0.28)] hover:bg-blue-600 hover:text-white dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300 dark:hover:text-black",
+          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
       )}
     >
-      <span
-        className={cn(
-          "pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300",
-          "bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.35),transparent_62%)]",
-          isActive && "opacity-100",
-        )}
-      />
-
-      <span className="relative z-10">{item.label}</span>
+      {item.label}
     </Link>
   );
 };

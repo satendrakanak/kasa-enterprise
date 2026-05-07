@@ -10,15 +10,22 @@ interface CourseAuthorProps {
 
 const CourseAuthor = ({ authorName, authorPhoto }: CourseAuthorProps) => {
   return (
-    <div className="flex items-center justify-center md:justify-start md:my-4">
+    <div className="flex items-center justify-center gap-2 text-sm text-white/80 md:my-4 md:justify-start">
       <Image
         src={authorPhoto}
-        alt="Author's Profile Photo"
-        className="w-8 h-8 rounded-full border-2 border-white mr-2"
+        alt={authorName}
+        className="h-8 w-8 rounded-full border-2 border-white/70 object-cover"
       />
-      <p className="text-md">
+
+      <p>
         <span>By </span>
-        <Link href="/">{authorName}</Link>
+
+        <Link
+          href="/"
+          className="font-semibold text-white underline-offset-4 transition hover:underline"
+        >
+          {authorName}
+        </Link>
       </p>
     </div>
   );

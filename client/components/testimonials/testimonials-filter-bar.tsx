@@ -40,16 +40,16 @@ export const TestimonialsFilterBar = ({ courses }: { courses: Course[] }) => {
   return (
     <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
           <SlidersHorizontal className="h-5 w-5" />
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-slate-950 dark:text-white">
+          <p className="text-sm font-semibold text-card-foreground">
             Filter testimonials
           </p>
 
-          <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Browse written reviews or watch video stories course-wise.
           </p>
         </div>
@@ -58,7 +58,7 @@ export const TestimonialsFilterBar = ({ courses }: { courses: Course[] }) => {
       <div className="flex flex-col gap-3 sm:flex-row">
         <NativeSelect
           aria-label="Filter by testimonial type"
-          className="h-11 w-full rounded-full border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-none focus:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-slate-200 dark:focus:ring-rose-200 sm:w-52"
+          className="h-11 w-full rounded-full border-border bg-muted px-4 text-sm font-medium text-foreground shadow-none focus:ring-primary sm:w-52"
           value={searchParams.get("type") || "all"}
           onChange={(event) => updateFilters({ type: event.target.value })}
         >
@@ -73,7 +73,7 @@ export const TestimonialsFilterBar = ({ courses }: { courses: Course[] }) => {
 
         <NativeSelect
           aria-label="Filter by course"
-          className="h-11 w-full rounded-full border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 shadow-none focus:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-slate-200 dark:focus:ring-rose-200 sm:w-72"
+          className="h-11 w-full rounded-full border-border bg-muted px-4 text-sm font-medium text-foreground shadow-none focus:ring-primary sm:w-72"
           value={searchParams.get("courseId") || "all"}
           onChange={(event) => updateFilters({ courseId: event.target.value })}
         >
@@ -90,7 +90,7 @@ export const TestimonialsFilterBar = ({ courses }: { courses: Course[] }) => {
           type="button"
           variant="outline"
           disabled={!hasFilters}
-          className="h-11 rounded-full border-slate-200 bg-white px-5 font-semibold text-slate-700 transition hover:border-blue-600 hover:bg-blue-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:border-rose-200 dark:hover:bg-rose-200 dark:hover:text-black"
+          className="h-11 rounded-full border-border bg-background px-5 font-semibold text-foreground transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           onClick={() =>
             startTransition(() => {
               router.push(pathname);

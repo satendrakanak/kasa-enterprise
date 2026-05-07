@@ -1,15 +1,7 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { CourseCard } from "../courses/course-card";
-import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Course } from "@/types/course";
-import { DashboardStats, WeeklyProgress } from "@/types/user";
-import { Order } from "@/types/order";
-import { OrderHistory } from "./order-history";
-import { ExamHistoryRecord } from "@/types/exam";
-import { ExamHistory } from "./exam-history";
+import Link from "next/link";
 import {
   Award,
   BarChart3,
@@ -17,6 +9,15 @@ import {
   ClipboardCheck,
   GraduationCap,
 } from "lucide-react";
+
+import { CourseCard } from "../courses/course-card";
+import { StatCard } from "./stat-card";
+import { OrderHistory } from "./order-history";
+import { ExamHistory } from "./exam-history";
+import { Course } from "@/types/course";
+import { DashboardStats, WeeklyProgress } from "@/types/user";
+import { Order } from "@/types/order";
+import { ExamHistoryRecord } from "@/types/exam";
 
 interface DashboardClientProps {
   stats: DashboardStats;
@@ -80,42 +81,42 @@ export default function DashboardClient({
 
       <ProgressChart weeklyProgress={weeklyProgress} />
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-        <div className="mb-5 flex flex-col gap-2 border-b border-slate-100 pb-5 dark:border-white/10 md:flex-row md:items-end md:justify-between">
+      <section className="academy-card p-5 md:p-6">
+        <div className="mb-5 flex flex-col gap-2 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700 dark:text-rose-200">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
               Continue Learning
             </p>
 
-            <h3 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+            <h3 className="mt-2 text-2xl font-semibold text-card-foreground">
               Pick up where you left off
             </h3>
           </div>
 
-          <p className="max-w-xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+          <p className="max-w-xl text-sm leading-6 text-muted-foreground">
             Resume your latest courses, keep the streak alive, and move one step
             closer to completion.
           </p>
         </div>
 
         {courses.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 p-10 text-center dark:border-white/10 dark:bg-[#0b1628]">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-muted/50 p-10 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary ring-1 ring-primary/15">
               <BookOpenCheck className="h-8 w-8" />
             </div>
 
-            <h3 className="mb-2 text-xl font-semibold text-slate-950 dark:text-white">
+            <h3 className="mb-2 text-xl font-semibold text-card-foreground">
               No courses yet
             </h3>
 
-            <p className="mb-6 max-w-md text-sm leading-7 text-slate-500 dark:text-slate-400">
+            <p className="mb-6 max-w-md text-sm leading-7 text-muted-foreground">
               You haven’t enrolled in any courses yet. Start learning something
               new today.
             </p>
 
             <Link
               href="/courses"
-              className="inline-flex h-11 items-center justify-center rounded-full bg-blue-600 px-6 text-sm font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:bg-blue-700 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_24%,transparent)] transition hover:-translate-y-0.5 hover:bg-primary/90"
             >
               Explore Courses
             </Link>
@@ -129,7 +130,7 @@ export default function DashboardClient({
         )}
       </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
+      <section className="academy-card p-5 md:p-6">
         <OrderHistory
           orders={orders}
           enrolledCourses={courses}
@@ -138,51 +139,9 @@ export default function DashboardClient({
         />
       </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
+      <section className="academy-card p-5 md:p-6">
         <ExamHistory records={examHistory} />
       </section>
     </div>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  title,
-  value,
-  description,
-  highlight = false,
-}: {
-  icon: typeof BookOpenCheck;
-  title: string;
-  value: string | number;
-  description: string;
-  highlight?: boolean;
-}) {
-  return (
-    <Card
-      className={
-        highlight
-          ? "overflow-hidden rounded-3xl border border-blue-100 bg-blue-50/80 shadow-[0_20px_60px_rgba(37,99,235,0.08)] dark:border-rose-200/20 dark:bg-rose-200/10 dark:shadow-[0_24px_70px_rgba(0,0,0,0.24)]"
-          : "overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)]"
-      }
-    >
-      <CardContent className="p-4 md:p-5">
-        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
-          <Icon className="h-5 w-5" />
-        </div>
-
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-          {title}
-        </p>
-
-        <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
-          {value}
-        </p>
-
-        <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
-          {description}
-        </p>
-      </CardContent>
-    </Card>
   );
 }

@@ -29,6 +29,7 @@ interface PublishedListProps {
   onDelete: (id: number) => void;
   viewType: string;
   handleDragEnd: (event: DragEndEvent) => void;
+  onLecturePublishChange: (lectureId: number, isPublished: boolean) => void;
 }
 
 export default function PublishedList({
@@ -37,6 +38,7 @@ export default function PublishedList({
   setActiveId,
   courseId,
   onTooglePublish,
+  onLecturePublishChange,
   viewType,
   onDelete,
   handleDragEnd,
@@ -76,6 +78,7 @@ export default function PublishedList({
                       setActiveId={setActiveId}
                       courseId={courseId}
                       onTooglePublish={onTooglePublish}
+                      onLecturePublishChange={onLecturePublishChange}
                       onDelete={onDelete}
                       viewType={viewType}
                       dragHandle={{

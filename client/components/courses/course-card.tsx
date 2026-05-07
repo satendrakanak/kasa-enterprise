@@ -96,7 +96,7 @@ export function CourseCard({ course, coupon }: CourseCardProps) {
   };
 
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(37,99,235,0.16)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_25px_70px_rgba(0,0,0,0.38)] dark:hover:shadow-[0_30px_90px_rgba(244,63,94,0.16)]">
+    <div className="academy-card group flex h-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_80px_color-mix(in_oklab,var(--primary)_18%,transparent)]">
       {/* IMAGE */}
       <div className="relative h-48 overflow-hidden">
         <Link href={`/course/${course.slug}`}>
@@ -108,35 +108,34 @@ export function CourseCard({ course, coupon }: CourseCardProps) {
           />
         </Link>
 
-        {!isEnrolled ? (
-          <span className="absolute left-3 top-3 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow-lg dark:bg-rose-200 dark:text-black dark:shadow-[0_0_18px_rgba(251,113,133,0.45)]">
-            Bestseller
-          </span>
-        ) : (
-          <span className="absolute left-3 top-3 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-lg dark:bg-emerald-300 dark:text-black">
-            Enrolled
-          </span>
-        )}
+        <span
+          className={
+            isEnrolled
+              ? "absolute left-3 top-3 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-lg"
+              : "absolute left-3 top-3 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg"
+          }
+        >
+          {isEnrolled ? "Enrolled" : "Bestseller"}
+        </span>
       </div>
 
       {/* CONTENT */}
       <div className="flex flex-1 flex-col p-5">
         <Link href={`/course/${course.slug}`}>
-          <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-slate-950 transition hover:text-blue-700 dark:text-white dark:hover:text-rose-200">
+          <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-card-foreground transition-colors hover:text-primary">
             {course.title}
           </h3>
         </Link>
 
-        <p className="mb-3 line-clamp-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+        <p className="mb-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
           {course.shortDescription}
         </p>
 
         <div className="mb-3 text-sm text-yellow-500">
-          ⭐⭐⭐⭐⭐{" "}
-          <span className="text-slate-400 dark:text-slate-500">(120)</span>
+          ⭐⭐⭐⭐⭐ <span className="text-muted-foreground">(120)</span>
         </div>
 
-        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
           <span>🎬 {meta.totalLectures} lectures</span>
           <span>⏱ {meta.totalDuration}</span>
           <span>📊 {course.experienceLevel || "All Levels"}</span>
@@ -153,20 +152,21 @@ export function CourseCard({ course, coupon }: CourseCardProps) {
               {discount > 0 ? (
                 <>
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-semibold text-blue-700 dark:text-rose-200">
+                    <span className="text-base font-semibold text-primary">
                       ₹{new Intl.NumberFormat("en-IN").format(finalPrice)}
                     </span>
-                    <span className="text-xs text-slate-400 line-through dark:text-slate-500">
+
+                    <span className="text-xs text-muted-foreground line-through">
                       ₹{new Intl.NumberFormat("en-IN").format(basePrice)}
                     </span>
                   </div>
 
-                  <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-300">
+                  <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                     🎉 {couponCode} applied
                   </span>
                 </>
               ) : (
-                <span className="text-base font-semibold text-blue-700 dark:text-rose-200">
+                <span className="text-base font-semibold text-primary">
                   ₹{new Intl.NumberFormat("en-IN").format(basePrice)}
                 </span>
               )}
@@ -174,11 +174,11 @@ export function CourseCard({ course, coupon }: CourseCardProps) {
 
             <button
               onClick={handleAdd}
-              className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border transition ${
+              className={
                 alreadyAdded
-                  ? "border-emerald-600 bg-emerald-600 text-white dark:border-emerald-300 dark:bg-emerald-300 dark:text-black"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-blue-600 hover:bg-blue-600 hover:text-white dark:border-white/10 dark:bg-white/10 dark:text-white dark:hover:border-rose-200 dark:hover:bg-rose-200 dark:hover:text-black"
-              }`}
+                  ? "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-emerald-600 bg-emerald-600 text-white transition hover:opacity-90"
+                  : "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-foreground transition hover:border-primary hover:bg-primary hover:text-primary-foreground"
+              }
               title={alreadyAdded ? "View cart" : "Add to cart"}
             >
               {alreadyAdded ? (

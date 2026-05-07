@@ -1,20 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+
 import {
   formatTotalDuration,
   getSectionStats,
 } from "@/helpers/get-section-stats";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
-import { SectionLectures } from "./section-lectures";
-import { LectureStats } from "@/types/lecture";
 import { Chapter } from "@/types/chapter";
+import { Lecture, LectureStats } from "@/types/lecture";
+import { Course } from "@/types/course";
+import { SectionLectures } from "./section-lectures";
+
+interface LearnCourseSidebarProps {
+  course: Course;
+  currentLecture: Lecture | null;
+  onSelectLecture: (lecture: Lecture) => void;
+}
 
 export const LearnCourseSidebar = ({
   course,
   currentLecture,
   onSelectLecture,
-}: any) => {
+}: LearnCourseSidebarProps) => {
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [sectionStats, setSectionStats] = useState<
@@ -39,14 +47,12 @@ export const LearnCourseSidebar = ({
   useEffect(() => {
     if (!currentLecture) return;
 
-    // 🔥 find parent chapter
     const parentChapter = course.chapters.find((chapter: Chapter) =>
-      chapter.lectures.some((l) => l.id === currentLecture.id),
+      chapter.lectures.some((lecture) => lecture.id === currentLecture.id),
     );
 
     if (!parentChapter) return;
 
-    // 🔥 auto expand that section
     setOpenSections((prev) => ({
       ...prev,
       [parentChapter.id]: true,
@@ -58,45 +64,44 @@ export const LearnCourseSidebar = ({
   };
 
   return (
-    <div className="h-full flex flex-col text-sm">
-      {/* <div className="p-4 border-b sticky top-0 bg-white z-10">
-        <h2 className="font-semibold">Course content</h2>
-      </div> */}
-
-      <div className="divide-y">
-        {course.chapters.map((chapter: any, index: number) => {
+    <div className="flex h-full flex-col text-sm text-card-foreground">
+      <div className="divide-y divide-border">
+        {course.chapters.map((chapter: Chapter, index: number) => {
           const isOpen = openSections[chapter.id] ?? index === 0;
           const stats = sectionStats[chapter.id];
+
           return (
             <div key={chapter.id}>
-              {/* SECTION */}
               <button
+                type="button"
                 onClick={() => toggleSection(chapter.id)}
-                className="w-full flex justify-between px-4 py-3 hover:bg-gray-50"
+                className="flex w-full cursor-pointer justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/70"
               >
-                <div className="text-left">
-                  <p className="font-medium">
-                    Section {index + 1} : {chapter.title}
+                <div className="min-w-0">
+                  <p className="line-clamp-2 font-semibold text-card-foreground">
+                    Section {index + 1}: {chapter.title}
                   </p>
 
-                  {stats && (
-                    <p className="text-xs text-gray-800 mt-1">
+                  {stats ? (
+                    <p className="mt-1 text-xs font-medium text-muted-foreground">
                       {stats.completed}/{stats.total}
-                      {stats.totalSeconds > 0 &&
-                        ` | ${formatTotalDuration(stats.totalSeconds)}`}
+                      {stats.totalSeconds > 0
+                        ? ` | ${formatTotalDuration(stats.totalSeconds)}`
+                        : ""}
                     </p>
-                  )}
+                  ) : null}
                 </div>
 
-                {isOpen ? (
-                  <ChevronDown size={16} />
-                ) : (
-                  <ChevronRight size={16} />
-                )}
+                <span className="mt-0.5 shrink-0 text-muted-foreground">
+                  {isOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </span>
               </button>
 
-              {/* LECTURES */}
-              {isOpen && (
+              {isOpen ? (
                 <SectionLectures
                   chapter={chapter}
                   openMenu={openMenu}
@@ -104,7 +109,7 @@ export const LearnCourseSidebar = ({
                   currentLecture={currentLecture}
                   onSelectLecture={onSelectLecture}
                 />
-              )}
+              ) : null}
             </div>
           );
         })}

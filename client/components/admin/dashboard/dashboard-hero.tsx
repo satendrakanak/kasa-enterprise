@@ -3,11 +3,7 @@
 import { compactNumberFormatter, currencyFormatter } from "./dashboard-utils";
 import { AdminDashboardSummary } from "@/types/admin-dashboard";
 
-export function DashboardHero({
-  summary,
-}: {
-  summary: AdminDashboardSummary;
-}) {
+export function DashboardHero({ summary }: { summary: AdminDashboardSummary }) {
   return (
     <section className="relative overflow-hidden rounded-[32px] border border-[var(--brand-100)] bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.18),transparent_34%),linear-gradient(135deg,var(--brand-950)_0%,var(--brand-800)_48%,var(--brand-500)_100%)] p-6 text-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.65)] md:p-8">
       <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:78px_78px]" />

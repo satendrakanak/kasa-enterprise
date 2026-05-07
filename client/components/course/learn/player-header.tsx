@@ -1,13 +1,14 @@
 "use client";
 
-import Logo from "@/components/logo";
-import { useRouter } from "next/navigation";
-import { Course } from "@/types/course";
-import { getCourseProgress } from "@/helpers/course-progress";
-import { ProgressCircle } from "@/components/ui/progress-circle";
-import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronDown } from "lucide-react";
+
 import { WebsiteNavUser } from "@/components/auth/website-nav-user";
+import Logo from "@/components/logo";
+import { ProgressCircle } from "@/components/ui/progress-circle";
+import { getCourseProgress } from "@/helpers/course-progress";
+import { Course } from "@/types/course";
 
 interface Props {
   course: Course;
@@ -20,65 +21,60 @@ export const PlayerHeader = ({ course }: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div
-      className="h-14 py-8 bg-linear-to-r from-[#0f172a] via-[#020617] to-[#0f172a]
-      text-white flex items-center justify-between px-6
-      border-b border-white/10"
-    >
-      {/* LEFT */}
-      <div className="flex items-center gap-4">
-        <div onClick={() => router.push("/")} className="cursor-pointer">
+    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6 text-card-foreground shadow-sm">
+      <div className="flex min-w-0 items-center gap-4">
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          className="shrink-0 cursor-pointer"
+          aria-label="Go to home"
+        >
           <Logo />
-        </div>
+        </button>
 
-        <div className="h-4 w-px bg-white/20" />
+        <div className="h-5 w-px bg-border" />
 
-        <h2 className="text-sm text-gray-200 truncate max-w-75">
+        <h2 className="max-w-75 truncate text-sm font-medium text-muted-foreground">
           {course.title}
         </h2>
       </div>
 
-      {/* RIGHT */}
-      <div className="relative flex items-center gap-4">
-        {/* 🔥 ICON */}
-        <div
+      <div className="relative z-50 flex items-center gap-4">
+        <button
+          type="button"
           onClick={() => setOpen((prev) => !prev)}
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex cursor-pointer items-center gap-2 rounded-full border border-border bg-muted/50 px-2 py-1 transition-colors hover:border-primary/25 hover:bg-primary/10"
+          aria-expanded={open}
         >
           <ProgressCircle percent={percent} />
 
-          {/* 🔥 TEXT RIGHT SIDE */}
-          <span className="text-xs text-gray-300 whitespace-nowrap">
+          <span className="whitespace-nowrap text-xs font-semibold text-muted-foreground">
             Your progress
           </span>
 
-          <ChevronDown className="w-4 h-4 text-gray-400" />
-        </div>
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        </button>
 
-        {/* 🔥 TOOLTIP FIXED */}
         {open && (
-          <div className="absolute right-0 top-10 w-64 bg-white text-black rounded-lg shadow-xl p-4 z-999">
-            {/* 🔥 ARROW */}
-            <div
-              className="absolute -top-2 right-5 w-0 h-0 
-                border-l-8 border-l-transparent
-                border-r-8 border-r-transparent
-                border-b-8 border-b-white"
-            />
+          <div className="absolute right-14 top-12 z-99999 w-64 rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-[0_24px_80px_color-mix(in_oklab,var(--foreground)_18%,transparent)]">
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 border-l border-t border-border bg-popover" />
 
-            <p className="text-sm font-semibold mb-2">{percent}% completed</p>
+            <p className="text-sm font-semibold text-popover-foreground">
+              {percent}% completed
+            </p>
 
-            <p className="text-xs text-gray-600 mb-1">
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
               {completed} of {total} lectures completed
             </p>
 
-            <p className="text-xs text-gray-500">
-              Finish course to get your certificate
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Finish course to get your certificate.
             </p>
           </div>
         )}
+
         <WebsiteNavUser />
       </div>
-    </div>
+    </header>
   );
 };

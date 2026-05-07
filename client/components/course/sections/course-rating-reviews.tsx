@@ -1,18 +1,25 @@
 "use client";
 
+import { useEffect, useState, useTransition } from "react";
+import { MessageSquare, Star, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession } from "@/context/session-context";
 import { getErrorMessage } from "@/lib/error-handler";
 import { getUserAvatarUrl } from "@/lib/user-avatar";
 import { cn } from "@/lib/utils";
-import { useSession } from "@/context/session-context";
 import { courseReviewClientService } from "@/services/course-reviews/course-review.client";
 import { Course } from "@/types/course";
 import { CourseReview, CourseReviewSummary } from "@/types/course-review";
-import { MessageSquare, Star, Trash2, UserRound } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
-import { toast } from "sonner";
+import {
+  getReviewInitials,
+  getReviewUserName,
+  mergeReviews,
+} from "@/utils/reviews";
+import { RatingStars } from "./rating-star";
 
 const emptySummary: CourseReviewSummary = {
   average: 0,
@@ -27,6 +34,7 @@ export function CourseRatingReviews({ course }: { course: Course }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [isPending, startTransition] = useTransition();
+
   const { user } = useSession();
 
   const loadReviews = async () => {
@@ -44,7 +52,7 @@ export function CourseRatingReviews({ course }: { course: Course }) {
 
       setMyReview(ownReview);
       setReviews(mergeReviews(reviewsResponse.data, ownReview));
-      setSummary(summaryResponse.data);
+      setSummary(summaryResponse.data || emptySummary);
 
       if (ownReview) {
         setRating(ownReview.rating);
@@ -72,7 +80,7 @@ export function CourseRatingReviews({ course }: { course: Course }) {
 
         setMyReview(ownReview);
         setReviews(mergeReviews(reviewsResponse.data, ownReview));
-        setSummary(summaryResponse.data);
+        setSummary(summaryResponse.data || emptySummary);
 
         if (ownReview) {
           setRating(ownReview.rating);
@@ -80,7 +88,9 @@ export function CourseRatingReviews({ course }: { course: Course }) {
         }
       })
       .catch((error) => {
-        if (isMounted) toast.error(getErrorMessage(error));
+        if (isMounted) {
+          toast.error(getErrorMessage(error));
+        }
       });
 
     return () => {
@@ -129,40 +139,37 @@ export function CourseRatingReviews({ course }: { course: Course }) {
   };
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-      <div className="mb-6 border-b border-slate-100 pb-4 dark:border-white/10">
-        <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+    <section className="academy-card p-5 md:p-6">
+      <div className="mb-6 border-b border-border pb-4">
+        <h2 className="text-xl font-semibold text-card-foreground">
           Ratings & Reviews
         </h2>
 
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           See what learners are saying and share your own experience after
           enrolling.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        {/* LEFT SUMMARY */}
-        <div className="rounded-3xl border border-blue-100 bg-blue-50/70 p-5 dark:border-white/10 dark:bg-[#0b1628]">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700 dark:text-rose-200">
+        <div className="rounded-3xl border border-border bg-muted/50 p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
             Course Rating
           </p>
 
           <div className="mt-5 flex items-end gap-2">
-            <span className="text-5xl font-bold tracking-tight text-slate-950 dark:text-white">
+            <span className="text-5xl font-bold tracking-tight text-card-foreground">
               {summary.average ? summary.average.toFixed(1) : "0.0"}
             </span>
 
-            <span className="pb-2 text-sm text-slate-500 dark:text-slate-400">
-              / 5
-            </span>
+            <span className="pb-2 text-sm text-muted-foreground">/ 5</span>
           </div>
 
           <div className="mt-3">
             <RatingStars rating={summary.average} />
           </div>
 
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Based on {summary.total} review{summary.total === 1 ? "" : "s"}
           </p>
 
@@ -174,18 +181,18 @@ export function CourseRatingReviews({ course }: { course: Course }) {
 
               return (
                 <div key={item.rating} className="flex items-center gap-2">
-                  <span className="w-10 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <span className="w-10 text-xs font-semibold text-muted-foreground">
                     {item.rating} star
                   </span>
 
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-white dark:bg-white/10">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
                     <div
-                      className="h-full rounded-full bg-amber-400"
+                      className="h-full rounded-full bg-primary"
                       style={{ width: `${width}%` }}
                     />
                   </div>
 
-                  <span className="w-7 text-right text-xs text-slate-500 dark:text-slate-400">
+                  <span className="w-7 text-right text-xs text-muted-foreground">
                     {item.count}
                   </span>
                 </div>
@@ -194,24 +201,22 @@ export function CourseRatingReviews({ course }: { course: Course }) {
           </div>
         </div>
 
-        {/* RIGHT REVIEWS */}
         <div>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h3 className="text-2xl font-semibold text-slate-950 dark:text-white">
+              <h3 className="text-2xl font-semibold text-card-foreground">
                 Learner Reviews
               </h3>
 
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Real feedback from students who joined this course.
               </p>
             </div>
           </div>
 
-          {/* REVIEW FORM */}
           {course.isEnrolled ? (
-            <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
-              <p className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="mt-5 rounded-3xl border border-border bg-muted/50 p-4">
+              <p className="mb-3 text-sm font-semibold text-card-foreground">
                 Share your experience
               </p>
 
@@ -228,8 +233,8 @@ export function CourseRatingReviews({ course }: { course: Course }) {
                       className={cn(
                         "h-6 w-6",
                         value <= rating
-                          ? "fill-amber-400 text-amber-400"
-                          : "text-slate-300 dark:text-slate-600",
+                          ? "fill-primary text-primary"
+                          : "text-muted-foreground/40",
                       )}
                     />
                   </button>
@@ -239,106 +244,132 @@ export function CourseRatingReviews({ course }: { course: Course }) {
               <Textarea
                 value={comment}
                 onChange={(event) => setComment(event.target.value)}
-                placeholder="What helped you most in this course?"
-                className="min-h-28 resize-none border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#07111f] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus-visible:ring-rose-200"
+                placeholder="Write a short review about your learning experience..."
+                className="min-h-28 resize-none rounded-2xl border-border bg-background text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary"
               />
 
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  disabled={isPending}
-                  onClick={submitReview}
-                  className="rounded-full bg-blue-600 px-5 font-semibold text-white hover:bg-blue-700 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
-                >
-                  {isPending
-                    ? "Submitting..."
-                    : myReview
-                      ? "Update review"
-                      : "Submit review"}
-                </Button>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Reviews may be checked before appearing publicly.
+                </p>
 
-                {myReview ? (
+                <div className="flex items-center gap-2">
+                  {myReview ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isPending}
+                      onClick={() => deleteReview(myReview.id)}
+                      className="rounded-full border-border bg-background text-destructive hover:border-destructive hover:bg-destructive hover:text-white **:text-inherit"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </Button>
+                  ) : null}
+
                   <Button
                     type="button"
-                    variant="outline"
                     disabled={isPending}
-                    onClick={() => deleteReview(myReview.id)}
-                    className="rounded-full border-slate-200 bg-white px-5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+                    onClick={submitReview}
+                    className="rounded-full bg-primary px-6 text-primary-foreground shadow-[0_12px_30px_color-mix(in_oklab,var(--primary)_18%,transparent)] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
+                    {isPending
+                      ? "Saving..."
+                      : myReview
+                        ? "Update Review"
+                        : "Submit Review"}
                   </Button>
-                ) : null}
+                </div>
               </div>
             </div>
           ) : (
-            <div className="mt-5 rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 p-5 text-sm text-slate-500 dark:border-white/10 dark:bg-[#0b1628] dark:text-slate-400">
-              Enroll in this course to add your own rating and review.
+            <div className="mt-5 rounded-3xl border border-dashed border-border bg-muted/50 p-5">
+              <p className="text-sm font-semibold text-card-foreground">
+                Enroll to leave a review
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Once you join this course, you can share your rating and
+                learning experience here.
+              </p>
             </div>
           )}
 
-          {/* REVIEW LIST */}
           <div className="mt-6 space-y-4">
             {reviews.length ? (
-              reviews.map((review) => (
-                <article
-                  key={review.id}
-                  className="rounded-3xl border border-slate-100 bg-white p-4 transition hover:border-blue-100 hover:bg-blue-50/40 dark:border-white/10 dark:bg-[#0b1628] dark:hover:border-rose-200/20 dark:hover:bg-white/[0.045]"
-                >
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-11 w-11 shrink-0 border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10">
-                      <AvatarImage
-                        src={getUserAvatarUrl(review.user)}
-                        alt={getReviewUserName(review)}
-                      />
-                      <AvatarFallback className="bg-blue-50 text-blue-700 dark:bg-white/10 dark:text-rose-200">
-                        {getReviewInitials(review)}
-                      </AvatarFallback>
-                    </Avatar>
+              reviews.map((review) => {
+                const reviewerName = getReviewUserName(review);
+                const avatarUrl = getUserAvatarUrl(review.user);
+                const isOwnReview = myReview?.id === review.id;
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <h4 className="font-semibold text-slate-950 dark:text-white">
-                            {getReviewUserName(review)}
-                          </h4>
+                return (
+                  <article
+                    key={review.id}
+                    className="rounded-3xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/25 hover:bg-primary/5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar className="h-11 w-11 border border-border">
+                          <AvatarImage src={avatarUrl} alt={reviewerName} />
 
-                          <div className="mt-1">
-                            <RatingStars rating={review.rating} small />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {getReviewInitials(review)}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="truncate text-sm font-semibold text-card-foreground">
+                              {reviewerName}
+                            </h4>
+
+                            {isOwnReview ? (
+                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                                Your review
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <div className="mt-1 flex items-center gap-2">
+                            <RatingStars rating={review.rating} />
+
+                            <span className="text-xs text-muted-foreground">
+                              {review.rating.toFixed(1)}
+                            </span>
                           </div>
                         </div>
-
-                        {myReview?.id === review.id ? (
-                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-rose-200/10 dark:text-rose-200">
-                            Your review
-                          </span>
-                        ) : null}
                       </div>
 
-                      {review.comment ? (
-                        <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                          {review.comment}
-                        </p>
-                      ) : (
-                        <p className="mt-3 text-sm italic text-slate-400 dark:text-slate-500">
-                          No written comment added.
-                        </p>
-                      )}
+                      {isOwnReview ? (
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => deleteReview(review.id)}
+                          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-destructive hover:bg-destructive hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                          aria-label="Delete review"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      ) : null}
                     </div>
-                  </div>
-                </article>
-              ))
-            ) : (
-              <div className="rounded-3xl border border-slate-100 bg-slate-50/70 p-8 text-center dark:border-white/10 dark:bg-[#0b1628]">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 dark:bg-white/10 dark:text-rose-200">
-                  <MessageSquare className="h-6 w-6" />
-                </div>
 
-                <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                    {review.comment ? (
+                      <p className="mt-4 text-sm leading-7 text-muted-foreground">
+                        {review.comment}
+                      </p>
+                    ) : null}
+                  </article>
+                );
+              })
+            ) : (
+              <div className="rounded-3xl border border-dashed border-border bg-muted/50 p-8 text-center">
+                <MessageSquare className="mx-auto h-8 w-8 text-muted-foreground" />
+
+                <p className="mt-3 text-sm font-semibold text-card-foreground">
                   No reviews yet
                 </p>
 
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Be the first learner to share feedback for this course.
                 </p>
               </div>
@@ -348,60 +379,4 @@ export function CourseRatingReviews({ course }: { course: Course }) {
       </div>
     </section>
   );
-}
-
-function RatingStars({
-  rating,
-  small = false,
-}: {
-  rating: number;
-  small?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((value) => (
-        <Star
-          key={value}
-          className={cn(
-            small ? "h-4 w-4" : "h-5 w-5",
-            value <= Math.round(rating)
-              ? "fill-amber-400 text-amber-400"
-              : "text-slate-300 dark:text-slate-600",
-          )}
-        />
-      ))}
-    </div>
-  );
-}
-
-function mergeReviews(
-  reviews: CourseReview[],
-  ownReview: CourseReview | null,
-): CourseReview[] {
-  if (!ownReview) return reviews;
-
-  const exists = reviews.some((review) => review.id === ownReview.id);
-
-  if (exists) return reviews;
-
-  return [ownReview, ...reviews];
-}
-
-function getReviewUserName(review: CourseReview) {
-  const firstName = review.user?.firstName || "";
-  const lastName = review.user?.lastName || "";
-  const fullName = `${firstName} ${lastName}`.trim();
-
-  return fullName || "Learner";
-}
-
-function getReviewInitials(review: CourseReview) {
-  const name = getReviewUserName(review);
-
-  return name
-    .split(" ")
-    .map((item) => item[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }

@@ -1,36 +1,52 @@
 "use client";
 
-import { Course } from "@/types/course";
-import { Certificate } from "@/types/certificate";
-import { certificateClientService } from "@/services/certificates/certificate.client";
-import { getCourseProgress } from "@/helpers/course-progress";
-import { getCourseMeta } from "@/helpers/course-meta";
 import { useEffect, useState } from "react";
+import { Award, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+import { CourseExamSection } from "@/components/course/learn/course-exam-section";
 import { CourseQaSection } from "@/components/course/sections/course-qa-section";
 import { CourseRatingReviews } from "@/components/course/sections/course-rating-reviews";
-import { slugify } from "@/utils/slugify";
+import { getCourseMeta } from "@/helpers/course-meta";
+import { getCourseProgress } from "@/helpers/course-progress";
 import { downloadRemoteFile } from "@/lib/download-file";
-import { CourseExamSection } from "@/components/course/learn/course-exam-section";
+import { cn } from "@/lib/utils";
+import { certificateClientService } from "@/services/certificates/certificate.client";
+import { Certificate } from "@/types/certificate";
+import { Course } from "@/types/course";
+import { slugify } from "@/utils/slugify";
 
 interface CourseTabsProps {
   course: Course;
 }
 
+type TabId = "overview" | "exam" | "qa" | "reviews";
+
 export const CourseTabs = ({ course }: CourseTabsProps) => {
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "exam" | "qa" | "reviews"
-  >("overview");
+  const [activeTab, setActiveTab] = useState<TabId>("overview");
+
   const [meta, setMeta] = useState({
     totalLectures: 0,
     totalDuration: "0m",
   });
+
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
   const { completed, total, percent } = getCourseProgress(course);
+
   const isCourseCompleted = total > 0 && completed >= total;
+
   const hasPublishedExam =
-    !!course.exam?.isPublished && !!course.exam?.questions?.length;
+    Boolean(course.exam?.isPublished) &&
+    Boolean(course.exam?.questions?.length);
+
+  const tabs: { id: TabId; label: string; visible?: boolean }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "qa", label: "Q&A" },
+    { id: "reviews", label: "Reviews" },
+    { id: "exam", label: "Final Exams", visible: hasPublishedExam },
+  ];
 
   useEffect(() => {
     const loadMeta = async () => {
@@ -47,9 +63,14 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
     const loadCertificate = async () => {
       try {
         const response = await certificateClientService.getForCourse(course.id);
-        if (mounted) setCertificate(response.data);
+
+        if (mounted) {
+          setCertificate(response.data);
+        }
       } catch {
-        if (mounted) setCertificate(null);
+        if (mounted) {
+          setCertificate(null);
+        }
       }
     };
 
@@ -62,15 +83,18 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
 
   const downloadCertificate = async (nextCertificate: Certificate) => {
     const fileUrl = nextCertificate.file?.path;
+
     if (!fileUrl) return;
 
     const name = slugify(
-      `${nextCertificate.user?.firstName} ${nextCertificate.user?.lastName}`,
+      `${nextCertificate.user?.firstName || ""} ${
+        nextCertificate.user?.lastName || ""
+      }`.trim() || "learner",
     );
 
-    const course = slugify(nextCertificate.course?.title || "course");
+    const courseName = slugify(nextCertificate.course?.title || "course");
+    const fileName = `${name}-${courseName}.pdf`;
 
-    const fileName = `${name}-${course}.pdf`;
     await downloadRemoteFile(fileUrl, fileName);
   };
 
@@ -87,9 +111,11 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
 
     try {
       setIsGenerating(true);
+
       const response = await certificateClientService.generateForCourse(
         course.id,
       );
+
       setCertificate(response.data);
       toast.success("Certificate generated and emailed successfully");
       downloadCertificate(response.data);
@@ -105,58 +131,31 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
   };
 
   return (
-    <div className="bg-white border-t">
-      {/* 🔥 TAB HEADER */}
-      <div className="flex flex-wrap gap-5 px-6 pt-4 border-b">
-        <button
-          type="button"
-          onClick={() => setActiveTab("overview")}
-          className={`pb-2 text-sm cursor-pointer font-bold ${
-            activeTab === "overview"
-              ? "border-b-2 border-primary text-primary"
-              : "text-gray-800"
-          }`}
-        >
-          Overview
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("qa")}
-          className={`pb-2 text-sm cursor-pointer font-bold ${
-            activeTab === "qa"
-              ? "border-b-2 border-primary text-primary"
-              : "text-gray-800"
-          }`}
-        >
-          Q&A
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("reviews")}
-          className={`pb-2 text-sm cursor-pointer font-bold ${
-            activeTab === "reviews"
-              ? "border-b-2 border-primary text-primary"
-              : "text-gray-800"
-          }`}
-        >
-          Reviews
-        </button>
-        {hasPublishedExam ? (
-          <button
-            type="button"
-            onClick={() => setActiveTab("exam")}
-            className={`pb-2 text-sm cursor-pointer font-bold ${
-              activeTab === "exam"
-                ? "border-b-2 border-primary text-primary"
-                : "text-gray-800"
-            }`}
-          >
-            Final Exams
-          </button>
-        ) : null}
+    <div className="border-t border-border bg-background">
+      <div className="flex flex-wrap gap-5 border-b border-border px-6 pt-4">
+        {tabs
+          .filter((tab) => tab.visible !== false)
+          .map((tab) => {
+            const isActive = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "cursor-pointer border-b-2 pb-2 text-sm font-bold transition-colors",
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-primary",
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
       </div>
 
-      {/* 🔥 CONTENT */}
       {activeTab === "exam" ? (
         <div className="px-6 py-6">
           <CourseExamSection course={{ ...course, isEnrolled: true }} />
@@ -170,61 +169,57 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
           <CourseRatingReviews course={{ ...course, isEnrolled: true }} />
         </div>
       ) : (
-        <div className="px-6 py-6 space-y-4 text-sm text-gray-700">
-          <h1 className="text-2xl font-semibold ">{course.title}</h1>
+        <div className="space-y-4 px-6 py-6 text-sm text-muted-foreground">
+          <h1 className="text-2xl font-semibold text-card-foreground">
+            {course.title}
+          </h1>
 
-          {/* 🚀 SHORT DESCRIPTION */}
-          {course.shortDescription && (
+          {course.shortDescription ? (
             <div>
-              <p className="text-base text-gray-900 leading-relaxed">
+              <p className="text-base leading-relaxed text-foreground">
                 {course.shortDescription}
               </p>
             </div>
-          )}
+          ) : null}
 
-          {/* 📊 STATS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 border-t pt-6">
-            <div>
-              <p className="text-gray-500 text-xs">Lectures</p>
-              <p className="font-semibold">{meta.totalLectures}</p>
-            </div>
-
-            <div>
-              <p className="text-gray-500 text-xs">Total Duration</p>
-              <p className="font-semibold">{meta.totalDuration}</p>
-            </div>
-
-            <div>
-              <p className="text-gray-500 text-xs">Language</p>
-              <p className="font-semibold">{course.language || "English"}</p>
-            </div>
-
-            <div>
-              <p className="text-gray-500 text-xs">Level</p>
-              <p className="font-semibold">All Level</p>
-            </div>
+          <div className="grid grid-cols-2 gap-6 border-t border-border pt-6 md:grid-cols-4">
+            <CourseStat label="Lectures" value={meta.totalLectures} />
+            <CourseStat label="Total Duration" value={meta.totalDuration} />
+            <CourseStat label="Language" value={course.language || "English"} />
+            <CourseStat label="Level" value="All Level" />
           </div>
 
-          {/* 🎓 CERTIFICATE */}
-          <div className="border-t pt-6">
-            <div className="overflow-hidden rounded-2xl border border-primary/15 bg-linear-to-br from-primary/10 via-white to-orange-50 p-5">
+          <div className="border-t border-border pt-6">
+            <div className="overflow-hidden rounded-2xl border border-primary/15 bg-primary/5 p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
-                    Certificate
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold text-gray-950">
-                    {certificate
-                      ? "Your certificate is ready"
-                      : "Unlock your completion certificate"}
-                  </h3>
-                  <p className="mt-2 max-w-xl text-sm leading-relaxed text-gray-600">
-                    {certificate
-                      ? `Certificate ID ${certificate.certificateNumber}. You can download it anytime from here or your profile.`
-                      : hasPublishedExam
-                        ? `Complete all ${total || meta.totalLectures} lectures and clear the final exam to generate your official Unitus certificate. Current lecture progress: ${percent}%.`
-                        : `Complete all ${total || meta.totalLectures} lectures to generate your official Unitus certificate. Current progress: ${percent}%.`}
-                  </p>
+                <div className="flex items-start gap-4">
+                  <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15 sm:flex">
+                    <Award className="h-6 w-6" />
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+                      Certificate
+                    </p>
+
+                    <h3 className="mt-2 text-lg font-semibold text-card-foreground">
+                      {certificate
+                        ? "Your certificate is ready"
+                        : "Unlock your completion certificate"}
+                    </h3>
+
+                    <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                      {certificate
+                        ? `Certificate ID ${certificate.certificateNumber}. You can download it anytime from here or your profile.`
+                        : hasPublishedExam
+                          ? `Complete all ${
+                              total || meta.totalLectures
+                            } lectures and clear the final exam to generate your official Unitus certificate. Current lecture progress: ${percent}%.`
+                          : `Complete all ${
+                              total || meta.totalLectures
+                            } lectures to generate your official Unitus certificate. Current progress: ${percent}%.`}
+                    </p>
+                  </div>
                 </div>
 
                 <button
@@ -233,35 +228,62 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
                     (!isCourseCompleted && !certificate) || isGenerating
                   }
                   onClick={handleCertificateClick}
-                  className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none cursor-pointer"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_22%,transparent)] transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none disabled:hover:translate-y-0"
                 >
-                  {isGenerating
-                    ? "Generating..."
-                    : certificate
-                      ? "Download Certificate"
-                      : "Get Certificate"}
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : certificate ? (
+                    <>
+                      <Download className="h-4 w-4" />
+                      Download Certificate
+                    </>
+                  ) : (
+                    "Get Certificate"
+                  )}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* 📚 FULL DESCRIPTION */}
-          {course.description && (
-            <div className="border-t pt-6">
-              <h3 className="font-semibold text-base mb-3">Description</h3>
+          {course.description ? (
+            <div className="border-t border-border pt-6">
+              <h3 className="mb-3 text-base font-semibold text-card-foreground">
+                Description
+              </h3>
 
               <div
                 className="prose prose-sm max-w-none
-                 prose-headings:font-semibold
-                 prose-p:leading-relaxed
-                 prose-ul:list-disc prose-ul:ml-4
-                 prose-ol:list-decimal prose-ol:ml-4"
+                  prose-headings:font-semibold prose-headings:text-card-foreground
+                  prose-p:leading-relaxed prose-p:text-muted-foreground
+                  prose-li:text-muted-foreground prose-li:marker:text-primary
+                  prose-strong:text-card-foreground
+                  prose-a:text-primary
+                  prose-ul:ml-4 prose-ul:list-disc
+                  prose-ol:ml-4 prose-ol:list-decimal"
                 dangerouslySetInnerHTML={{ __html: course.description }}
               />
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>
   );
 };
+
+function CourseStat({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="font-semibold text-card-foreground">{value}</p>
+    </div>
+  );
+}

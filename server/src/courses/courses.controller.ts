@@ -94,6 +94,14 @@ export class CoursesController {
     return await this.coursesService.create(createCourseDto, user);
   }
 
+  @Post(':id/duplicate')
+  public async duplicateCourse(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ): Promise<Course> {
+    return await this.coursesService.duplicate(id, user);
+  }
+
   @Patch(':id')
   public async updateCourse(
     @Param('id', ParseIntPipe) id: number,

@@ -5,10 +5,8 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Send, Sparkles } from "lucide-react";
-import { useSession } from "@/context/session-context";
-import { contactLeadClientService } from "@/services/contact-leads/contact-lead.client";
-import { getErrorMessage } from "@/lib/error-handler";
 import { toast } from "sonner";
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -17,6 +15,9 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { useSession } from "@/context/session-context";
+import { getErrorMessage } from "@/lib/error-handler";
+import { contactLeadClientService } from "@/services/contact-leads/contact-lead.client";
 
 const contactSchema = z.object({
   fullName: z.string().trim().min(3, "Full name is required"),
@@ -90,32 +91,28 @@ export function ContactForm() {
   });
 
   const inputClass =
-    "h-12 rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-none transition focus-visible:border-blue-600 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:placeholder:text-slate-500 dark:focus-visible:border-rose-200 dark:focus-visible:ring-rose-200";
+    "h-12 rounded-2xl border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none transition focus-visible:border-primary focus-visible:ring-primary";
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6"
-    >
-      {/* Header */}
-      <div className="mb-6 rounded-3xl border border-blue-100 bg-blue-50/70 p-5 dark:border-white/10 dark:bg-[#0b1628]">
+    <form onSubmit={handleSubmit} className="academy-card p-5 md:p-6">
+      <div className="mb-6 rounded-3xl border border-primary/15 bg-primary/5 p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700 dark:text-rose-200">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
               Contact form
             </p>
 
-            <h3 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white md:text-3xl">
+            <h3 className="mt-2 text-2xl font-semibold text-card-foreground md:text-3xl">
               Tell us what you need.
             </h3>
 
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300">
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
               Share your question, program interest, or support request and the
               team will get back to you quickly.
             </p>
           </div>
 
-          <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-700 shadow-sm ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10 md:flex">
+          <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm ring-1 ring-primary/15 md:flex">
             <Sparkles className="h-5 w-5" />
           </div>
         </div>
@@ -124,7 +121,7 @@ export function ContactForm() {
       <FieldGroup className="gap-5">
         <div className="grid gap-5 md:grid-cols-2">
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               Full name
             </FieldLabel>
 
@@ -144,7 +141,7 @@ export function ContactForm() {
           </Field>
 
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               Email address
             </FieldLabel>
 
@@ -165,7 +162,7 @@ export function ContactForm() {
           </Field>
 
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               Phone number
             </FieldLabel>
 
@@ -185,7 +182,7 @@ export function ContactForm() {
           </Field>
 
           <Field>
-            <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <FieldLabel className="text-sm font-semibold text-card-foreground">
               Subject
             </FieldLabel>
 
@@ -206,7 +203,7 @@ export function ContactForm() {
         </div>
 
         <Field>
-          <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <FieldLabel className="text-sm font-semibold text-card-foreground">
             Message
           </FieldLabel>
 
@@ -218,7 +215,7 @@ export function ContactForm() {
                 {...field}
                 placeholder="Tell us how we can help..."
                 rows={7}
-                className="min-h-40 resize-none rounded-2xl border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-none transition focus-visible:border-blue-600 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:placeholder:text-slate-500 dark:focus-visible:border-rose-200 dark:focus-visible:ring-rose-200"
+                className="min-h-40 resize-none rounded-2xl border-border bg-muted px-4 py-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none transition focus-visible:border-primary focus-visible:ring-primary"
               />
             )}
           />
@@ -227,8 +224,8 @@ export function ContactForm() {
         </Field>
       </FieldGroup>
 
-      <div className="mt-6 flex flex-col gap-4 border-t border-slate-100 pt-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+      <div className="mt-6 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm leading-6 text-muted-foreground">
           By submitting, you allow the academy team to contact you about your
           enquiry.
         </p>
@@ -236,10 +233,10 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={isPending || !form.formState.isValid}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-blue-600 px-6 text-sm font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_24%,transparent)] transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
         >
           <Send className="h-4 w-4" />
-          {isPending ? "Sending..." : "Send message"}
+          {isPending ? "Sending..." : "Send Message"}
         </button>
       </div>
     </form>

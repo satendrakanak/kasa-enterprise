@@ -68,6 +68,29 @@ export default function ChaptersForm({ course }: ChaptersFormProps) {
       toast.error("Failed to reorder chapters");
     }
   };
+  const onLecturePublishChange = (lectureId: number, isPublished: boolean) => {
+    setChapters((prev) =>
+      prev.map((chapter) => {
+        // update lectures
+        const updatedLectures = chapter.lectures.map((lecture) =>
+          lecture.id === lectureId ? { ...lecture, isPublished } : lecture,
+        );
+
+        // check if at least one published lecture exists
+        const hasPublishedLecture = updatedLectures.some(
+          (lecture) => lecture.isPublished,
+        );
+
+        return {
+          ...chapter,
+          lectures: updatedLectures,
+
+          // 🔥 auto unpublish chapter
+          isPublished: hasPublishedLecture ? chapter.isPublished : false,
+        };
+      }),
+    );
+  };
 
   const onTooglePublish = async (id: number, isPublished: boolean) => {
     try {
@@ -119,6 +142,7 @@ export default function ChaptersForm({ course }: ChaptersFormProps) {
           onDelete={onDelete}
           viewType="all"
           handleDragEnd={handleDragEnd}
+          onLecturePublishChange={onLecturePublishChange}
         />
 
         <PublishedList
@@ -130,6 +154,7 @@ export default function ChaptersForm({ course }: ChaptersFormProps) {
           onDelete={onDelete}
           viewType="published"
           handleDragEnd={handleDragEnd}
+          onLecturePublishChange={onLecturePublishChange}
         />
       </div>
     </>

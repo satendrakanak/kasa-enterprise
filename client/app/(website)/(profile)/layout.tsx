@@ -56,8 +56,12 @@ export default async function ProfileLayout({
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-50 dark:bg-[#101b2d] dark:bg-none">
-      <Container>
+    <div className="relative min-h-screen bg-background">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-(--surface-shell)" />
+      </div>
+
+      <Container className="relative z-10">
         <div className="pb-12 pt-6">
           <ProfileCover coverImage={user.coverImage?.path} isOwner={isOwner} />
 

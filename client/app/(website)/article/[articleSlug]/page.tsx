@@ -100,30 +100,36 @@ export default async function ArticleSlugPage({ params }: ArticlePageProps) {
   ).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
   return (
-    <div className="relative bg-linear-to-b from-slate-50 via-white to-slate-50 dark:bg-[#101b2d] dark:bg-none">
-      <ArticleHero article={article} />
+    <div className="relative bg-background">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-(--surface-shell)" />
+      </div>
 
-      <Container>
-        <div className="flex flex-col items-start gap-10 py-10 lg:flex-row">
-          <div className="max-w-4xl flex-1">
-            <div className="space-y-8">
-              <ArticleContent article={article} />
-              <ArticleMeta article={article} />
-              <ArticleComments articleId={article.id} />
-            </div>
-          </div>
+      <div className="relative z-10">
+        <ArticleHero article={article} />
 
-          <aside className="w-full self-start lg:sticky lg:top-24 lg:w-80">
-            <ArticleSidebar article={article} categories={categories} />
-          </aside>
-        </div>
-      </Container>
-
-      {relatedArticles.length > 0 && (
         <Container>
-          <RelatedArticles articles={relatedArticles} />
+          <div className="flex flex-col items-start gap-10 py-10 lg:flex-row">
+            <div className="max-w-4xl flex-1">
+              <div className="space-y-8">
+                <ArticleContent article={article} />
+                <ArticleMeta article={article} />
+                <ArticleComments articleId={article.id} />
+              </div>
+            </div>
+
+            <aside className="w-full self-start lg:sticky lg:top-24 lg:w-80">
+              <ArticleSidebar article={article} categories={categories} />
+            </aside>
+          </div>
         </Container>
-      )}
+
+        {relatedArticles.length > 0 && (
+          <Container>
+            <RelatedArticles articles={relatedArticles} />
+          </Container>
+        )}
+      </div>
     </div>
   );
 }

@@ -17,6 +17,11 @@ import { UserProgressService } from 'src/user-progress/providers/user-progress.s
 import { GetFeaturedCoursesProvider } from './get-featured-courses.provider';
 import { GetRelatedCoursesProvider } from './get-related-courses.provider';
 import { GetEnrolledCoursesProvider } from './get-enrolled-courses.provider';
+import { SlugProvider } from 'src/common/slug/providers/slug.provider';
+import { generateSlug } from 'src/common/utils/slug.util';
+import { Chapter } from 'src/chapters/chapter.entity';
+import { Lecture } from 'src/lectures/lecture.entity';
+import { Attachment } from 'src/attachments/attachment.entity';
 
 @Injectable()
 export class CoursesService {
@@ -81,6 +86,8 @@ export class CoursesService {
      */
 
     private readonly getEnrolledCoursesProvider: GetEnrolledCoursesProvider,
+
+    private readonly slugProvider: SlugProvider,
   ) {}
 
   public async findAll(
@@ -249,6 +256,132 @@ export class CoursesService {
     return {
       message: 'Course deleted successfully',
     };
+  }
+  public async duplicate(id: number, user: ActiveUserData): Promise<Course> {
+    const sourceCourse = await this.courseRepository.findOne({
+      where: { id },
+      relations: [
+        'image',
+        'video',
+        'categories',
+        'tags',
+        'faculties',
+        'chapters',
+        'chapters.lectures',
+        'chapters.lectures.video',
+        'chapters.lectures.attachments',
+        'chapters.lectures.attachments.file',
+      ],
+      order: {
+        chapters: {
+          position: 'ASC',
+          lectures: {
+            position: 'ASC',
+          },
+        },
+      },
+    });
+
+    if (!sourceCourse) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const duplicatedCourse = await this.courseRepository.manager.transaction(
+      async (manager) => {
+        const courseRepository = manager.getRepository(Course);
+        const chapterRepository = manager.getRepository(Chapter);
+        const lectureRepository = manager.getRepository(Lecture);
+        const attachmentRepository = manager.getRepository(Attachment);
+
+        const title = `${sourceCourse.title} Copy`;
+        const slug = await this.slugProvider.ensureUniqueSlug(
+          courseRepository,
+          generateSlug(title),
+        );
+
+        const course = courseRepository.create({
+          title,
+          slug,
+          shortDescription: sourceCourse.shortDescription,
+          description: sourceCourse.description,
+          metaTitle: sourceCourse.metaTitle,
+          metaSlug: sourceCourse.metaSlug
+            ? `${sourceCourse.metaSlug}-copy`
+            : undefined,
+          metaDescription: sourceCourse.metaDescription,
+          image: sourceCourse.image ?? null,
+          imageAlt: sourceCourse.imageAlt,
+          video: sourceCourse.video ?? null,
+          isFree: sourceCourse.isFree,
+          isFeatured: false,
+          isPublished: false,
+          priceInr: sourceCourse.priceInr,
+          priceUsd: sourceCourse.priceUsd,
+          duration: sourceCourse.duration,
+          mode: sourceCourse.mode,
+          certificate: sourceCourse.certificate,
+          exams: sourceCourse.exams,
+          experienceLevel: sourceCourse.experienceLevel,
+          studyMaterial: sourceCourse.studyMaterial,
+          additionalBook: sourceCourse.additionalBook,
+          language: sourceCourse.language,
+          technologyRequirements: sourceCourse.technologyRequirements,
+          eligibilityRequirements: sourceCourse.eligibilityRequirements,
+          disclaimer: sourceCourse.disclaimer,
+          faqs: sourceCourse.faqs ?? [],
+          exam: sourceCourse.exam ?? null,
+          categories: sourceCourse.categories ?? [],
+          tags: sourceCourse.tags ?? [],
+          faculties: sourceCourse.faculties ?? [],
+          createdBy: { id: user.sub },
+          updatedBy: { id: user.sub },
+        });
+
+        const savedCourse = await courseRepository.save(course);
+
+        for (const sourceChapter of sourceCourse.chapters ?? []) {
+          const chapter = chapterRepository.create({
+            title: sourceChapter.title,
+            description: sourceChapter.description,
+            position: sourceChapter.position,
+            isPublished: false,
+            isFree: sourceChapter.isFree,
+            course: savedCourse,
+          });
+          const savedChapter = await chapterRepository.save(chapter);
+
+          for (const sourceLecture of sourceChapter.lectures ?? []) {
+            const lecture = lectureRepository.create({
+              title: sourceLecture.title,
+              description: sourceLecture.description,
+              position: sourceLecture.position,
+              isPublished: false,
+              isFree: sourceLecture.isFree,
+              video: sourceLecture.video ?? null,
+              chapter: savedChapter,
+            });
+            const savedLecture = await lectureRepository.save(lecture);
+
+            const attachments = (sourceLecture.attachments ?? []).map(
+              (sourceAttachment) =>
+                attachmentRepository.create({
+                  name: sourceAttachment.name,
+                  file: sourceAttachment.file ?? null,
+                  lecture: savedLecture,
+                }),
+            );
+
+            if (attachments.length) {
+              await attachmentRepository.save(attachments);
+            }
+          }
+        }
+
+        return savedCourse;
+      },
+    );
+
+    return this.findOneById(duplicatedCourse.id);
   }
   public async softDelete() {}
   public async restore() {}

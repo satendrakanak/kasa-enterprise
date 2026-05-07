@@ -36,48 +36,48 @@ export const CourseRequirements = ({ course }: CourseRequirementsProps) => {
   ];
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-      <div className="mb-6 border-b border-slate-100 pb-4 dark:border-white/10">
-        <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+    <div className="academy-card p-5 md:p-6">
+      <div className="mb-6 border-b border-border pb-4">
+        <h2 className="text-xl font-semibold text-card-foreground">
           Course Requirements
         </h2>
 
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Review the requirements, eligibility, and important notes before
           starting this course.
         </p>
       </div>
 
       <div className="space-y-5">
-        {sections.map((section, index) => {
+        {sections.map((section) => {
           const items = section.items.length ? section.items : section.fallback;
 
           return (
             <div
-              key={index}
-              className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]"
+              key={section.title}
+              className="rounded-2xl border border-border bg-muted/50 p-4"
             >
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
                   <Info className="h-5 w-5" />
                 </div>
 
-                <h3 className="text-base font-semibold text-slate-950 dark:text-white">
+                <h3 className="text-base font-semibold text-card-foreground">
                   {section.title}
                 </h3>
               </div>
 
               <div className="grid gap-3">
-                {items.map((item, i) => (
+                {items.map((item) => (
                   <div
-                    key={i}
-                    className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-white p-4 transition hover:border-blue-100 hover:bg-blue-50/60 dark:border-white/10 dark:bg-[#07111f] dark:hover:border-rose-200/20 dark:hover:bg-white/[0.055]"
+                    key={item}
+                    className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/25 hover:bg-primary/5"
                   >
-                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-300/10 dark:text-emerald-300">
-                      <Check className="h-4 w-4 stroke-[3]" />
+                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <Check className="h-4 w-4 stroke-3" />
                     </div>
 
-                    <p className="text-sm leading-6 text-slate-700 dark:text-slate-300">
+                    <p className="text-sm leading-6 text-muted-foreground">
                       {item}
                     </p>
                   </div>

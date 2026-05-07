@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 export function SwitchRow({
   label,
   description,
@@ -13,19 +15,20 @@ export function SwitchRow({
 
   return (
     <div
-      className={`flex items-start justify-between gap-4 rounded-2xl border px-4 py-4 transition ${
+      className={cn(
+        "flex items-start justify-between gap-4 rounded-2xl border px-4 py-4 transition-colors",
         isChecked
-          ? "border-blue-100 bg-blue-50/80 dark:border-rose-200/20 dark:bg-rose-200/10"
-          : "border-slate-100 bg-slate-50/80 dark:border-white/10 dark:bg-[#0b1628]"
-      }`}
+          ? "border-primary/20 bg-primary/10"
+          : "border-border bg-muted/50",
+      )}
     >
       <div className="min-w-0">
-        <span className="text-sm font-semibold text-slate-950 dark:text-white">
+        <span className="text-sm font-semibold text-card-foreground">
           {label}
         </span>
 
         {description ? (
-          <p className="mt-1 max-w-xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+          <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
             {description}
           </p>
         ) : null}
@@ -36,18 +39,16 @@ export function SwitchRow({
         role="switch"
         aria-checked={isChecked}
         onClick={() => onChange(!isChecked)}
-        className={`mt-1 flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full p-1 transition ${
-          isChecked
-            ? "bg-blue-600 dark:bg-rose-200"
-            : "bg-slate-300 dark:bg-white/20"
-        }`}
+        className={cn(
+          "mt-1 flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors",
+          isChecked ? "bg-primary" : "bg-muted-foreground/30",
+        )}
       >
         <span
-          className={`h-5 w-5 rounded-full bg-white shadow transition ${
-            isChecked
-              ? "translate-x-5 dark:bg-black"
-              : "translate-x-0 dark:bg-white"
-          }`}
+          className={cn(
+            "h-5 w-5 rounded-full bg-background shadow transition-transform",
+            isChecked && "translate-x-5",
+          )}
         />
       </button>
     </div>

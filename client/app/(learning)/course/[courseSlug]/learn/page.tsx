@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { Course } from "@/types/course";
 import { courseServerService } from "@/services/courses/course.server";

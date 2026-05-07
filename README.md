@@ -6,6 +6,21 @@ It is designed as a production-style LMS platform with separate role-based dashb
 
 ---
 
+## Docker Quick Start
+
+```bash
+cp .env.docker.example .env.docker
+docker compose --env-file .env.docker up --build
+```
+
+- Client: http://localhost:3000
+- API: http://localhost:8000
+- Swagger: http://localhost:8000/api
+
+Full infrastructure and CI/CD notes are in [docs/INFRA_AND_DEPLOYMENT.md](./docs/INFRA_AND_DEPLOYMENT.md).
+
+---
+
 ## Preview
 
 ### Home Page

@@ -19,29 +19,29 @@ export default function CoursePrice({
     new Intl.NumberFormat("en-IN").format(Number(value || 0));
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
-      <p className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-blue-700 dark:text-rose-200">
+    <div className="rounded-2xl border border-border bg-muted/50 p-4">
+      <p className="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-primary">
         Course Price
       </p>
 
       {hasDiscount ? (
         <>
           <div className="flex flex-wrap items-end gap-2">
-            <span className="text-3xl font-bold leading-none text-slate-950 dark:text-white">
+            <span className="text-3xl font-bold leading-none text-card-foreground">
               ₹{formatPrice(finalAmount)}
             </span>
 
-            <span className="text-base font-semibold text-slate-400 line-through dark:text-slate-500">
+            <span className="text-base font-semibold text-muted-foreground line-through">
               ₹{formatPrice(course.priceInr)}
             </span>
           </div>
 
-          <div className="mt-3 inline-flex rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-300">
+          <div className="mt-3 inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
             🎉 {couponCode || "Coupon"} applied
           </div>
         </>
       ) : (
-        <span className="text-3xl font-bold leading-none text-slate-950 dark:text-white">
+        <span className="text-3xl font-bold leading-none text-card-foreground">
           ₹{formatPrice(course.priceInr)}
         </span>
       )}

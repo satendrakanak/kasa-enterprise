@@ -4,8 +4,10 @@ import { useEffect } from "react";
 import { CreditCard, Loader2, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
 import { Gateway } from "@/types/settings";
+import { SummaryRow } from "./summary-row";
 
 interface OrderSummaryProps {
   isSubmitting: boolean;
@@ -56,25 +58,23 @@ export const OrderSummary = ({
     (hasMultipleGateways && !selectedGateway);
 
   return (
-    <aside className="h-fit w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.10)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_28px_90px_rgba(0,0,0,0.42)] md:p-6">
-      {/* HEADER */}
-      <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-5 dark:border-white/10">
+    <aside className="academy-card h-fit w-full p-5 md:p-6">
+      <div className="mb-5 flex items-start justify-between gap-4 border-b border-border pb-5">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700 dark:text-rose-200">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
             Payment
           </p>
 
-          <h2 className="mt-2 text-xl font-semibold text-slate-950 dark:text-white">
+          <h2 className="mt-2 text-xl font-semibold text-card-foreground">
             Order Summary
           </h2>
         </div>
 
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
           <Sparkles className="h-5 w-5" />
         </span>
       </div>
 
-      {/* PRICE DETAILS */}
       <div className="space-y-3">
         {totalDiscount > 0 && (
           <SummaryRow
@@ -89,7 +89,7 @@ export const OrderSummary = ({
           <SummaryRow
             label="Best offer applied"
             value={`-₹${format(autoDiscount)}`}
-            accent="blue"
+            accent
           />
         )}
 
@@ -97,23 +97,23 @@ export const OrderSummary = ({
           <SummaryRow
             label={`Coupon${manualCoupon ? ` (${manualCoupon})` : ""}`}
             value={`-₹${format(manualDiscount)}`}
-            accent="green"
+            accent
           />
         )}
 
         {totalDiscount > 0 && (
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 dark:border-emerald-300/20 dark:bg-emerald-300/10">
+          <div className="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3">
             <SummaryRow
               label="You Saved"
               value={`-₹${format(totalDiscount)}`}
-              accent="green"
+              accent
               strong
               noTextSize
             />
           </div>
         )}
 
-        <div className="mt-4 space-y-3 border-t border-slate-100 pt-4 dark:border-white/10">
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
           <SummaryRow
             label="Subtotal (excl. GST)"
             value={`₹${format(basePrice)}`}
@@ -121,46 +121,45 @@ export const OrderSummary = ({
 
           <SummaryRow label="GST (18%)" value={`₹${format(gstAmount)}`} />
 
-          <div className="flex items-center justify-between border-t border-slate-100 pt-4 dark:border-white/10">
-            <span className="text-base font-semibold text-slate-950 dark:text-white">
+          <div className="flex items-center justify-between border-t border-border pt-4">
+            <span className="text-base font-semibold text-card-foreground">
               Total Amount
             </span>
 
-            <span className="text-2xl font-bold text-slate-950 dark:text-white">
+            <span className="text-2xl font-bold text-card-foreground">
               ₹{format(finalPrice)}
             </span>
           </div>
 
-          <p className="text-right text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-right text-xs text-muted-foreground">
             GST is included in your total.
           </p>
         </div>
       </div>
 
-      {/* NO GATEWAY */}
       {!isPaymentGatewayAvailable && (
-        <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600 dark:border-red-300/20 dark:bg-red-300/10 dark:text-red-300">
+        <div className="mt-5 rounded-2xl border border-destructive/20 bg-destructive/10 p-4 text-sm font-medium text-destructive">
           No payment gateway configured.
         </div>
       )}
 
-      {/* SINGLE GATEWAY */}
       {isPaymentGatewayAvailable && !hasMultipleGateways && selectedGateway && (
-        <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-700 dark:text-rose-200">
+        <div className="mt-5 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
             Payment Method
           </p>
 
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-background text-primary ring-1 ring-primary/15">
               <CreditCard className="h-5 w-5" />
             </span>
 
             <div>
-              <p className="text-sm font-semibold text-slate-950 dark:text-white">
+              <p className="text-sm font-semibold text-card-foreground">
                 {selectedGateway.displayName}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+
+              <p className="text-xs text-muted-foreground">
                 Secure online payment
               </p>
             </div>
@@ -168,10 +167,9 @@ export const OrderSummary = ({
         </div>
       )}
 
-      {/* MULTIPLE GATEWAYS */}
       {hasMultipleGateways && (
-        <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
-          <p className="mb-3 text-sm font-semibold text-slate-950 dark:text-white">
+        <div className="mt-5 rounded-2xl border border-border bg-muted/50 p-4">
+          <p className="mb-3 text-sm font-semibold text-card-foreground">
             Choose Payment Method
           </p>
 
@@ -182,29 +180,30 @@ export const OrderSummary = ({
               return (
                 <label
                   key={gateway.provider}
-                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 transition ${
+                  className={cn(
+                    "flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 transition-colors",
                     isActive
-                      ? "border-blue-600 bg-blue-50 shadow-[0_12px_30px_rgba(37,99,235,0.12)] dark:border-rose-200 dark:bg-rose-200/10"
-                      : "border-slate-200 bg-white hover:border-blue-100 hover:bg-blue-50/60 dark:border-white/10 dark:bg-[#07111f] dark:hover:border-rose-200/20 dark:hover:bg-white/[0.055]"
-                  }`}
+                      ? "border-primary bg-primary/10 shadow-[0_12px_30px_color-mix(in_oklab,var(--primary)_14%,transparent)]"
+                      : "border-border bg-card hover:border-primary/25 hover:bg-primary/5",
+                  )}
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors",
                         isActive
-                          ? "bg-blue-600 text-white dark:bg-rose-200 dark:text-black"
-                          : "bg-slate-50 text-slate-500 dark:bg-white/10 dark:text-slate-300"
-                      }`}
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
+                      )}
                     >
                       <CreditCard className="h-5 w-5" />
                     </span>
 
                     <span
-                      className={`truncate text-sm font-semibold ${
-                        isActive
-                          ? "text-blue-700 dark:text-rose-200"
-                          : "text-slate-700 dark:text-slate-300"
-                      }`}
+                      className={cn(
+                        "truncate text-sm font-semibold",
+                        isActive ? "text-primary" : "text-card-foreground",
+                      )}
                     >
                       {gateway.displayName}
                     </span>
@@ -215,7 +214,7 @@ export const OrderSummary = ({
                     name="gateway"
                     checked={isActive}
                     onChange={() => onSelectGateway(gateway)}
-                    className="h-4 w-4 accent-blue-600 dark:accent-rose-200"
+                    className="h-4 w-4 accent-primary"
                   />
                 </label>
               );
@@ -224,11 +223,10 @@ export const OrderSummary = ({
         </div>
       )}
 
-      {/* CTA */}
       <Button
         type="submit"
         disabled={isDisabled}
-        className="mt-5 h-12 w-full rounded-full bg-blue-600 text-base font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+        className="mt-5 h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_24%,transparent)] transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
       >
         {isSubmitting ? (
           <>
@@ -240,22 +238,21 @@ export const OrderSummary = ({
         )}
       </Button>
 
-      {/* FOOTER */}
       {cartItems.length === 0 ? (
-        <p className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-4 text-center text-xs text-muted-foreground">
           Your cart is empty
         </p>
       ) : (
-        <div className="mt-5 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-center dark:border-white/10 dark:bg-[#0b1628]">
-          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-700 dark:bg-white/10 dark:text-rose-200">
+        <div className="mt-5 rounded-2xl border border-border bg-muted/50 p-4 text-center">
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
             <ShieldCheck className="h-5 w-5" />
           </div>
 
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+          <p className="text-sm font-semibold text-card-foreground">
             30-Day Money-Back Guarantee
           </p>
 
-          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
             Not satisfied? Get a full refund within 30 days.
           </p>
         </div>
@@ -263,56 +260,3 @@ export const OrderSummary = ({
     </aside>
   );
 };
-
-function SummaryRow({
-  label,
-  value,
-  muted = false,
-  strike = false,
-  strong = false,
-  accent,
-  noTextSize = false,
-}: {
-  label: string;
-  value: string;
-  muted?: boolean;
-  strike?: boolean;
-  strong?: boolean;
-  accent?: "blue" | "green";
-  noTextSize?: boolean;
-}) {
-  const accentClass =
-    accent === "blue"
-      ? "text-blue-700 dark:text-rose-200"
-      : accent === "green"
-        ? "text-emerald-700 dark:text-emerald-300"
-        : "text-slate-700 dark:text-slate-300";
-
-  return (
-    <div
-      className={`flex items-start justify-between gap-4 ${
-        noTextSize ? "" : "text-sm"
-      }`}
-    >
-      <span
-        className={`leading-6 ${
-          muted
-            ? "text-slate-400 dark:text-slate-500"
-            : strong
-              ? "font-semibold text-slate-950 dark:text-white"
-              : "text-slate-600 dark:text-slate-400"
-        }`}
-      >
-        {label}
-      </span>
-
-      <span
-        className={`shrink-0 text-right font-semibold ${accentClass} ${
-          strike ? "line-through" : ""
-        }`}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}

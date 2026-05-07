@@ -14,11 +14,12 @@ import {
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
+import { Copy, Pencil, Trash2 } from "lucide-react";
 import { Category } from "@/types/category";
 
 export const getCourseColumns = (
   onDelete: (course: Course) => void,
+  onDuplicate: (course: Course) => void,
 ): ColumnDef<Course>[] => [
   // ✅ Select
   {
@@ -130,6 +131,13 @@ export const getCourseColumns = (
             >
               <Pencil className="size-4" />
               Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDuplicate(course)}
+              className="cursor-pointer flex items-center gap-2"
+            >
+              <Copy className="size-4" />
+              Duplicate
             </DropdownMenuItem>
             <DropdownMenuItem
               variant="destructive"

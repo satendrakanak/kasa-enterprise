@@ -83,27 +83,33 @@ export default async function CourseSlugPage({ params }: CoursePageProps) {
   }
 
   return (
-    <div className="relative bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:bg-[#101b2d] dark:bg-none">
-      {/* HERO */}
-      <CourseHero course={course} />
+    <div className="relative bg-background">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-(--surface-shell)" />
+      </div>
 
-      <Container>
-        <div className="flex items-start gap-10">
-          {/* LEFT */}
-          <div className="mt-10 max-w-4xl flex-1">
-            <CourseTabs course={course} testimonials={testimonials} />
+      <div className="relative z-10">
+        {/* HERO */}
+        <CourseHero course={course} />
+
+        <Container>
+          <div className="flex items-start gap-10">
+            {/* LEFT */}
+            <div className="mt-10 max-w-4xl flex-1">
+              <CourseTabs course={course} testimonials={testimonials} />
+            </div>
+
+            {/* RIGHT */}
+            <div className="sticky top-30 z-40 -mt-120 w-100">
+              <CourseSidebarCard course={course} />
+            </div>
           </div>
+        </Container>
 
-          {/* RIGHT */}
-          <div className="sticky top-30 z-40 -mt-120 w-100">
-            <CourseSidebarCard course={course} />
-          </div>
-        </div>
-      </Container>
-
-      <Container>
-        <RelatedCourses courses={relatedCourses} />
-      </Container>
+        <Container>
+          <RelatedCourses courses={relatedCourses} />
+        </Container>
+      </div>
     </div>
   );
 }

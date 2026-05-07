@@ -16,7 +16,12 @@ const MobileMenu = () => {
   const items = [
     { href: "/", label: "Home", icon: Home },
     { href: "/courses", label: "Courses", icon: BookOpen },
-    { href: "/cart", label: "Cart", icon: ShoppingCart, count: cartItems.length },
+    {
+      href: "/cart",
+      label: "Cart",
+      icon: ShoppingCart,
+      count: cartItems.length,
+    },
     {
       href: user ? "/dashboard" : "/auth/sign-in",
       label: user ? "Account" : "Sign in",

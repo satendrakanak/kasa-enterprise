@@ -7,13 +7,13 @@ export const CourseTestimonials = ({
   testimonials: Testimonial[];
 }) => {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-      <div className="mb-6 border-b border-slate-100 pb-4 dark:border-white/10">
-        <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+    <section className="academy-card p-5 md:p-6">
+      <div className="mb-6 border-b border-border pb-4">
+        <h2 className="text-xl font-semibold text-card-foreground">
           Student Testimonials
         </h2>
 
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Real stories and learning experiences from students of this course.
         </p>
       </div>
@@ -29,12 +29,12 @@ export const CourseTestimonials = ({
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-8 text-center dark:border-white/10 dark:bg-[#0b1628]">
-          <p className="text-sm font-semibold text-slate-800 dark:text-white">
+        <div className="rounded-2xl border border-dashed border-border bg-muted/50 p-8 text-center">
+          <p className="text-sm font-semibold text-card-foreground">
             No testimonials yet
           </p>
 
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Testimonials for this course will be added soon.
           </p>
         </div>

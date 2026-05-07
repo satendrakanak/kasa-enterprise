@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -10,7 +10,6 @@ import {
   CircleCheckBig,
   CreditCard,
   FileClock,
-  HandCoins,
   RotateCcw,
 } from "lucide-react";
 
@@ -66,17 +65,17 @@ export function OrderHistory({
 
   return (
     <section>
-      <div className="mb-5 flex flex-col gap-3 border-b border-slate-100 pb-5 dark:border-white/10 md:flex-row md:items-end md:justify-between">
+      <div className="mb-5 flex flex-col gap-3 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700 dark:text-rose-200">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
             Purchase History
           </p>
 
-          <h3 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+          <h3 className="mt-2 text-2xl font-semibold text-card-foreground">
             Recent Orders
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Track purchases, applied coupons, payment retries, and refund
             status.
           </p>
@@ -85,7 +84,7 @@ export function OrderHistory({
         {showViewAll ? (
           <Link
             href="/orders"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-600 hover:bg-blue-600 hover:text-white dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:border-rose-200 dark:hover:bg-rose-200 dark:hover:text-black"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
           >
             View all orders
             <ArrowRight className="h-4 w-4" />
@@ -145,53 +144,48 @@ export function OrderHistory({
               order.manualCouponCode || order.autoCouponCode || null;
 
             return (
-              <article
-                key={order.id}
-                className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)]"
-              >
+              <article key={order.id} className="academy-card overflow-hidden">
                 <div className="space-y-5 p-5 md:p-6">
-                  {/* TOP */}
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-3">
-                        <h4 className="text-lg font-semibold text-slate-950 dark:text-white">
+                        <h4 className="text-lg font-semibold text-card-foreground">
                           Order #{order.id}
                         </h4>
 
                         <OrderStatusPill status={order.status} />
                       </div>
 
-                      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                      <p className="mt-2 text-sm text-muted-foreground">
                         Placed on {formatDate(order.createdAt)}
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 text-left dark:border-white/10 dark:bg-[#0b1628] md:text-right">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    <div className="rounded-2xl border border-border bg-muted/50 px-4 py-3 text-left md:text-right">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
                         Total Paid
                       </p>
 
-                      <p className="mt-1 text-xl font-bold text-slate-950 dark:text-white">
+                      <p className="mt-1 text-xl font-bold text-card-foreground">
                         ₹{formatPrice(Number(order.totalAmount || 0))}
                       </p>
                     </div>
                   </div>
 
-                  {/* COURSE + DETAILS */}
                   <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-                    <div className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
+                    <div className="rounded-3xl border border-border bg-muted/50 p-4">
                       {course ? (
                         <div className="flex flex-col gap-4 sm:flex-row">
                           <Link
                             href={`/course/${course.slug}`}
-                            className="relative h-44 w-full shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 sm:h-28 sm:w-32"
+                            className="relative h-44 w-full shrink-0 overflow-hidden rounded-2xl border border-border bg-card sm:h-28 sm:w-32"
                           >
                             <Image
                               src={course.image?.path || "/assets/default.png"}
                               alt={course.imageAlt || course.title}
                               fill
                               sizes="128px"
-                              className="object-cover transition duration-500 hover:scale-105"
+                              className="object-cover transition-transform duration-500 hover:scale-105"
                             />
                           </Link>
 
@@ -200,18 +194,18 @@ export function OrderHistory({
                               <div className="min-w-0">
                                 <Link
                                   href={`/course/${course.slug}`}
-                                  className="line-clamp-2 text-lg font-semibold leading-7 text-slate-950 transition hover:text-blue-700 dark:text-white dark:hover:text-rose-200"
+                                  className="line-clamp-2 text-lg font-semibold leading-7 text-card-foreground transition-colors hover:text-primary"
                                 >
                                   {course.title}
                                 </Link>
 
-                                <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                                <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
                                   {course.shortDescription ||
                                     "Purchased course from your learning dashboard."}
                                 </p>
                               </div>
 
-                              <p className="shrink-0 text-sm font-bold text-slate-800 dark:text-slate-100">
+                              <p className="shrink-0 text-sm font-bold text-card-foreground">
                                 ₹{formatPrice(Number(primaryItem.price || 0))}
                               </p>
                             </div>
@@ -226,7 +220,7 @@ export function OrderHistory({
                               ) : null}
 
                               {course.isEnrolled ? (
-                                <span className="inline-flex rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-300">
+                                <span className="inline-flex rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                                   Enrolled
                                 </span>
                               ) : null}
@@ -243,14 +237,14 @@ export function OrderHistory({
                           </div>
                         </div>
                       ) : (
-                        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-sm text-slate-500 dark:border-white/10 dark:bg-[#07111f] dark:text-slate-400">
+                        <div className="rounded-2xl border border-dashed border-border bg-card p-5 text-sm text-muted-foreground">
                           Course details are not available for this order.
                         </div>
                       )}
                     </div>
 
-                    <div className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
-                      <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-blue-700 dark:text-rose-200">
+                    <div className="rounded-3xl border border-border bg-muted/50 p-4">
+                      <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-primary">
                         Order Details
                       </p>
 
@@ -284,12 +278,11 @@ export function OrderHistory({
                     </div>
                   </div>
 
-                  {/* ACTIONS */}
-                  <div className="flex flex-wrap gap-3 border-t border-slate-100 pt-5 dark:border-white/10">
+                  <div className="flex flex-wrap gap-3 border-t border-border pt-5">
                     {course?.isEnrolled ? (
                       <Link
                         href={`/course/${course.slug}/learn`}
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(37,99,235,0.18)] transition hover:-translate-y-0.5 hover:bg-blue-700 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_12px_30px_color-mix(in_oklab,var(--primary)_18%,transparent)] transition hover:-translate-y-0.5 hover:bg-primary/90"
                       >
                         <CircleCheckBig className="h-4 w-4" />
                         Continue Learning
@@ -299,7 +292,7 @@ export function OrderHistory({
                     {canRetry ? (
                       <Link
                         href={`/checkout?retryOrderId=${order.id}`}
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-blue-600 px-4 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(37,99,235,0.18)] transition hover:-translate-y-0.5 hover:bg-blue-700 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_12px_30px_color-mix(in_oklab,var(--primary)_18%,transparent)] transition hover:-translate-y-0.5 hover:bg-primary/90"
                       >
                         <CreditCard className="h-4 w-4" />
                         Retry Payment
@@ -310,7 +303,7 @@ export function OrderHistory({
                       <button
                         type="button"
                         onClick={() => setRefundDialogOrderId(order.id)}
-                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-600 hover:bg-blue-600 hover:text-white dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:border-rose-200 dark:hover:bg-rose-200 dark:hover:text-black"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
                       >
                         <RotateCcw className="h-4 w-4" />
                         Request Refund
@@ -318,7 +311,7 @@ export function OrderHistory({
                     ) : null}
 
                     {latestRefundRequest ? (
-                      <span className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-4 text-sm font-semibold text-violet-700 dark:border-violet-300/20 dark:bg-violet-300/10 dark:text-violet-200">
+                      <span className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-primary/15 bg-primary/10 px-4 text-sm font-semibold text-primary">
                         <FileClock className="h-4 w-4" />
                         Refund {latestRefundRequest.status}
                       </span>
@@ -357,25 +350,25 @@ export function OrderHistory({
 
 function EmptyOrders() {
   return (
-    <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-[0_18px_55px_rgba(15,23,42,0.05)] dark:border-white/10 dark:bg-[#07111f]">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+    <div className="academy-card border-dashed p-10 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary ring-1 ring-primary/15">
         <BadgeAlert className="h-8 w-8" />
       </div>
 
-      <h4 className="mt-5 text-xl font-semibold text-slate-950 dark:text-white">
+      <h4 className="mt-5 text-xl font-semibold text-card-foreground">
         No orders yet
       </h4>
 
-      <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-slate-500 dark:text-slate-400">
+      <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-muted-foreground">
         Once you purchase a course, the complete order trail will appear here.
       </p>
     </div>
   );
 }
 
-function Tag({ children }: { children: React.ReactNode }) {
+function Tag({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex rounded-full border border-slate-100 bg-white px-3 py-1 text-xs font-medium text-slate-600 dark:border-white/10 dark:bg-white/10 dark:text-slate-300">
+    <span className="inline-flex rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
       {children}
     </span>
   );
@@ -391,17 +384,15 @@ function InfoLine({
   accent?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0 dark:border-white/10">
-      <span className="text-sm text-slate-500 dark:text-slate-400">
-        {label}
-      </span>
+    <div className="flex items-start justify-between gap-4 border-b border-border pb-3 last:border-b-0 last:pb-0">
+      <span className="text-sm text-muted-foreground">{label}</span>
 
       <span
-        className={`text-right text-sm font-semibold ${
+        className={
           accent
-            ? "text-blue-700 dark:text-rose-200"
-            : "text-slate-900 dark:text-white"
-        }`}
+            ? "text-right text-sm font-semibold text-primary"
+            : "text-right text-sm font-semibold text-card-foreground"
+        }
       >
         {value}
       </span>
@@ -412,7 +403,7 @@ function InfoLine({
 function OrderStatusPill({ status }: { status: OrderStatus }) {
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] ${getOrderStatusClass(
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] ${getOrderStatusClass(
         status,
       )}`}
     >
@@ -431,7 +422,7 @@ function RefundBlockedNote({
   if (isWithinRefundWindow && isProgressAllowedForRefund) return null;
 
   return (
-    <span className="inline-flex min-h-10 items-center gap-2 rounded-full border border-amber-100 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-200">
+    <span className="inline-flex min-h-10 items-center gap-2 rounded-full border border-primary/15 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
       <AlertCircle className="h-4 w-4" />
       {!isWithinRefundWindow
         ? "Refund window closed"
@@ -465,27 +456,23 @@ function formatPrice(value: number) {
 function getOrderStatusClass(status: OrderStatus) {
   switch (status) {
     case OrderStatus.PAID:
-      return "bg-emerald-50 text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-300";
+      return "border-primary/15 bg-primary/10 text-primary";
 
     case OrderStatus.FAILED:
-      return "bg-red-50 text-red-700 dark:bg-red-300/10 dark:text-red-300";
+    case OrderStatus.REFUND_REJECTED:
+    case OrderStatus.REFUND_FAILED:
+      return "border-destructive/20 bg-destructive/10 text-destructive";
 
     case OrderStatus.CANCELLED:
-      return "bg-amber-50 text-amber-700 dark:bg-amber-300/10 dark:text-amber-300";
+      return "border-border bg-muted text-muted-foreground";
 
     case OrderStatus.REFUNDED:
-      return "bg-sky-50 text-sky-700 dark:bg-sky-300/10 dark:text-sky-300";
-
     case OrderStatus.REFUND_REQUESTED:
     case OrderStatus.REFUND_APPROVED:
     case OrderStatus.REFUND_PROCESSING:
-      return "bg-violet-50 text-violet-700 dark:bg-violet-300/10 dark:text-violet-200";
-
-    case OrderStatus.REFUND_REJECTED:
-    case OrderStatus.REFUND_FAILED:
-      return "bg-orange-50 text-orange-700 dark:bg-orange-300/10 dark:text-orange-300";
+      return "border-primary/15 bg-primary/10 text-primary";
 
     default:
-      return "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300";
+      return "border-border bg-muted text-muted-foreground";
   }
 }

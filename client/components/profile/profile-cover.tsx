@@ -67,7 +67,7 @@ export function ProfileCover({ coverImage, isOwner }: ProfileCoverProps) {
   };
 
   return (
-    <div className="relative h-[220px] w-full overflow-hidden rounded-[34px] border border-slate-200 bg-slate-100 shadow-[0_30px_90px_rgba(15,23,42,0.14)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_30px_90px_rgba(0,0,0,0.38)] md:h-[290px]">
+    <div className="relative h-55 w-full overflow-hidden rounded-[34px] border border-border bg-muted shadow-[0_30px_90px_color-mix(in_oklab,var(--foreground)_14%,transparent)] md:h-72.5">
       <Image
         src={preview || "/assets/default-cover.jpg"}
         alt="Profile cover"
@@ -77,14 +77,14 @@ export function ProfileCover({ coverImage, isOwner }: ProfileCoverProps) {
         className="object-cover object-top"
       />
 
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/50 via-slate-950/14 to-blue-600/30 dark:from-slate-950/68 dark:via-[#07111f]/35 dark:to-rose-950/22" />
+      <div className="absolute inset-0 bg-linear-to-br from-foreground/55 via-foreground/15 to-primary/30" />
 
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:42px_42px] opacity-25 dark:opacity-15" />
+      <div className="academy-grid-mask absolute inset-0 opacity-20" />
 
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent p-5 md:p-7">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-foreground/75 via-foreground/25 to-transparent p-5 md:p-7">
         <div className="flex items-end justify-between gap-4">
-          <div className="max-w-xl text-white">
-            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-sky-100/85 dark:text-rose-200">
+          <div className="max-w-xl text-primary-foreground">
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-primary-foreground/80">
               Learner Space
             </p>
 
@@ -92,7 +92,7 @@ export function ProfileCover({ coverImage, isOwner }: ProfileCoverProps) {
               Your learning dashboard
             </h2>
 
-            <p className="mt-2 max-w-lg text-sm leading-6 text-white/78 md:text-base">
+            <p className="mt-2 max-w-lg text-sm leading-6 text-primary-foreground/75 md:text-base">
               Track progress, revisit purchases, and keep your profile polished
               from one clean workspace.
             </p>
@@ -106,7 +106,7 @@ export function ProfileCover({ coverImage, isOwner }: ProfileCoverProps) {
           onClick={() => inputRef.current?.click()}
           disabled={isUploading}
           title="Change Cover"
-          className="absolute right-4 top-4 inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-slate-950/45 text-white shadow-lg backdrop-blur-md transition hover:bg-white hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-70 dark:hover:bg-rose-200 dark:hover:text-black"
+          className="absolute right-4 top-4 inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-primary-foreground/20 bg-foreground/45 text-primary-foreground shadow-lg backdrop-blur-md transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isUploading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -123,7 +123,11 @@ export function ProfileCover({ coverImage, isOwner }: ProfileCoverProps) {
         accept="image/*"
         onChange={(event) => {
           const file = event.target.files?.[0];
-          if (file) handleUpload(file);
+
+          if (file) {
+            handleUpload(file);
+          }
+
           event.target.value = "";
         }}
       />

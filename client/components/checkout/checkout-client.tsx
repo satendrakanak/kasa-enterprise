@@ -186,12 +186,17 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
 
   if (isLoading) {
     return (
-      <div className="relative min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:bg-[#101b2d] dark:bg-none">
-        <Container>
+      <div className="relative min-h-screen bg-background">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-(--surface-shell)" />
+        </div>
+
+        <Container className="relative z-10">
           <div className="flex min-h-[60vh] items-center justify-center">
-            <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f]">
-              <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-blue-700 dark:text-rose-200" />
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <div className="academy-card p-8 text-center">
+              <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
+
+              <p className="text-sm font-semibold text-card-foreground">
                 Loading checkout...
               </p>
             </div>
@@ -203,24 +208,28 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
 
   if (!cartItems || cartItems.length === 0) {
     return (
-      <div className="relative min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 py-12 dark:bg-[#101b2d] dark:bg-none md:py-16">
-        <Container>
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)]">
-            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+      <div className="relative min-h-screen bg-background py-12 md:py-16">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-(--surface-shell)" />
+        </div>
+
+        <Container className="relative z-10">
+          <div className="academy-card flex flex-col items-center justify-center border-dashed px-6 py-16 text-center">
+            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary ring-1 ring-primary/15">
               <ShoppingCart className="h-10 w-10" />
             </div>
 
-            <h2 className="text-2xl font-semibold text-slate-950 dark:text-white">
+            <h2 className="text-2xl font-semibold text-card-foreground">
               Your cart is empty
             </h2>
 
-            <p className="mt-3 max-w-md text-sm leading-7 text-slate-500 dark:text-slate-400">
+            <p className="mt-3 max-w-md text-sm leading-7 text-muted-foreground">
               Add courses to your cart before continuing to checkout.
             </p>
 
             <Link
               href="/courses"
-              className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-blue-600 px-6 text-sm font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:bg-blue-700 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+              className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_24%,transparent)] transition hover:-translate-y-0.5 hover:bg-primary/90"
             >
               Explore Courses
               <ArrowRight className="h-4 w-4" />
@@ -233,29 +242,35 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
 
   return (
     <FormProvider {...checkoutForm}>
-      <div className="relative min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:bg-[#101b2d] dark:bg-none">
-        <form onSubmit={handleSubmit(handlePaymentSubmit)}>
+      <div className="relative min-h-screen bg-background">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-(--surface-shell)" />
+        </div>
+
+        <form
+          onSubmit={handleSubmit(handlePaymentSubmit)}
+          className="relative z-10"
+        >
           <Container>
             <div className="py-10 md:py-12">
-              {/* PAGE HEADER */}
-              <div className="mb-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700 dark:text-rose-200">
+              <div className="academy-card mb-8 p-5 md:p-6">
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
                   Secure Checkout
                 </p>
 
                 <div className="mt-2 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                   <div>
-                    <h1 className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white md:text-4xl">
+                    <h1 className="text-3xl font-semibold tracking-tight text-card-foreground md:text-4xl">
                       Checkout
                     </h1>
 
-                    <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
                       Complete your billing details and choose a payment method
                       to place your order.
                     </p>
                   </div>
 
-                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 dark:border-rose-200/20 dark:bg-rose-200/10 dark:text-rose-200">
+                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/15 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
                     <ShieldCheck className="h-4 w-4" />
                     Secure payment
                   </div>
@@ -263,17 +278,16 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
               </div>
 
               <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
-                {/* LEFT */}
                 <div className="min-w-0 space-y-6">
                   {!user ? (
-                    <p className="rounded-3xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm leading-6 text-blue-900 dark:border-rose-200/20 dark:bg-rose-200/10 dark:text-rose-100">
+                    <p className="rounded-3xl border border-primary/15 bg-primary/5 px-5 py-4 text-sm leading-6 text-primary">
                       Complete your billing details first. We will create your
                       account and verify your email with an OTP before payment.
                     </p>
                   ) : null}
 
                   {isRetryFlow ? (
-                    <p className="rounded-3xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-200">
+                    <p className="rounded-3xl border border-border bg-muted/50 px-5 py-4 text-sm leading-6 text-muted-foreground">
                       You are retrying a previous payment. We will continue with
                       your existing order instead of creating a new one.
                     </p>
@@ -284,7 +298,6 @@ const CheckoutClient = ({ gateways }: CheckoutClientProps) => {
                   <CheckoutItems />
                 </div>
 
-                {/* RIGHT */}
                 <aside className="lg:sticky lg:top-28">
                   <OrderSummary
                     isSubmitting={isSubmitting}

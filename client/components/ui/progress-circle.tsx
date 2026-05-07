@@ -1,46 +1,46 @@
 "use client";
 
 import { Award } from "lucide-react";
+
 interface ProgressCircleProps {
   percent: number;
   size?: number;
 }
 
 export const ProgressCircle = ({ percent, size = 36 }: ProgressCircleProps) => {
-  const radius = 16;
   const stroke = 3;
-  const normalized = radius - stroke;
-  const circumference = normalized * 2 * Math.PI;
-
-  const strokeDashoffset = circumference - (percent / 100) * circumference;
+  const radius = size / 2 - stroke;
+  const circumference = radius * 2 * Math.PI;
+  const safePercent = Math.max(0, Math.min(100, percent));
+  const strokeDashoffset = circumference - (safePercent / 100) * circumference;
 
   return (
     <div className="relative flex items-center justify-center">
       <svg width={size} height={size}>
         <circle
-          stroke="rgba(255,255,255,0.1)"
+          stroke="color-mix(in_oklab,var(--muted-foreground)_20%,transparent)"
           fill="transparent"
           strokeWidth={stroke}
-          r={normalized}
+          r={radius}
           cx={size / 2}
           cy={size / 2}
         />
 
         <circle
-          stroke="#22c55e"
+          stroke="var(--primary)"
           fill="transparent"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
-          r={normalized}
+          r={radius}
           cx={size / 2}
           cy={size / 2}
+          className="transition-all duration-300"
         />
       </svg>
 
-      {/* 🔥 CENTER ICON */}
-      <Award className="absolute w-4 h-4 text-green-400" />
+      <Award className="absolute h-4 w-4 text-primary" />
     </div>
   );
 };

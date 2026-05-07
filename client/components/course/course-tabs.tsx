@@ -98,14 +98,12 @@ export const CourseTabs = ({
       <div
         ref={tabsRef}
         className={cn(
-          "z-40 mb-8 rounded-3xl border p-2 transition-all duration-300",
-          "border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)]",
-          "dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.28)]",
+          "z-40 mb-8 rounded-3xl border border-border bg-card p-2 shadow-[0_18px_55px_rgba(15,23,42,0.06)] transition-all duration-300",
           isSticky &&
-            "sticky top-20 border-blue-100 bg-white/85 shadow-[0_18px_65px_rgba(37,99,235,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[#07111f]/90 dark:shadow-[0_24px_80px_rgba(0,0,0,0.45)]",
+            "sticky top-20 bg-card/85 shadow-[0_18px_65px_color-mix(in_oklab,var(--primary)_14%,transparent)] backdrop-blur-xl",
         )}
       >
-        <div className="flex gap-2 overflow-x-auto no-scrollbar px-1">
+        <div className="no-scrollbar flex gap-2 overflow-x-auto px-1">
           {tabs.map((tab) => {
             const isCurrent = active === tab.id;
 
@@ -115,14 +113,13 @@ export const CourseTabs = ({
                 type="button"
                 onClick={() => handleScroll(tab.id)}
                 className={cn(
-                  "relative inline-flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-full px-4 text-xs font-bold uppercase tracking-[0.14em] transition-all duration-300",
-                  "text-slate-600 hover:bg-blue-50 hover:text-blue-700",
-                  "dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white",
+                  "relative inline-flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-full px-4 text-xs font-bold uppercase tracking-[0.14em] transition-colors duration-300",
+                  "text-muted-foreground hover:bg-primary/10 hover:text-primary",
                   isCurrent &&
-                    "bg-blue-600 text-white shadow-[0_12px_30px_rgba(37,99,235,0.28)] hover:bg-blue-600 hover:text-white dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300 dark:hover:text-black",
+                    "bg-primary text-primary-foreground shadow-[0_12px_30px_color-mix(in_oklab,var(--primary)_28%,transparent)] hover:bg-primary hover:text-primary-foreground",
                 )}
               >
-                <span className="relative z-10">{tab.label}</span>
+                {tab.label}
               </button>
             );
           })}

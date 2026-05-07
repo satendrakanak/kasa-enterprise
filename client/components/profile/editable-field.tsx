@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pencil, Check, X } from "lucide-react";
-import { userClientService } from "@/services/users/user.client";
+import { Check, Loader2, Lock, Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { userClientService } from "@/services/users/user.client";
 
 interface EditableFieldProps {
   userId: number;
@@ -16,7 +17,6 @@ interface EditableFieldProps {
 }
 
 export function EditableField({
-  userId,
   label,
   value,
   field,
@@ -26,15 +26,22 @@ export function EditableField({
   const [isEditing, setIsEditing] = useState(false);
   const [temp, setTemp] = useState(value);
   const [loading, setLoading] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const isEditable = editable !== false;
+
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select(); // optional (select text)
-    }
+    setTemp(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+
+    inputRef.current?.focus();
+    inputRef.current?.select();
   }, [isEditing]);
+
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -47,93 +54,100 @@ export function EditableField({
       toast.success("Updated successfully");
       setIsEditing(false);
       router.refresh();
-    } catch (err) {
+    } catch (error) {
       toast.error("Failed to update");
-      console.log(err);
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="flex items-center justify-between py-3 border-b gap-x-2">
-      {/* LEFT */}
-      <div className="flex flex-col w-full ">
-        <span className="text-xs text-gray-400">{label}</span>
+  const handleCancel = () => {
+    setTemp(value);
+    setIsEditing(false);
+  };
 
-        {!isEditable ? (
-          <span className="text-sm font-medium text-gray-800">
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-border py-3 last:border-b-0">
+      <div className="min-w-0 flex-1">
+        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          {label}
+        </span>
+
+        {!isEditing ? (
+          <p className="mt-1 wrap-break-word text-sm font-semibold text-card-foreground">
             {value || "—"}
-          </span>
-        ) : !isEditing ? (
-          <span className="text-sm font-medium text-gray-800">
-            {value || "—"}
-          </span>
+          </p>
         ) : (
-          <div className="relative mt-1">
+          <div className="relative mt-2">
             <input
               ref={inputRef}
-              value={temp}
               id={field}
+              value={temp}
               disabled={loading}
-              onChange={(e) => setTemp(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSave();
-                if (e.key === "Escape") {
-                  setTemp(value);
-                  setIsEditing(false);
+              onChange={(event) => setTemp(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleSave();
+                }
+
+                if (event.key === "Escape") {
+                  handleCancel();
                 }
               }}
-              className="w-full text-sm px-2 py-1 border-b border-primary outline-none bg-transparent disabled:opacity-50"
+              className="h-10 w-full rounded-2xl border border-border bg-muted px-3 text-sm font-medium text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
             />
 
-            {/* 🔥 Loading overlay */}
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-sm bg-white/60 dark:bg-slate-950/50">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            {loading ? (
+              <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/70 backdrop-blur-sm">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
               </div>
-            )}
+            ) : null}
           </div>
         )}
       </div>
 
-      {/* RIGHT */}
-      <div className="flex items-center mt-4 gap-2">
-        {/* 🔒 NOT EDITABLE */}
-        {!isEditable && <span className="p-1 rounded-md bg-gray-100">🔒</span>}
+      <div className="mt-5 flex shrink-0 items-center gap-2">
+        {!isEditable ? (
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground">
+            <Lock className="h-4 w-4" />
+          </span>
+        ) : null}
 
-        {/* ✏️ EDIT MODE OFF */}
-        {isEditable && !isEditing && (
+        {isEditable && !isEditing ? (
           <button
+            type="button"
             onClick={() => setIsEditing(true)}
-            className="p-1 rounded-md hover:bg-gray-100 cursor-pointer"
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
+            aria-label={`Edit ${label}`}
           >
-            <Pencil size={12} className="text-gray-500" />
+            <Pencil className="h-3.5 w-3.5" />
           </button>
-        )}
+        ) : null}
 
-        {/* ✅ EDIT MODE ON */}
-        {isEditable && isEditing && (
+        {isEditable && isEditing ? (
           <>
             <button
+              type="button"
               onClick={handleSave}
               disabled={loading}
-              className="p-1 rounded-md hover:bg-green-100 cursor-pointer"
+              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-primary/15 bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label={`Save ${label}`}
             >
-              <Check size={14} className="text-green-600" />
+              <Check className="h-4 w-4" />
             </button>
 
             <button
-              onClick={() => {
-                setTemp(value);
-                setIsEditing(false);
-              }}
-              className="p-1 rounded-md hover:bg-red-100 cursor-pointer"
+              type="button"
+              onClick={handleCancel}
+              disabled={loading}
+              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-destructive/20 bg-destructive/10 text-destructive transition-colors hover:bg-destructive hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label={`Cancel ${label}`}
             >
-              <X size={14} className="text-red-500" />
+              <X className="h-4 w-4" />
             </button>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -27,8 +27,12 @@ export default async function CoursesPage() {
     <div>
       <CoursesBanner totalCourses={courses.length} />
 
-      <section className="academy-surface py-20">
-        <Container>
+      <section className="academy-section relative bg-background">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-(--surface-shell)" />
+        </div>
+
+        <Container className="relative z-10">
           <CouponBulkClient courses={courses} />
         </Container>
       </section>

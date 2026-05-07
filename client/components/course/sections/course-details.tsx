@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Course } from "@/types/course";
 import {
   Monitor,
   Award,
@@ -13,7 +12,9 @@ import {
   Languages,
   ChevronDown,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+import { Course } from "@/types/course";
 
 interface CourseDetailsProps {
   course: Course;
@@ -66,13 +67,13 @@ export const CourseDetails = ({ course }: CourseDetailsProps) => {
   ];
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-      <div className="mb-5 border-b border-slate-100 pb-4 dark:border-white/10">
-        <h2 className="text-xl font-semibold text-slate-950 dark:text-white">
+    <div className="academy-card p-5 md:p-6">
+      <div className="mb-5 border-b border-border pb-4">
+        <h2 className="text-xl font-semibold text-card-foreground">
           Course Details
         </h2>
 
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Important information about course format, level, certificate, and
           learning resources.
         </p>
@@ -86,20 +87,20 @@ export const CourseDetails = ({ course }: CourseDetailsProps) => {
 
           return (
             <div
-              key={index}
-              className="group rounded-2xl border border-slate-100 bg-slate-50/70 p-4 transition-all duration-300 hover:border-blue-100 hover:bg-blue-50/60 hover:shadow-[0_14px_40px_rgba(37,99,235,0.08)] dark:border-white/10 dark:bg-[#0b1628] dark:hover:border-rose-200/20 dark:hover:bg-white/[0.055] dark:hover:shadow-[0_18px_55px_rgba(0,0,0,0.25)]"
+              key={item.label}
+              className="group rounded-2xl border border-border bg-muted/50 p-4 transition-all duration-300 hover:border-primary/25 hover:bg-primary/5 hover:shadow-[0_14px_40px_color-mix(in_oklab,var(--primary)_12%,transparent)]"
             >
               <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 transition group-hover:bg-blue-600 group-hover:text-white dark:bg-white/10 dark:text-rose-200 dark:ring-white/10 dark:group-hover:bg-rose-200 dark:group-hover:text-black">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15 transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <Icon className="h-5 w-5 stroke-[1.9]" />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                     {item.label}
                   </p>
 
-                  <p className="text-sm font-medium leading-6 text-slate-800 dark:text-slate-100">
+                  <p className="text-sm font-medium leading-6 text-card-foreground">
                     {isExpanded
                       ? item.value
                       : isLong
@@ -113,9 +114,10 @@ export const CourseDetails = ({ course }: CourseDetailsProps) => {
                       onClick={() =>
                         setExpandedIndex(isExpanded ? null : index)
                       }
-                      className="mt-2 inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-blue-700 transition hover:text-blue-800 dark:text-rose-200 dark:hover:text-rose-100"
+                      className="mt-2 inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-primary/80"
                     >
                       {isExpanded ? "Show less" : "Show more"}
+
                       <ChevronDown
                         className={cn(
                           "h-3.5 w-3.5 transition-transform",

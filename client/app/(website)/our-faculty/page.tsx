@@ -1,9 +1,9 @@
 import Container from "@/components/container";
 import { FacultyGrid } from "@/components/faculty/faculty-grid";
-import { userServerService } from "@/services/users/user.server";
-import { User } from "@/types/user";
 import { PageHero } from "@/components/sliders/page-hero";
 import { buildMetadata } from "@/lib/seo";
+import { userServerService } from "@/services/users/user.server";
+import { User } from "@/types/user";
 
 export const metadata = buildMetadata({
   title: "Our Faculty",
@@ -23,30 +23,36 @@ export default async function FacultiesPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:bg-[#101b2d] dark:bg-none">
-      <PageHero
-        pageTitle="Faculty Network"
-        pageHeadline="Meet the minds behind the learning experience."
-        pageDescription="Learn from experienced faculty across nutrition, wellness, and lifestyle sciences who bring both depth and real practice into every session."
-      />
+    <div className="relative min-h-screen bg-background">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-(--surface-shell)" />
+      </div>
 
-      <section className="py-12 pb-20">
-        <Container>
-          {faculties.length ? (
-            <FacultyGrid faculties={faculties} />
-          ) : (
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)]">
-              <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                No faculty profiles found
-              </p>
+      <div className="relative z-10">
+        <PageHero
+          pageTitle="Faculty Network"
+          pageHeadline="Meet the minds behind the learning experience."
+          pageDescription="Learn from experienced faculty across nutrition, wellness, and lifestyle sciences who bring both depth and real practice into every session."
+        />
 
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Faculty profiles will appear here once they are added.
-              </p>
-            </div>
-          )}
-        </Container>
-      </section>
+        <section className="py-12 pb-20">
+          <Container>
+            {faculties.length ? (
+              <FacultyGrid faculties={faculties} />
+            ) : (
+              <div className="academy-card border-dashed p-10 text-center">
+                <p className="text-sm font-semibold text-card-foreground">
+                  No faculty profiles found
+                </p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Faculty profiles will appear here once they are added.
+                </p>
+              </div>
+            )}
+          </Container>
+        </section>
+      </div>
     </div>
   );
 }

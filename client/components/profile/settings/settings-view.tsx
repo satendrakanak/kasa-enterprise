@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   Eye,
@@ -10,13 +10,14 @@ import {
   Save,
   ShieldCheck,
   UserRound,
+  type LucideIcon,
 } from "lucide-react";
 
-import { User } from "@/types/user";
-import { profileClientService } from "@/services/users/profile.client";
-import { getErrorMessage } from "@/lib/error-handler";
-import { SwitchRow } from "../switch-row";
 import { Button } from "@/components/ui/button";
+import { getErrorMessage } from "@/lib/error-handler";
+import { profileClientService } from "@/services/users/profile.client";
+import { User } from "@/types/user";
+import { SwitchRow } from "../switch-row";
 import { ChangePasswordForm } from "./change-password-form";
 
 interface SettingsViewProps {
@@ -60,8 +61,7 @@ export default function SettingsView({ user }: SettingsViewProps) {
     <div className="space-y-8">
       <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
-          {/* PRIVACY */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
+          <section className="academy-card p-5 md:p-6">
             <SectionHeader
               icon={ShieldCheck}
               eyebrow="Privacy Settings"
@@ -70,7 +70,7 @@ export default function SettingsView({ user }: SettingsViewProps) {
             />
 
             <div className="mt-6 space-y-3">
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
+              <div className="rounded-2xl border border-border bg-muted/50 p-4">
                 <SwitchRow
                   label="Public Profile"
                   description="Allow your learner profile to be discoverable from public views."
@@ -82,7 +82,7 @@ export default function SettingsView({ user }: SettingsViewProps) {
                 />
               </div>
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
+              <div className="rounded-2xl border border-border bg-muted/50 p-4">
                 <SwitchRow
                   label="Show Courses"
                   description="Display your enrolled or taught courses on public profile areas."
@@ -97,7 +97,7 @@ export default function SettingsView({ user }: SettingsViewProps) {
                 />
               </div>
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
+              <div className="rounded-2xl border border-border bg-muted/50 p-4">
                 <SwitchRow
                   label="Show Certificates"
                   description="Expose completed course certificates on your public-facing profile."
@@ -113,8 +113,8 @@ export default function SettingsView({ user }: SettingsViewProps) {
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+            <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm leading-6 text-muted-foreground">
                 Changes will only apply after saving your visibility settings.
               </p>
 
@@ -122,7 +122,7 @@ export default function SettingsView({ user }: SettingsViewProps) {
                 type="button"
                 disabled={!dirty || isSaving}
                 onClick={handleProfileSave}
-                className="h-11 rounded-full bg-blue-600 px-6 font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+                className="h-11 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_24%,transparent)] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSaving ? (
                   <>
@@ -143,8 +143,7 @@ export default function SettingsView({ user }: SettingsViewProps) {
         </div>
 
         <div className="space-y-6">
-          {/* SUMMARY */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
+          <section className="academy-card p-5 md:p-6">
             <SectionHeader
               icon={UserRound}
               eyebrow="Account Summary"
@@ -186,8 +185,7 @@ export default function SettingsView({ user }: SettingsViewProps) {
             </div>
           </section>
 
-          {/* SECURITY NOTES */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
+          <section className="academy-card p-5 md:p-6">
             <SectionHeader
               icon={LockKeyhole}
               eyebrow="Security Notes"
@@ -225,7 +223,7 @@ function SectionHeader({
   description,
   compact = false,
 }: {
-  icon: typeof ShieldCheck;
+  icon: LucideIcon;
   eyebrow: string;
   title: string;
   description: string;
@@ -233,28 +231,28 @@ function SectionHeader({
 }) {
   return (
     <div
-      className={`flex items-start gap-3 border-b border-slate-100 dark:border-white/10 ${
+      className={`flex items-start gap-3 border-b border-border ${
         compact ? "pb-4" : "pb-5"
       }`}
     >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
         <Icon className="h-5 w-5" />
       </div>
 
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700 dark:text-rose-200">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
           {eyebrow}
         </p>
 
         <h3
-          className={`mt-2 font-semibold text-slate-950 dark:text-white ${
+          className={`mt-2 font-semibold text-card-foreground ${
             compact ? "text-xl" : "text-2xl"
           }`}
         >
           {title}
         </h3>
 
-        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {description}
         </p>
       </div>
@@ -268,35 +266,29 @@ function SummaryRow({
   value,
   active,
 }: {
-  icon: typeof Eye;
+  icon: LucideIcon;
   label: string;
   value: string;
   active?: boolean;
 }) {
   return (
-    <div
-      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 ${
-        active
-          ? "border-blue-100 bg-blue-50/80 dark:border-rose-200/20 dark:bg-rose-200/10"
-          : "border-slate-100 bg-slate-50/80 dark:border-white/10 dark:bg-[#0b1628]"
-      }`}
-    >
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/50 p-4">
       <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ${
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ${
           active
-            ? "bg-white text-blue-700 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10"
-            : "bg-white text-slate-500 ring-slate-100 dark:bg-white/10 dark:text-slate-400 dark:ring-white/10"
+            ? "bg-primary/10 text-primary ring-primary/15"
+            : "bg-background text-muted-foreground ring-border"
         }`}
       >
-        <Icon className="h-[18px] w-[18px]" />
+        <Icon className="h-5 w-5" />
       </div>
 
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
           {label}
         </p>
 
-        <p className="mt-1 truncate text-sm font-semibold leading-none text-slate-950 dark:text-white">
+        <p className="mt-1 truncate text-sm font-semibold text-card-foreground">
           {value}
         </p>
       </div>
@@ -304,11 +296,10 @@ function SummaryRow({
   );
 }
 
-function SecurityNote({ children }: { children: React.ReactNode }) {
+function SecurityNote({ children }: { children: ReactNode }) {
   return (
-    <li className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-sm leading-6 text-slate-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-slate-300">
-      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600 dark:bg-rose-200" />
-      <span>{children}</span>
+    <li className="rounded-2xl border border-border bg-muted/50 p-4 text-sm leading-6 text-muted-foreground">
+      {children}
     </li>
   );
 }

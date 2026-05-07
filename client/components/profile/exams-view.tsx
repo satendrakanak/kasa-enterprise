@@ -12,6 +12,7 @@ import {
 import { Course } from "@/types/course";
 import { ExamHistoryRecord } from "@/types/exam";
 import { ExamHistory } from "./exam-history";
+import { cn } from "@/lib/utils";
 
 interface ExamsViewProps {
   courses: Course[];
@@ -38,28 +39,23 @@ export function ExamsView({ courses, examHistory }: ExamsViewProps) {
 
   return (
     <div className="space-y-8">
-      {/* HERO */}
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-        <div className="pointer-events-none absolute inset-0 dark:hidden">
-          <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-100/70 blur-[90px]" />
-          <div className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-sky-100/70 blur-[90px]" />
-        </div>
-
-        <div className="pointer-events-none absolute inset-0 hidden dark:block">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_15%,rgba(56,189,248,0.14),transparent_32%),radial-gradient(circle_at_88%_35%,rgba(99,102,241,0.12),transparent_36%)]" />
+      <section className="academy-card relative overflow-hidden p-5 md:p-6">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/10 blur-[90px]" />
+          <div className="absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-primary/10 blur-[90px]" />
         </div>
 
         <div className="relative z-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700 dark:text-rose-200">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
               Exam Centre
             </p>
 
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 dark:text-white md:text-4xl">
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-card-foreground md:text-4xl">
               Review every final exam, result, and next milestone.
             </h2>
 
-            <p className="mt-3 text-sm leading-7 text-slate-500 dark:text-slate-400 md:text-base">
+            <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
               See what is available now, what is still locked behind course
               completion, and how your final assessments are progressing.
             </p>
@@ -73,36 +69,35 @@ export function ExamsView({ courses, examHistory }: ExamsViewProps) {
         </div>
       </section>
 
-      {/* UPCOMING EXAMS */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-        <div className="mb-6 flex flex-col gap-3 border-b border-slate-100 pb-5 dark:border-white/10 md:flex-row md:items-end md:justify-between">
+      <section className="academy-card p-5 md:p-6">
+        <div className="mb-6 flex flex-col gap-3 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700 dark:text-rose-200">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
               Upcoming Exams
             </p>
 
-            <h3 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+            <h3 className="mt-2 text-2xl font-semibold text-card-foreground">
               Courses with final assessments
             </h3>
           </div>
 
-          <p className="max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
             A final exam unlocks only after course completion. Open the course
             and continue learning to make an exam available.
           </p>
         </div>
 
         {upcomingExams.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 p-10 text-center dark:border-white/10 dark:bg-[#0b1628]">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+          <div className="rounded-3xl border border-dashed border-border bg-muted/50 p-10 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary ring-1 ring-primary/15">
               <ClipboardCheck className="h-8 w-8" />
             </div>
 
-            <p className="text-sm font-semibold text-slate-800 dark:text-white">
+            <p className="text-sm font-semibold text-card-foreground">
               No published final exams found
             </p>
 
-            <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-slate-500 dark:text-slate-400">
+            <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-muted-foreground">
               No published final exams are attached to your current enrollments.
             </p>
           </div>
@@ -110,73 +105,76 @@ export function ExamsView({ courses, examHistory }: ExamsViewProps) {
           <div className="grid gap-5 xl:grid-cols-2">
             {upcomingExams.map(({ course, hasAttempted, progress }) => {
               const unlocked = progress >= 100;
+              const safeProgress = Math.min(progress, 100);
 
               return (
                 <article
                   key={course.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.06)] transition hover:border-blue-100 hover:shadow-[0_26px_80px_rgba(37,99,235,0.1)] dark:border-white/10 dark:bg-[#0b1628] dark:shadow-[0_24px_70px_rgba(0,0,0,0.28)] dark:hover:border-rose-200/25 dark:hover:shadow-[0_30px_90px_rgba(244,63,94,0.12)]"
+                  className="rounded-3xl border border-border bg-card p-5 shadow-(--shadow-card) transition-all duration-300 hover:border-primary/25 hover:shadow-[0_26px_80px_color-mix(in_oklab,var(--primary)_12%,transparent)]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700 dark:text-rose-200">
+                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
                         Final assessment
                       </p>
 
-                      <h4 className="mt-2 line-clamp-2 text-lg font-semibold leading-7 text-slate-950 dark:text-white">
+                      <h4 className="mt-2 line-clamp-2 text-lg font-semibold leading-7 text-card-foreground">
                         {course.title}
                       </h4>
                     </div>
 
                     <span
-                      className={
+                      className={cn(
+                        "inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border px-3 text-xs font-bold",
                         unlocked
-                          ? "inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 text-xs font-bold text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-300/10 dark:text-emerald-300"
-                          : "inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-amber-100 bg-amber-50 px-3 text-xs font-bold text-amber-700 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-300"
-                      }
+                          ? "border-primary/15 bg-primary/10 text-primary"
+                          : "border-border bg-muted text-muted-foreground",
+                      )}
                     >
                       {unlocked ? (
                         <Sparkles className="h-3.5 w-3.5" />
                       ) : (
                         <Lock className="h-3.5 w-3.5" />
                       )}
+
                       {unlocked ? "Available now" : "Locked"}
                     </span>
                   </div>
 
                   <div className="mt-5">
-                    <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">
                       <span>Course progress</span>
-                      <span>{Math.min(progress, 100)}%</span>
+                      <span>{safeProgress}%</span>
                     </div>
 
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-blue-600 transition-all dark:bg-rose-200"
-                        style={{ width: `${Math.min(progress, 100)}%` }}
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${safeProgress}%` }}
                       />
                     </div>
                   </div>
 
-                  <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
                     {unlocked
                       ? "All course lectures are complete, so you can now take the final exam."
                       : `${progress}% course progress completed. Finish all lessons to unlock the exam.`}
                   </p>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-300">
-                    <span className="inline-flex h-9 items-center gap-2 rounded-full border border-slate-100 bg-slate-50 px-3 font-semibold dark:border-white/10 dark:bg-white/10">
-                      <Clock3 className="h-3.5 w-3.5 text-blue-700 dark:text-rose-200" />
+                  <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-muted px-3 font-semibold">
+                      <Clock3 className="h-3.5 w-3.5 text-primary" />
                       {course.exam?.timeLimitMinutes
                         ? `${course.exam.timeLimitMinutes} mins`
                         : "No time limit"}
                     </span>
 
-                    <span className="inline-flex h-9 items-center rounded-full border border-slate-100 bg-slate-50 px-3 font-semibold dark:border-white/10 dark:bg-white/10">
+                    <span className="inline-flex h-9 items-center rounded-full border border-border bg-muted px-3 font-semibold">
                       {course.exam?.maxAttempts || "Unlimited"} attempts
                     </span>
 
                     {hasAttempted ? (
-                      <span className="inline-flex h-9 items-center rounded-full border border-blue-100 bg-blue-50 px-3 font-semibold text-blue-700 dark:border-rose-200/20 dark:bg-rose-200/10 dark:text-rose-200">
+                      <span className="inline-flex h-9 items-center rounded-full border border-primary/15 bg-primary/10 px-3 font-semibold text-primary">
                         Attempted before
                       </span>
                     ) : null}
@@ -185,7 +183,7 @@ export function ExamsView({ courses, examHistory }: ExamsViewProps) {
                   <div className="mt-5">
                     <Link
                       href={`/course/${course.slug}/learn`}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-600 hover:bg-blue-600 hover:text-white dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:border-rose-200 dark:hover:bg-rose-200 dark:hover:text-black"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
                     >
                       Open learning screen
                       <ArrowRight className="h-4 w-4" />
@@ -198,8 +196,7 @@ export function ExamsView({ courses, examHistory }: ExamsViewProps) {
         )}
       </section>
 
-      {/* HISTORY */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
+      <section className="academy-card p-5 md:p-6">
         <ExamHistory records={examHistory} />
       </section>
     </div>
@@ -214,17 +211,17 @@ function HeroMetric({
   value: string | number;
 }) {
   return (
-    <div className="flex min-w-[150px] items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 shadow-sm dark:border-white/10 dark:bg-[#0b1628]">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
-        <ClipboardCheck className="h-[18px] w-[18px]" />
+    <div className="flex min-w-37.5 items-center gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-3 shadow-sm">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+        <ClipboardCheck className="h-4.5 w-4.5" />
       </div>
 
       <div className="min-w-0">
-        <p className="text-lg font-semibold leading-none text-slate-950 dark:text-white">
+        <p className="text-lg font-semibold leading-none text-card-foreground">
           {value}
         </p>
 
-        <p className="mt-1.5 line-clamp-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+        <p className="mt-1.5 line-clamp-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </p>
       </div>

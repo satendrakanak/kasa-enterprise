@@ -68,9 +68,7 @@ export default async function Home() {
       <PopularCourses courses={courses} />
       <HowItWorks />
       <FeaturedTestimonialsSection testimonials={testimonials} />
-
       <Faculty faculties={faculties} />
-
       <ArticlesSection articles={articles} />
     </div>
   );

@@ -275,12 +275,24 @@ export const CreateTestimonialForm = ({
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel>Rating</FieldLabel>
                 <Input
-                  {...field}
+                  name={field.name}
+                  ref={field.ref}
+                  onBlur={field.onBlur}
                   type="number"
                   min={1}
                   max={5}
                   placeholder="5"
                   className="h-11"
+                  value={
+                    typeof field.value === "number" ||
+                    typeof field.value === "string"
+                      ? field.value
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    field.onChange(value === "" ? undefined : Number(value));
+                  }}
                 />
                 {fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
@@ -435,11 +447,23 @@ export const CreateTestimonialForm = ({
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Priority</FieldLabel>
                   <Input
-                    {...field}
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
                     type="number"
                     min={0}
                     placeholder="0"
                     className="h-11"
+                    value={
+                      typeof field.value === "number" ||
+                      typeof field.value === "string"
+                        ? field.value
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? undefined : Number(value));
+                    }}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />

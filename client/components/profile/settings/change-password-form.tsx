@@ -1,22 +1,22 @@
 "use client";
 
 import * as z from "zod";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LockKeyhole, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 
-import { changePasswordSchema } from "@/schemas/profile";
-import { userClientService } from "@/services/users/user.client";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getErrorMessage } from "@/lib/error-handler";
+import { changePasswordSchema } from "@/schemas/profile";
+import { userClientService } from "@/services/users/user.client";
 
 export function ChangePasswordForm() {
   const form = useForm<z.infer<typeof changePasswordSchema>>({
@@ -46,25 +46,25 @@ export function ChangePasswordForm() {
   };
 
   const inputClass =
-    "h-12 rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-none transition focus-visible:border-blue-600 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:placeholder:text-slate-500 dark:focus-visible:border-rose-200 dark:focus-visible:ring-rose-200";
+    "h-12 rounded-2xl border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none transition focus-visible:border-primary focus-visible:ring-primary";
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-      <div className="flex items-start gap-3 border-b border-slate-100 pb-5 dark:border-white/10">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+    <section className="academy-card p-5 md:p-6">
+      <div className="flex items-start gap-3 border-b border-border pb-5">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
           <LockKeyhole className="h-5 w-5" />
         </div>
 
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700 dark:text-rose-200">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
             Security
           </p>
 
-          <h3 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
+          <h3 className="mt-2 text-2xl font-semibold text-card-foreground">
             Change password
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Update your password to keep your learning account secure.
           </p>
         </div>
@@ -77,7 +77,7 @@ export function ChangePasswordForm() {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <FieldLabel className="text-sm font-semibold text-card-foreground">
                   Current password
                 </FieldLabel>
 
@@ -100,7 +100,7 @@ export function ChangePasswordForm() {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <FieldLabel className="text-sm font-semibold text-card-foreground">
                   New password
                 </FieldLabel>
 
@@ -123,7 +123,7 @@ export function ChangePasswordForm() {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <FieldLabel className="text-sm font-semibold text-card-foreground">
                   Confirm password
                 </FieldLabel>
 
@@ -142,15 +142,15 @@ export function ChangePasswordForm() {
           />
         </FieldGroup>
 
-        <div className="flex flex-col gap-3 border-t border-slate-100 pt-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+        <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm leading-6 text-muted-foreground">
             Use a strong password that you do not reuse on other websites.
           </p>
 
           <Button
             type="submit"
             disabled={!isValid || isSubmitting}
-            className="h-11 rounded-full bg-blue-600 px-6 font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+            className="h-11 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_24%,transparent)] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? (
               <>

@@ -11,13 +11,12 @@ import {
   Loader2,
   MapPin,
   Save,
-  UserRound,
   Sparkles,
+  UserRound,
 } from "lucide-react";
+import { FaInstagram, FaLinkedin } from "react-icons/fa";
 
-import { User, UpdateFacultyProfilePayload } from "@/types/user";
-import { userClientService } from "@/services/users/user.client";
-import { getErrorMessage } from "@/lib/error-handler";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldError,
@@ -26,8 +25,12 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { FaInstagram, FaLinkedin, FaLinkedinIn } from "react-icons/fa";
+import { getErrorMessage } from "@/lib/error-handler";
+import { userClientService } from "@/services/users/user.client";
+import { UpdateFacultyProfilePayload, User } from "@/types/user";
+import { PreviewLine } from "./profile/preview-line";
+import { SectionHeader } from "./profile/section-header";
+import { SocialPill } from "./profile/social-pill";
 
 interface ProfileViewProps {
   user: User;
@@ -190,6 +193,10 @@ export default function ProfileView({ user }: ProfileViewProps) {
     name: "website",
   });
 
+  const fullName = `${profileForm.watch("firstName") || ""} ${
+    profileForm.watch("lastName") || ""
+  }`.trim();
+
   const handleProfileSave = profileForm.handleSubmit((values) => {
     startSavingProfile(async () => {
       try {
@@ -235,6 +242,7 @@ export default function ProfileView({ user }: ProfileViewProps) {
         };
 
         await userClientService.updateFacultyProfile(user.id, payload);
+
         toast.success("Faculty profile updated");
       } catch (error: unknown) {
         toast.error(getErrorMessage(error));
@@ -242,331 +250,107 @@ export default function ProfileView({ user }: ProfileViewProps) {
     });
   });
 
-  const inputClass =
-    "h-12 rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-none transition focus-visible:border-blue-600 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:placeholder:text-slate-500 dark:focus-visible:border-rose-200 dark:focus-visible:ring-rose-200";
-
-  const textareaClass =
-    "resize-none rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-none transition focus-visible:border-blue-600 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:placeholder:text-slate-500 dark:focus-visible:border-rose-200 dark:focus-visible:ring-rose-200";
-
   return (
-    <div className="space-y-8">
-      <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
-        {/* PROFILE FORM */}
-        <form
-          onSubmit={handleProfileSave}
-          className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6"
-        >
+    <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+      <div className="space-y-8">
+        <form onSubmit={handleProfileSave} className="academy-card p-5 md:p-6">
           <SectionHeader
             icon={UserRound}
             eyebrow="Personal Profile"
             title="Update your public profile"
-            description="Keep your basic details, professional headline, and social links fresh."
+            description="Keep your basic details, profile summary, and contact links up to date."
           />
 
           <FieldGroup className="mt-6 gap-5">
             <div className="grid gap-5 md:grid-cols-2">
-              <Field>
-                <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  First name
-                </FieldLabel>
-                <Controller
-                  name="firstName"
-                  control={profileForm.control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      placeholder="First name"
-                      className={inputClass}
-                    />
-                  )}
-                />
-                <FieldError errors={[profileForm.formState.errors.firstName]} />
-              </Field>
-
-              <Field>
-                <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Last name
-                </FieldLabel>
-                <Controller
-                  name="lastName"
-                  control={profileForm.control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      placeholder="Last name"
-                      className={inputClass}
-                    />
-                  )}
-                />
-                <FieldError errors={[profileForm.formState.errors.lastName]} />
-              </Field>
-            </div>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field>
-                <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Phone number
-                </FieldLabel>
-                <Controller
-                  name="phoneNumber"
-                  control={profileForm.control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      placeholder="Phone number"
-                      className={inputClass}
-                    />
-                  )}
-                />
-                <FieldError
-                  errors={[profileForm.formState.errors.phoneNumber]}
-                />
-              </Field>
-
-              <Field>
-                <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Headline
-                </FieldLabel>
-                <Controller
-                  name="headline"
-                  control={profileForm.control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      placeholder="Nutrition learner, wellness mentor..."
-                      className={inputClass}
-                    />
-                  )}
-                />
-                <FieldError errors={[profileForm.formState.errors.headline]} />
-              </Field>
-            </div>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field>
-                <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Company
-                </FieldLabel>
-                <Controller
-                  name="company"
-                  control={profileForm.control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      placeholder="Company or institution"
-                      className={inputClass}
-                    />
-                  )}
-                />
-                <FieldError errors={[profileForm.formState.errors.company]} />
-              </Field>
-
-              <Field>
-                <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                  Location
-                </FieldLabel>
-                <Controller
-                  name="location"
-                  control={profileForm.control}
-                  render={({ field }) => (
-                    <Input
-                      {...field}
-                      placeholder="City, Country"
-                      className={inputClass}
-                    />
-                  )}
-                />
-                <FieldError errors={[profileForm.formState.errors.location]} />
-              </Field>
-            </div>
-
-            <Field>
-              <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Website
-              </FieldLabel>
-              <Controller
-                name="website"
+              <FieldControl
+                name="firstName"
+                label="First name"
+                placeholder="First name"
                 control={profileForm.control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="https://yourwebsite.com"
-                    className={inputClass}
-                  />
-                )}
+                error={profileForm.formState.errors.firstName}
               />
-              <FieldError errors={[profileForm.formState.errors.website]} />
-            </Field>
+
+              <FieldControl
+                name="lastName"
+                label="Last name"
+                placeholder="Last name"
+                control={profileForm.control}
+                error={profileForm.formState.errors.lastName}
+              />
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <FieldControl
+                name="phoneNumber"
+                label="Phone number"
+                placeholder="Phone number"
+                control={profileForm.control}
+                error={profileForm.formState.errors.phoneNumber}
+              />
+
+              <FieldControl
+                name="headline"
+                label="Headline"
+                placeholder="Example: Wellness learner, nutrition enthusiast"
+                control={profileForm.control}
+                error={profileForm.formState.errors.headline}
+              />
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <FieldControl
+                name="company"
+                label="Company"
+                placeholder="Company or organization"
+                control={profileForm.control}
+                error={profileForm.formState.errors.company}
+              />
+
+              <FieldControl
+                name="location"
+                label="Location"
+                placeholder="City, country"
+                control={profileForm.control}
+                error={profileForm.formState.errors.location}
+              />
+            </div>
+
+            <FieldControl
+              name="website"
+              label="Website"
+              placeholder="https://example.com"
+              control={profileForm.control}
+              error={profileForm.formState.errors.website}
+            />
 
             <Field>
-              <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <FieldLabel className="text-sm font-semibold text-card-foreground">
                 Bio
               </FieldLabel>
+
               <Controller
                 name="bio"
                 control={profileForm.control}
                 render={({ field }) => (
                   <Textarea
                     {...field}
-                    rows={5}
                     placeholder="Write a short profile bio..."
-                    className={`min-h-32 ${textareaClass}`}
+                    rows={6}
+                    className="min-h-36 resize-none rounded-2xl border-border bg-muted px-4 py-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none focus-visible:border-primary focus-visible:ring-primary"
                   />
                 )}
               />
+
               <FieldError errors={[profileForm.formState.errors.bio]} />
             </Field>
-
-            <div className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4 dark:border-white/10 dark:bg-[#0b1628]">
-              <p className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-blue-700 dark:text-rose-200">
-                Social Links
-              </p>
-
-              <div className="grid gap-5 md:grid-cols-2">
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Facebook
-                  </FieldLabel>
-                  <Controller
-                    name="facebook"
-                    control={profileForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="https://facebook.com/..."
-                        className={inputClass}
-                      />
-                    )}
-                  />
-                  <FieldError
-                    errors={[profileForm.formState.errors.facebook]}
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Instagram
-                  </FieldLabel>
-                  <Controller
-                    name="instagram"
-                    control={profileForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="https://instagram.com/..."
-                        className={inputClass}
-                      />
-                    )}
-                  />
-                  <FieldError
-                    errors={[profileForm.formState.errors.instagram]}
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    X / Twitter
-                  </FieldLabel>
-                  <Controller
-                    name="twitter"
-                    control={profileForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="https://x.com/..."
-                        className={inputClass}
-                      />
-                    )}
-                  />
-                  <FieldError errors={[profileForm.formState.errors.twitter]} />
-                </Field>
-
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    LinkedIn
-                  </FieldLabel>
-                  <Controller
-                    name="linkedin"
-                    control={profileForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="https://linkedin.com/in/..."
-                        className={inputClass}
-                      />
-                    )}
-                  />
-                  <FieldError
-                    errors={[profileForm.formState.errors.linkedin]}
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    YouTube
-                  </FieldLabel>
-                  <Controller
-                    name="youtube"
-                    control={profileForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="https://youtube.com/..."
-                        className={inputClass}
-                      />
-                    )}
-                  />
-                  <FieldError errors={[profileForm.formState.errors.youtube]} />
-                </Field>
-
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    WhatsApp
-                  </FieldLabel>
-                  <Controller
-                    name="whatsapp"
-                    control={profileForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="+91..."
-                        className={inputClass}
-                      />
-                    )}
-                  />
-                  <FieldError
-                    errors={[profileForm.formState.errors.whatsapp]}
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Telegram
-                  </FieldLabel>
-                  <Controller
-                    name="telegram"
-                    control={profileForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="@username"
-                        className={inputClass}
-                      />
-                    )}
-                  />
-                  <FieldError
-                    errors={[profileForm.formState.errors.telegram]}
-                  />
-                </Field>
-              </div>
-            </div>
           </FieldGroup>
 
-          <div className="mt-6 flex justify-end border-t border-slate-100 pt-5 dark:border-white/10">
+          <div className="mt-6 flex justify-end border-t border-border pt-5">
             <Button
               type="submit"
-              disabled={isSavingProfile || !profileForm.formState.isValid}
-              className="h-11 rounded-full bg-blue-600 px-6 font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+              disabled={isSavingProfile}
+              className="h-11 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_24%,transparent)] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSavingProfile ? (
                 <>
@@ -583,160 +367,356 @@ export default function ProfileView({ user }: ProfileViewProps) {
           </div>
         </form>
 
-        {/* PREVIEW */}
-        <aside className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6">
-            <SectionHeader
-              icon={Sparkles}
-              eyebrow="Live Preview"
-              title="Profile snapshot"
-              description="This gives you a quick idea of how the public profile details will read."
-              compact
-            />
+        <form onSubmit={handleProfileSave} className="academy-card p-5 md:p-6">
+          <SectionHeader
+            icon={Globe}
+            eyebrow="Social Links"
+            title="Connect your online presence"
+            description="Add public profile links so people can discover your work and updates."
+          />
 
-            <div className="mt-6 rounded-3xl border border-blue-100 bg-blue-50/70 p-5 dark:border-rose-200/20 dark:bg-rose-200/10">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700 dark:text-rose-200">
-                {watchedHeadline || "Learner Profile"}
-              </p>
-
-              <h3 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">
-                {profileForm.watch("firstName") || user.firstName}{" "}
-                {profileForm.watch("lastName") || user.lastName || ""}
-              </h3>
-
-              <div className="mt-4 space-y-3">
-                {watchedCompany ? (
-                  <PreviewLine icon={Briefcase} value={watchedCompany} />
-                ) : null}
-
-                {watchedLocation ? (
-                  <PreviewLine icon={MapPin} value={watchedLocation} />
-                ) : null}
-
-                {watchedWebsite ? (
-                  <PreviewLine icon={Globe} value={watchedWebsite} />
-                ) : null}
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              {watchedLinkedin ? (
-                <SocialPill icon={FaLinkedin} label="LinkedIn" />
-              ) : null}
-
-              {watchedInstagram ? (
-                <SocialPill icon={FaInstagram} label="Instagram" />
-              ) : null}
-
-              {!watchedLinkedin && !watchedInstagram ? (
-                <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-500 dark:border-white/10 dark:bg-[#0b1628] dark:text-slate-400">
-                  Add social links to make your public profile more complete.
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          {isFaculty ? (
-            <form
-              onSubmit={handleFacultySave}
-              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)] md:p-6"
-            >
-              <SectionHeader
-                icon={Briefcase}
-                eyebrow="Faculty Profile"
-                title="Faculty details"
-                description="These details are used on faculty and course instructor sections."
-                compact
+          <FieldGroup className="mt-6 gap-5">
+            <div className="grid gap-5 md:grid-cols-2">
+              <FieldControl
+                name="linkedin"
+                label="LinkedIn"
+                placeholder="https://linkedin.com/in/username"
+                control={profileForm.control}
+                error={profileForm.formState.errors.linkedin}
               />
 
-              <FieldGroup className="mt-6 gap-5">
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Designation
-                  </FieldLabel>
-                  <Controller
-                    name="designation"
-                    control={facultyForm.control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="Senior Faculty Mentor"
-                        className={inputClass}
-                      />
-                    )}
-                  />
-                  <FieldError
-                    errors={[facultyForm.formState.errors.designation]}
-                  />
-                </Field>
+              <FieldControl
+                name="instagram"
+                label="Instagram"
+                placeholder="https://instagram.com/username"
+                control={profileForm.control}
+                error={profileForm.formState.errors.instagram}
+              />
+            </div>
 
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Expertise
-                  </FieldLabel>
-                  <Controller
-                    name="expertise"
-                    control={facultyForm.control}
-                    render={({ field }) => (
-                      <Textarea
-                        {...field}
-                        rows={4}
-                        placeholder="Nutrition, Ayurveda, Wellness..."
-                        className={`min-h-24 ${textareaClass}`}
-                      />
-                    )}
-                  />
-                  <FieldError
-                    errors={[facultyForm.formState.errors.expertise]}
-                  />
-                </Field>
+            <div className="grid gap-5 md:grid-cols-2">
+              <FieldControl
+                name="facebook"
+                label="Facebook"
+                placeholder="https://facebook.com/username"
+                control={profileForm.control}
+                error={profileForm.formState.errors.facebook}
+              />
 
-                <Field>
-                  <FieldLabel className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                    Experience
-                  </FieldLabel>
-                  <Controller
-                    name="experience"
-                    control={facultyForm.control}
-                    render={({ field }) => (
-                      <Textarea
-                        {...field}
-                        rows={4}
-                        placeholder="Brief teaching or professional experience..."
-                        className={`min-h-24 ${textareaClass}`}
-                      />
-                    )}
-                  />
-                  <FieldError
-                    errors={[facultyForm.formState.errors.experience]}
-                  />
-                </Field>
-              </FieldGroup>
+              <FieldControl
+                name="twitter"
+                label="X / Twitter"
+                placeholder="https://x.com/username"
+                control={profileForm.control}
+                error={profileForm.formState.errors.twitter}
+              />
+            </div>
 
-              <div className="mt-6 flex justify-end border-t border-slate-100 pt-5 dark:border-white/10">
-                <Button
-                  type="submit"
-                  disabled={isSavingFaculty || !facultyForm.formState.isValid}
-                  className="h-11 rounded-full bg-blue-600 px-6 font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
-                >
-                  {isSavingFaculty ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Save Faculty
-                    </>
-                  )}
-                </Button>
+            <div className="grid gap-5 md:grid-cols-2">
+              <FieldControl
+                name="youtube"
+                label="YouTube"
+                placeholder="https://youtube.com/@username"
+                control={profileForm.control}
+                error={profileForm.formState.errors.youtube}
+              />
+
+              <FieldControl
+                name="whatsapp"
+                label="WhatsApp"
+                placeholder="+91..."
+                control={profileForm.control}
+                error={profileForm.formState.errors.whatsapp}
+              />
+            </div>
+
+            <FieldControl
+              name="telegram"
+              label="Telegram"
+              placeholder="@username or https://t.me/username"
+              control={profileForm.control}
+              error={profileForm.formState.errors.telegram}
+            />
+          </FieldGroup>
+
+          <div className="mt-6 flex justify-end border-t border-border pt-5">
+            <Button
+              type="submit"
+              disabled={isSavingProfile}
+              className="h-11 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_24%,transparent)] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSavingProfile ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Links
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+
+        {isFaculty ? (
+          <form
+            onSubmit={handleFacultySave}
+            className="academy-card p-5 md:p-6"
+          >
+            <SectionHeader
+              icon={Briefcase}
+              eyebrow="Faculty Profile"
+              title="Update faculty details"
+              description="These details appear on your faculty profile and course instructor sections."
+            />
+
+            <FieldGroup className="mt-6 gap-5">
+              <div className="grid gap-5 md:grid-cols-2">
+                <FacultyFieldControl
+                  name="designation"
+                  label="Designation"
+                  placeholder="Faculty Mentor"
+                  control={facultyForm.control}
+                  error={facultyForm.formState.errors.designation}
+                />
+
+                <FacultyFieldControl
+                  name="experience"
+                  label="Experience"
+                  placeholder="Example: 8"
+                  control={facultyForm.control}
+                  error={facultyForm.formState.errors.experience}
+                />
               </div>
-            </form>
-          ) : null}
-        </aside>
+
+              <Field>
+                <FieldLabel className="text-sm font-semibold text-card-foreground">
+                  Expertise
+                </FieldLabel>
+
+                <Controller
+                  name="expertise"
+                  control={facultyForm.control}
+                  render={({ field }) => (
+                    <Textarea
+                      {...field}
+                      placeholder="Mention your areas of expertise..."
+                      rows={5}
+                      className="min-h-32 resize-none rounded-2xl border-border bg-muted px-4 py-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none focus-visible:border-primary focus-visible:ring-primary"
+                    />
+                  )}
+                />
+
+                <FieldError errors={[facultyForm.formState.errors.expertise]} />
+              </Field>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <FacultyFieldControl
+                  name="linkedin"
+                  label="Faculty LinkedIn"
+                  placeholder="https://linkedin.com/in/username"
+                  control={facultyForm.control}
+                  error={facultyForm.formState.errors.linkedin}
+                />
+
+                <FacultyFieldControl
+                  name="instagram"
+                  label="Faculty Instagram"
+                  placeholder="https://instagram.com/username"
+                  control={facultyForm.control}
+                  error={facultyForm.formState.errors.instagram}
+                />
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <FacultyFieldControl
+                  name="twitter"
+                  label="Faculty X / Twitter"
+                  placeholder="https://x.com/username"
+                  control={facultyForm.control}
+                  error={facultyForm.formState.errors.twitter}
+                />
+
+                <FacultyFieldControl
+                  name="youtube"
+                  label="Faculty YouTube"
+                  placeholder="https://youtube.com/@username"
+                  control={facultyForm.control}
+                  error={facultyForm.formState.errors.youtube}
+                />
+              </div>
+            </FieldGroup>
+
+            <div className="mt-6 flex justify-end border-t border-border pt-5">
+              <Button
+                type="submit"
+                disabled={isSavingFaculty}
+                className="h-11 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-[0_14px_35px_color-mix(in_oklab,var(--primary)_24%,transparent)] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingFaculty ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save Faculty Profile
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        ) : null}
       </div>
+
+      <aside className="space-y-5 xl:sticky xl:top-24">
+        <div className="academy-card overflow-hidden p-5">
+          <div className="rounded-3xl border border-primary/15 bg-primary/5 p-5">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
+              <Sparkles className="h-6 w-6" />
+            </div>
+
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+              Live Preview
+            </p>
+
+            <h3 className="mt-2 text-xl font-semibold text-card-foreground">
+              {fullName || "Learner"}
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              {watchedHeadline ||
+                "Your headline will appear here as you update your profile."}
+            </p>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <PreviewLine
+              icon={Briefcase}
+              label="Company"
+              value={watchedCompany || "Not added"}
+            />
+
+            <PreviewLine
+              icon={MapPin}
+              label="Location"
+              value={watchedLocation || "Not added"}
+            />
+
+            <PreviewLine
+              icon={Globe}
+              label="Website"
+              value={watchedWebsite || "Not added"}
+            />
+          </div>
+        </div>
+
+        <div className="academy-card p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
+            Social Preview
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {watchedLinkedin ? (
+              <SocialPill
+                icon={FaLinkedin}
+                label="LinkedIn"
+                href={watchedLinkedin}
+              />
+            ) : null}
+
+            {watchedInstagram ? (
+              <SocialPill
+                icon={FaInstagram}
+                label="Instagram"
+                href={watchedInstagram}
+              />
+            ) : null}
+
+            {!watchedLinkedin && !watchedInstagram ? (
+              <p className="rounded-2xl border border-dashed border-border bg-muted/50 p-4 text-sm leading-6 text-muted-foreground">
+                Add your social links to preview them here.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </aside>
     </div>
+  );
+}
+
+function FieldControl({
+  name,
+  label,
+  placeholder,
+  control,
+  error,
+}: {
+  name: keyof ProfileFormValues;
+  label: string;
+  placeholder: string;
+  control: ReturnType<typeof useForm<ProfileFormValues>>["control"];
+  error?: { message?: string };
+}) {
+  return (
+    <Field>
+      <FieldLabel className="text-sm font-semibold text-card-foreground">
+        {label}
+      </FieldLabel>
+
+      <Controller
+        name={name}
+        control={control}
+        render={({ field }) => (
+          <Input
+            {...field}
+            placeholder={placeholder}
+            className="h-12 rounded-2xl border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none focus-visible:border-primary focus-visible:ring-primary"
+          />
+        )}
+      />
+
+      <FieldError errors={[error]} />
+    </Field>
+  );
+}
+
+function FacultyFieldControl({
+  name,
+  label,
+  placeholder,
+  control,
+  error,
+}: {
+  name: keyof FacultyFormValues;
+  label: string;
+  placeholder: string;
+  control: ReturnType<typeof useForm<FacultyFormValues>>["control"];
+  error?: { message?: string };
+}) {
+  return (
+    <Field>
+      <FieldLabel className="text-sm font-semibold text-card-foreground">
+        {label}
+      </FieldLabel>
+
+      <Controller
+        name={name}
+        control={control}
+        render={({ field }) => (
+          <Input
+            {...field}
+            placeholder={placeholder}
+            className="h-12 rounded-2xl border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none focus-visible:border-primary focus-visible:ring-primary"
+          />
+        )}
+      />
+
+      <FieldError errors={[error]} />
+    </Field>
   );
 }
 
@@ -770,82 +750,4 @@ function getFacultyDefaults(user: User): FacultyFormValues {
     twitter: user.facultyProfile?.twitter || "",
     youtube: user.facultyProfile?.youtube || "",
   };
-}
-
-function SectionHeader({
-  icon: Icon,
-  eyebrow,
-  title,
-  description,
-  compact = false,
-}: {
-  icon: typeof UserRound;
-  eyebrow: string;
-  title: string;
-  description: string;
-  compact?: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-start gap-3 border-b border-slate-100 dark:border-white/10 ${
-        compact ? "pb-4" : "pb-5"
-      }`}
-    >
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
-        <Icon className="h-5 w-5" />
-      </div>
-
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700 dark:text-rose-200">
-          {eyebrow}
-        </p>
-
-        <h2
-          className={`mt-2 font-semibold text-slate-950 dark:text-white ${
-            compact ? "text-xl" : "text-2xl"
-          }`}
-        >
-          {title}
-        </h2>
-
-        <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-          {description}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function PreviewLine({
-  icon: Icon,
-  value,
-}: {
-  icon: typeof Briefcase;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-      <Icon className="h-4 w-4 text-blue-700 dark:text-rose-200" />
-      <span className="break-words">{value}</span>
-    </div>
-  );
-}
-
-function SocialPill({
-  icon: Icon,
-  label,
-}: {
-  icon: typeof FaLinkedinIn;
-  label: string;
-}) {
-  return (
-    <span className="inline-flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/10 dark:text-slate-300">
-      <Icon className="h-4 w-4 text-blue-700 dark:text-rose-200" />
-      {label}
-    </span>
-  );
-}
-
-function SparkPreviewIcon(props: React.SVGProps<SVGSVGElement>) {
-  return <Globe {...props} />;
 }

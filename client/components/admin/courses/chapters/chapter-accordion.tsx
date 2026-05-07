@@ -12,8 +12,9 @@ interface ChapterAccordionProps {
   index: number;
   activeId: number | null;
   courseId: number;
-  setActiveId: (id: number) => void;
+  setActiveId: (id: number | null) => void;
   onTooglePublish: (id: number, isPublished: boolean) => void;
+  onLecturePublishChange: (lectureId: number, isPublished: boolean) => void;
   onDelete: (id: number) => void;
   viewType: string;
   dragHandle?: {
@@ -29,6 +30,7 @@ export default function ChapterAccordion({
   courseId,
   index,
   onTooglePublish,
+  onLecturePublishChange,
   onDelete,
   viewType,
   dragHandle,
@@ -54,6 +56,7 @@ export default function ChapterAccordion({
         setActiveId={setActiveId}
         onTooglePublish={onTooglePublish}
         isPublishedView={isPublishedView}
+        onLecturePublishChange={onLecturePublishChange}
         isTemp={isTemp}
         onDelete={onDelete}
         dragHandle={dragHandle}

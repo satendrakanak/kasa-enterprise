@@ -19,14 +19,6 @@ export const chartConfig = {
   usageRate: { label: "Usage %", color: "#8b5cf6" },
 };
 
-export function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 export function getStatusVariant(status: string) {
   switch (status) {
     case "PAID":

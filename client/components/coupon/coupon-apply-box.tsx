@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { X, Ticket, ArrowRight } from "lucide-react";
+import { ArrowRight, Ticket, X } from "lucide-react";
 import { toast } from "sonner";
+
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { getErrorMessage } from "@/lib/error-handler";
 
 interface CouponApplyBoxProps {
@@ -30,8 +31,7 @@ export const CouponApplyBox = ({
       setCode("");
       toast.success("Coupon applied successfully");
     } catch (error: unknown) {
-      const message = getErrorMessage(error);
-      toast.error(message);
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -50,52 +50,58 @@ export const CouponApplyBox = ({
   };
 
   return (
-    <div className="mt-2 space-y-3">
-      <h3 className="text-sm font-semibold">Apply Coupon</h3>
+    <div className="space-y-3">
+      <h3 className="text-sm font-semibold text-card-foreground">
+        Apply Coupon
+      </h3>
 
-      {/* ✅ Applied State */}
       {appliedCoupon ? (
-        <div className="flex items-center justify-between rounded-lg border bg-green-50 px-3 py-2">
-          <div className="flex items-center gap-2">
-            <Ticket className="w-4 h-4 text-green-600" />
-            <Badge variant="secondary">{appliedCoupon}</Badge>
-            <span className="text-xs text-green-700">Applied successfully</span>
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-primary/5 px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <Ticket className="h-4 w-4 shrink-0 text-primary" />
+
+            <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">
+              {appliedCoupon}
+            </Badge>
+
+            <span className="truncate text-xs font-medium text-muted-foreground">
+              Applied successfully
+            </span>
           </div>
 
           <button
+            type="button"
             onClick={handleRemove}
             disabled={loading}
-            className="p-1 rounded-md hover:bg-red-100 transition cursor-pointer"
+            aria-label="Remove coupon"
+            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:border-destructive hover:bg-destructive hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <X className="w-4 h-4 text-red-500" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       ) : (
-        /* ✅ Modern Input */
         <div className="relative">
           <Input
             placeholder="Enter coupon code"
             value={code}
-            onChange={(e) => setCode(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
+            onChange={(event) => setCode(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
                 handleApply();
               }
             }}
-            className="h-11 pr-12"
+            className="h-11 rounded-full border-border bg-background pr-12 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
           />
 
-          {/* 🔥 Inline Button */}
           <button
+            type="button"
             onClick={handleApply}
             disabled={loading || !code.trim()}
-            className="absolute right-1 top-1/2 -translate-y-1/2 
-              h-9 w-9 flex items-center justify-center 
-              rounded-md bg-primary text-white 
-              hover:bg-primary/90 transition disabled:opacity-50 cursor-pointer"
+            aria-label="Apply coupon"
+            className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       )}

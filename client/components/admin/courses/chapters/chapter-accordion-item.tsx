@@ -25,9 +25,10 @@ interface ChapterAccordionItemProps {
   chapter: Chapter;
   index: number;
   activeId: number | null;
-  setActiveId: (id: number) => void;
+  setActiveId: (id: number | null) => void;
   onDelete?: (id: number) => void;
   onTooglePublish: (id: number, value: boolean) => void;
+  onLecturePublishChange: (lectureId: number, isPublished: boolean) => void;
   isPublishedView?: boolean;
   isTemp?: boolean;
   dragHandle?: {
@@ -45,6 +46,7 @@ export const ChapterAccordionItem = ({
   onDelete,
   onTooglePublish,
   isPublishedView,
+  onLecturePublishChange,
   isTemp,
   dragHandle,
   onEdit,
@@ -55,9 +57,7 @@ export const ChapterAccordionItem = ({
     <Collapsible
       open={isActive}
       onOpenChange={(open) => {
-        if (open) {
-          setActiveId(chapter.id);
-        }
+        setActiveId(open ? chapter.id : null);
       }}
       className={`w-full rounded-lg transition-all ${
         isActive
@@ -82,9 +82,10 @@ export const ChapterAccordionItem = ({
           {/* DRAG */}
           {dragHandle && (
             <span
-              {...dragHandle.attributes}
-              {...dragHandle.listeners}
+              {...(typeof window !== "undefined" ? dragHandle.attributes : {})}
+              {...(typeof window !== "undefined" ? dragHandle.listeners : {})}
               onClick={(e) => e.stopPropagation()}
+              suppressHydrationWarning
               className="cursor-grab text-sm text-muted-foreground dark:text-slate-400"
             >
               ☰
@@ -103,11 +104,9 @@ export const ChapterAccordionItem = ({
           </span>
         </div>
 
-        {/* RIGHT ACTIONS */}
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1 shrink-0"
-        >
+        {/* RIGHT SIDE */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* ACCORDION TOGGLE ICON */}
           <div className="mr-1 text-slate-500 dark:text-slate-300">
             {isActive ? (
               <ChevronUp className="size-3.5" />
@@ -115,81 +114,92 @@ export const ChapterAccordionItem = ({
               <ChevronDown className="size-3.5" />
             )}
           </div>
-          {/* EDIT (Drawer open) */}
-          <div
-            role="button"
-            onClick={() => onEdit(chapter)}
-            className="cursor-pointer rounded p-1 hover:bg-muted dark:hover:bg-white/8"
-            title="Edit Chapter"
-          >
-            <Pencil className="size-3" />
-          </div>
 
-          {/* Published View */}
-          {isPublishedView && (
+          {/* ACTION BUTTONS */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1"
+          >
+            {/* EDIT */}
             <div
               role="button"
-              onClick={() => onTooglePublish(chapter.id, false)}
-              className="cursor-pointer rounded p-1 text-red-600 hover:bg-red-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
-              title="Unpublish"
+              onClick={() => onEdit(chapter)}
+              className="cursor-pointer rounded p-1 hover:bg-muted dark:hover:bg-white/8"
+              title="Edit Chapter"
             >
-              <RotateCcw className="size-3" />
+              <Pencil className="size-3" />
             </div>
-          )}
 
-          {/* Normal View */}
-          {!isPublishedView && (
-            <>
-              {!chapter.isPublished && !isTemp && (
-                <div
-                  role="button"
-                  tabIndex={disabled ? -1 : 0}
-                  aria-disabled={disabled}
-                  onClick={(e) => {
-                    e.stopPropagation(); // 🔥 IMPORTANT (accordion fix)
-                    if (disabled) return;
+            {/* Published View */}
+            {isPublishedView && (
+              <div
+                role="button"
+                onClick={() => onTooglePublish(chapter.id, false)}
+                className="cursor-pointer rounded p-1 text-red-600 hover:bg-red-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                title="Unpublish"
+              >
+                <RotateCcw className="size-3" />
+              </div>
+            )}
 
-                    onTooglePublish(chapter.id, true);
-                  }}
-                  onKeyDown={(e) => {
-                    if (disabled) return;
+            {/* Normal View */}
+            {!isPublishedView && (
+              <>
+                {!chapter.isPublished && !isTemp && (
+                  <div
+                    role="button"
+                    tabIndex={disabled ? -1 : 0}
+                    aria-disabled={disabled}
+                    onClick={(e) => {
+                      e.stopPropagation();
 
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
+                      if (disabled) return;
+
                       onTooglePublish(chapter.id, true);
-                    }
-                  }}
-                  className={cn(
-                    "rounded p-1 text-green-600 dark:text-emerald-300",
-                    disabled
-                      ? "opacity-40 cursor-not-allowed"
-                      : "cursor-pointer hover:bg-green-50 dark:hover:bg-emerald-500/10",
-                  )}
-                  title={disabled ? "Cannot publish yet" : "Publish"}
-                >
-                  <CheckCircle className="size-3" />
-                </div>
-              )}
+                    }}
+                    onKeyDown={(e) => {
+                      if (disabled) return;
 
-              {!chapter.isPublished && !isTemp && (
-                <div
-                  role="button"
-                  onClick={() => onDelete?.(chapter.id)}
-                  className="cursor-pointer rounded p-1 text-red-500 hover:bg-red-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
-                  title="Delete Chapter"
-                >
-                  <Trash2 className="size-3" />
-                </div>
-              )}
-            </>
-          )}
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onTooglePublish(chapter.id, true);
+                      }
+                    }}
+                    className={cn(
+                      "rounded p-1 text-green-600 dark:text-emerald-300",
+                      disabled
+                        ? "cursor-not-allowed opacity-40"
+                        : "cursor-pointer hover:bg-green-50 dark:hover:bg-emerald-500/10",
+                    )}
+                    title={disabled ? "Cannot publish yet" : "Publish"}
+                  >
+                    <CheckCircle className="size-3" />
+                  </div>
+                )}
+
+                {!chapter.isPublished && !isTemp && (
+                  <div
+                    role="button"
+                    onClick={() => onDelete?.(chapter.id)}
+                    className="cursor-pointer rounded p-1 text-red-500 hover:bg-red-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                    title="Delete Chapter"
+                  >
+                    <Trash2 className="size-3" />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </CollapsibleTrigger>
 
       {/* CONTENT */}
       <CollapsibleContent className="w-full overflow-hidden">
         <div className="min-h-50 max-h-[60vh] overflow-y-auto rounded-b-md bg-muted/30 px-3 pt-3 pb-4 dark:bg-white/3">
-          <LectureForm chapter={chapter} />
+          <LectureForm
+            chapter={chapter}
+            onLecturePublishChange={onLecturePublishChange}
+          />
         </div>
       </CollapsibleContent>
     </Collapsible>

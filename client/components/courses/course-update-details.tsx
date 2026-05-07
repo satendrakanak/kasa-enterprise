@@ -37,9 +37,9 @@ const CourseUpdateDetails = ({
         return (
           <div
             key={item.label}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-2 text-white/82 backdrop-blur-md dark:bg-white/5 dark:text-slate-200"
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-white/80 backdrop-blur-md"
           >
-            <Icon className="h-4 w-4 shrink-0 text-sky-100 dark:text-rose-200" />
+            <Icon className="h-4 w-4 shrink-0 text-white/85" />
             <span className="whitespace-nowrap">{item.label}</span>
           </div>
         );

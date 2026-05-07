@@ -92,9 +92,8 @@ export function ProfileHeader({ user, stats, isOwner }: ProfileHeaderProps) {
   };
 
   return (
-    <div className="-mt-14 rounded-3xl border border-slate-200 bg-white/92 p-5 shadow-[0_30px_90px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#07111f]/92 dark:shadow-[0_32px_90px_rgba(0,0,0,0.42)] md:-mt-20 md:p-6">
+    <div className="-mt-14 rounded-3xl border border-border bg-card/90 p-5 shadow-[0_30px_90px_color-mix(in_oklab,var(--foreground)_12%,transparent)] backdrop-blur-xl md:-mt-20 md:p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        {/* LEFT */}
         <div className="flex min-w-0 flex-col gap-5 md:flex-row md:items-end">
           <ProfileAvatar
             avatar={user.avatar?.path || user.avatarUrl!}
@@ -111,7 +110,6 @@ export function ProfileHeader({ user, stats, isOwner }: ProfileHeaderProps) {
           />
         </div>
 
-        {/* RIGHT */}
         <div className="flex w-full justify-start lg:w-auto lg:justify-end">
           <ProfileMiniCard
             icon={UserRound}
@@ -134,17 +132,17 @@ function ProfileMiniCard({
   value: string;
 }) {
   return (
-    <div className="flex w-full items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 shadow-sm dark:border-white/10 dark:bg-[#0b1628] sm:w-auto sm:min-w-60">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+    <div className="flex w-full items-center gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-3 shadow-sm sm:w-auto sm:min-w-60">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
         <Icon className="h-4.5 w-4.5" />
       </div>
 
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
           {label}
         </p>
 
-        <p className="mt-1 truncate text-sm font-semibold leading-none text-slate-950 dark:text-white">
+        <p className="mt-1 truncate text-sm font-semibold leading-none text-card-foreground">
           {value}
         </p>
       </div>

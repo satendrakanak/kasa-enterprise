@@ -16,9 +16,13 @@ import { getErrorMessage } from "@/lib/error-handler";
 
 interface LectureFormProps {
   chapter: Chapter;
+  onLecturePublishChange: (lectureId: number, isPublished: boolean) => void;
 }
 
-export const LectureForm = ({ chapter }: LectureFormProps) => {
+export const LectureForm = ({
+  chapter,
+  onLecturePublishChange,
+}: LectureFormProps) => {
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
 
@@ -84,6 +88,7 @@ export const LectureForm = ({ chapter }: LectureFormProps) => {
       setLectures((prev) =>
         prev.map((l) => (l.id === id ? { ...l, isPublished } : l)),
       );
+      onLecturePublishChange(id, isPublished);
 
       // 🔥 API call
       await lectureClientService.update(id, {
@@ -101,6 +106,7 @@ export const LectureForm = ({ chapter }: LectureFormProps) => {
           l.id === id ? { ...l, isPublished: !isPublished } : l,
         ),
       );
+      onLecturePublishChange(id, isPublished);
     }
   };
 

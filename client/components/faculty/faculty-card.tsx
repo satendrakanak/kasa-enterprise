@@ -19,7 +19,6 @@ interface FacultyCardProps {
 
 export function FacultyCard({ faculty }: FacultyCardProps) {
   const name = `${faculty.firstName} ${faculty.lastName || ""}`.trim();
-
   const designation = faculty.facultyProfile?.designation || "Faculty Mentor";
 
   const socials = [
@@ -53,13 +52,13 @@ export function FacultyCard({ faculty }: FacultyCardProps) {
   return (
     <Link
       href={`/our-faculty/${faculty.id}`}
-      className="group relative block h-full overflow-hidden rounded-3xl border border-white/15 bg-white/10 p-3 shadow-[0_20px_60px_rgba(2,6,23,0.22)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-white/15 hover:shadow-[0_28px_80px_rgba(2,6,23,0.32)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_24px_70px_rgba(0,0,0,0.38)] dark:hover:border-rose-200/25 dark:hover:shadow-[0_32px_90px_rgba(244,63,94,0.16)]"
+      className="academy-card group relative block h-full overflow-hidden p-3 transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_28px_80px_color-mix(in_oklab,var(--primary)_18%,transparent)]"
     >
       <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100">
-        <div className="absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.18),transparent_64%)] dark:bg-[radial-gradient(circle_at_50%_0%,rgba(251,113,133,0.13),transparent_64%)]" />
+        <div className="absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_50%_0%,color-mix(in_oklab,var(--primary)_14%,transparent),transparent_64%)]" />
       </div>
 
-      <div className="relative h-56 overflow-hidden rounded-[22px] border border-white/15 bg-white/10 dark:border-white/10 dark:bg-white/5">
+      <div className="relative h-56 overflow-hidden rounded-[22px] border border-border bg-muted">
         <Image
           src={faculty.avatar?.path || "/assets/default.png"}
           alt={name || "Faculty"}
@@ -68,7 +67,7 @@ export function FacultyCard({ faculty }: FacultyCardProps) {
           className="object-cover transition duration-500 group-hover:scale-105"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#020617]/80 via-[#020617]/15 to-transparent opacity-75 transition group-hover:opacity-90" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/15 to-transparent opacity-75 transition-opacity group-hover:opacity-90" />
 
         <div className="absolute left-3 top-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/15 text-white shadow-sm backdrop-blur-md">
@@ -84,7 +83,7 @@ export function FacultyCard({ faculty }: FacultyCardProps) {
       </div>
 
       <div className="relative z-10 px-2 pb-2 pt-4">
-        <h3 className="line-clamp-1 text-lg font-semibold text-white dark:text-white">
+        <h3 className="line-clamp-1 text-lg font-semibold text-card-foreground">
           {name || "Faculty"}
         </h3>
 
@@ -97,7 +96,7 @@ export function FacultyCard({ faculty }: FacultyCardProps) {
                 return (
                   <span
                     key={social.label}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white hover:text-blue-800 dark:text-rose-200 dark:hover:bg-rose-200 dark:hover:text-black"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
                     title={social.label}
                   >
                     <Icon className="h-4 w-4" />
@@ -109,8 +108,8 @@ export function FacultyCard({ faculty }: FacultyCardProps) {
             <span />
           )}
 
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition group-hover:bg-white group-hover:text-blue-800 dark:bg-white/10 dark:text-rose-200 dark:group-hover:bg-rose-200 dark:group-hover:text-black">
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </span>
         </div>
       </div>

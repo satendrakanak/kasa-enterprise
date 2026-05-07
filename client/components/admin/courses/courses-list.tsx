@@ -34,8 +34,20 @@ export const CoursesList = ({ courses }: CoursesListProps) => {
       getCourseColumns((course) => {
         setDeleteItem(course);
         setDeleteOpen(true);
+      }, async (course) => {
+        try {
+          setLoading(true);
+          const response = await courseClientService.duplicate(course.id);
+          toast.success("Course duplicated as a draft");
+          router.push(`/admin/courses/${response.data.id}`);
+          router.refresh();
+        } catch (error: unknown) {
+          toast.error(getErrorMessage(error));
+        } finally {
+          setLoading(false);
+        }
       }),
-    [],
+    [router],
   );
 
   const handleConfirmDelete = async () => {
