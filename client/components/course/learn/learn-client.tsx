@@ -52,6 +52,8 @@ export const LearnClient = ({ course }: LearnClientProps) => {
     lastTime: number,
     alreadyCompleted?: boolean,
   ) => {
+    const nextIsCompleted = alreadyCompleted || progress >= 90;
+
     setCourseData((prev) => ({
       ...prev,
       chapters: prev.chapters.map((chapter) => ({
@@ -61,7 +63,7 @@ export const LearnClient = ({ course }: LearnClientProps) => {
             ? {
                 ...lecture,
                 progress: {
-                  isCompleted: alreadyCompleted || progress >= 90,
+                  isCompleted: nextIsCompleted,
                   progress,
                   lastTime,
                 },
@@ -70,6 +72,20 @@ export const LearnClient = ({ course }: LearnClientProps) => {
         ),
       })),
     }));
+
+    setCurrentLecture((current) =>
+      current?.id === lectureId
+        ? {
+            ...current,
+            progress: {
+              isCompleted: nextIsCompleted,
+              progress,
+              lastTime,
+            },
+          }
+        : current,
+    );
+
   };
 
   if (!currentLecture) return null;

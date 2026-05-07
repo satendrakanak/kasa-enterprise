@@ -4,11 +4,15 @@ import { Certificate } from 'src/certificates/certificate.entity';
 import { Lecture } from 'src/lectures/lecture.entity';
 import { Course } from 'src/courses/course.entity';
 import { Enrollment } from 'src/enrollments/enrollment.entity';
+import { EmailTemplatesModule } from 'src/email-templates/email-templates.module';
 import { UserProgres } from 'src/user-progress/user-progres.entity';
 import { User } from 'src/users/user.entity';
+import { ExamAttempt } from 'src/exams/exam-attempt.entity';
+import { Exam } from 'src/exams/exam.entity';
 import { CourseExamAccessOverride } from './course-exam-access-override.entity';
 import { CourseExamAttempt } from './course-exam-attempt.entity';
 import { CourseExamsController } from './course-exams.controller';
+import { CourseExamEmailProvider } from './providers/course-exam-email.provider';
 import { CourseExamsService } from './providers/course-exams.service';
 
 @Module({
@@ -22,10 +26,13 @@ import { CourseExamsService } from './providers/course-exams.service';
       Certificate,
       CourseExamAccessOverride,
       CourseExamAttempt,
+      Exam,
+      ExamAttempt,
     ]),
+    EmailTemplatesModule,
   ],
   controllers: [CourseExamsController],
-  providers: [CourseExamsService],
+  providers: [CourseExamsService, CourseExamEmailProvider],
   exports: [CourseExamsService, TypeOrmModule],
 })
 export class CourseExamsModule {}

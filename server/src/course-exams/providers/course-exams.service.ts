@@ -11,9 +11,14 @@ import { Enrollment } from 'src/enrollments/enrollment.entity';
 import { Lecture } from 'src/lectures/lecture.entity';
 import { UserProgres } from 'src/user-progress/user-progres.entity';
 import { User } from 'src/users/user.entity';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { DateRangeQueryDto } from 'src/common/dtos/date-range-query.dto';
+import { ExamAttempt } from 'src/exams/exam-attempt.entity';
+import { Exam } from 'src/exams/exam.entity';
+import { ExamAttemptStatus } from 'src/exams/enums/exam-attempt-status.enum';
+import { ExamStatus } from 'src/exams/enums/exam-status.enum';
 import { CourseExamAccessOverride } from '../course-exam-access-override.entity';
+import { CourseExamEmailProvider } from './course-exam-email.provider';
 import { UpsertCourseExamAccessOverrideDto } from '../dtos/upsert-course-exam-access-override.dto';
 import { SubmitCourseExamAttemptDto } from '../dtos/submit-course-exam-attempt.dto';
 import {
@@ -42,6 +47,11 @@ export class CourseExamsService {
     private readonly courseExamAccessOverrideRepository: Repository<CourseExamAccessOverride>,
     @InjectRepository(CourseExamAttempt)
     private readonly courseExamAttemptRepository: Repository<CourseExamAttempt>,
+    @InjectRepository(Exam)
+    private readonly examRepository: Repository<Exam>,
+    @InjectRepository(ExamAttempt)
+    private readonly examAttemptRepository: Repository<ExamAttempt>,
+    private readonly courseExamEmailProvider: CourseExamEmailProvider,
   ) {}
 
   async getMyHistory(userId: number, query?: DateRangeQueryDto) {
@@ -122,22 +132,66 @@ export class CourseExamsService {
   }
 
   async getAdminOverview() {
-    const [attempts, certificatesIssued] = await Promise.all([
+    const [attempts, advancedAttempts, certificatesIssued] = await Promise.all([
       this.courseExamAttemptRepository.find({
+        relations: ['course', 'user'],
+        order: { submittedAt: 'DESC', createdAt: 'DESC' },
+      }),
+      this.examAttemptRepository.find({
+        where: { status: Not(ExamAttemptStatus.InProgress) },
         relations: ['course', 'user'],
         order: { submittedAt: 'DESC', createdAt: 'DESC' },
       }),
       this.certificateRepository.count(),
     ]);
 
-    const totalAttempts = attempts.length;
+    const normalizedAttempts = [
+      ...attempts.map((attempt) => ({
+        id: attempt.id,
+        learnerName:
+          `${attempt.user?.firstName || ''} ${attempt.user?.lastName || ''}`.trim() ||
+          attempt.user?.email ||
+          'Learner',
+        courseId: attempt.course.id,
+        courseTitle: attempt.course?.title || 'Course',
+        score: attempt.score,
+        maxScore: attempt.maxScore,
+        percentage: Number(attempt.percentage || 0),
+        passed: attempt.passed,
+        submittedAt: attempt.submittedAt,
+        createdAt: attempt.createdAt,
+      })),
+      ...advancedAttempts.map((attempt) => ({
+        id: attempt.id,
+        learnerName:
+          `${attempt.user?.firstName || ''} ${attempt.user?.lastName || ''}`.trim() ||
+          attempt.user?.email ||
+          'Learner',
+        courseId: attempt.course?.id ?? 0,
+        courseTitle: attempt.course?.title || 'Course',
+        score: Number(attempt.score),
+        maxScore: Number(attempt.maxScore),
+        percentage: Number(attempt.percentage || 0),
+        passed: attempt.passed,
+        submittedAt: attempt.submittedAt,
+        createdAt: attempt.createdAt,
+      })),
+    ].sort((left, right) => {
+      const leftDate = new Date(left.submittedAt || left.createdAt || 0).getTime();
+      const rightDate = new Date(right.submittedAt || right.createdAt || 0).getTime();
+      return rightDate - leftDate;
+    });
+
+    const totalAttempts = normalizedAttempts.length;
     const uniqueLearners = new Set(
-      attempts.map((attempt) => attempt.user?.id).filter(Boolean),
+      [...attempts, ...advancedAttempts]
+        .map((attempt) => attempt.user?.id)
+        .filter(Boolean),
     ).size;
-    const passedAttempts = attempts.filter((attempt) => attempt.passed).length;
+    const passedAttempts = normalizedAttempts.filter((attempt) => attempt.passed).length;
     const averageScore = totalAttempts
       ? Math.round(
-          attempts.reduce(
+          normalizedAttempts.reduce(
             (sum, attempt) => sum + Number(attempt.percentage || 0),
             0,
           ) / totalAttempts,
@@ -158,10 +212,11 @@ export class CourseExamsService {
       }
     >();
 
-    for (const attempt of attempts) {
-      const existing = courseMap.get(attempt.course.id) || {
-        courseId: attempt.course.id,
-        courseTitle: attempt.course.title,
+    for (const attempt of normalizedAttempts) {
+      if (!attempt.courseId) continue;
+      const existing = courseMap.get(attempt.courseId) || {
+        courseId: attempt.courseId,
+        courseTitle: attempt.courseTitle,
         attempts: 0,
         passCount: 0,
         totalPercentage: 0,
@@ -170,7 +225,7 @@ export class CourseExamsService {
       existing.attempts += 1;
       existing.passCount += attempt.passed ? 1 : 0;
       existing.totalPercentage += Number(attempt.percentage || 0);
-      courseMap.set(attempt.course.id, existing);
+      courseMap.set(attempt.courseId, existing);
     }
 
     return {
@@ -180,13 +235,10 @@ export class CourseExamsService {
       certificatesIssued,
       averageScore,
       passRate,
-      recentAttempts: attempts.slice(0, 6).map((attempt) => ({
+      recentAttempts: normalizedAttempts.slice(0, 6).map((attempt) => ({
         id: attempt.id,
-        learnerName:
-          `${attempt.user?.firstName || ''} ${attempt.user?.lastName || ''}`.trim() ||
-          attempt.user?.email ||
-          'Learner',
-        courseTitle: attempt.course?.title || 'Course',
+        learnerName: attempt.learnerName,
+        courseTitle: attempt.courseTitle,
         score: attempt.score,
         maxScore: attempt.maxScore,
         percentage: Number(attempt.percentage || 0),
@@ -222,38 +274,77 @@ export class CourseExamsService {
       overrides.map((override) => [override.course.id, override]),
     );
 
+    const courseIds = enrollments
+      .map((enrollment) => enrollment.course?.id)
+      .filter(Boolean) as number[];
+    const advancedExamMap = await this.getPublishedAdvancedExamMap(courseIds);
+
     const rows = await Promise.all(
       enrollments
-        .filter((enrollment) => enrollment.course?.exam?.questions?.length)
+        .filter((enrollment) => {
+          const course = enrollment.course;
+          return (
+            Boolean(course?.exam?.questions?.length) ||
+            advancedExamMap.has(course.id)
+          );
+        })
         .map(async (enrollment) => {
           const course = enrollment.course;
           const override = overrideMap.get(course.id);
-          const attemptsUsed = await this.courseExamAttemptRepository.count({
-            where: {
-              user: { id: userId },
-              course: { id: course.id },
-            },
-          });
-          const passed = await this.courseExamAttemptRepository.exists({
-            where: {
-              user: { id: userId },
-              course: { id: course.id },
-              passed: true,
-            },
-          });
-          const baseAttempts = Number(course.exam?.maxAttempts || 0);
+          const advancedExam = advancedExamMap.get(course.id);
+          const attemptsUsed = advancedExam
+            ? await this.examAttemptRepository.count({
+                where: {
+                  user: { id: userId },
+                  course: { id: course.id },
+                  exam: { id: advancedExam.id },
+                  status: Not(ExamAttemptStatus.InProgress),
+                },
+              })
+            : await this.courseExamAttemptRepository.count({
+                where: {
+                  user: { id: userId },
+                  course: { id: course.id },
+                },
+              });
+          const passed = advancedExam
+            ? await this.examAttemptRepository.exists({
+                where: {
+                  user: { id: userId },
+                  course: { id: course.id },
+                  exam: { id: advancedExam.id },
+                  passed: true,
+                },
+              })
+            : await this.courseExamAttemptRepository.exists({
+                where: {
+                  user: { id: userId },
+                  course: { id: course.id },
+                  passed: true,
+                },
+              });
+          const baseAttempts = advancedExam
+            ? advancedExam.attemptLimit === null
+              ? null
+              : Number(advancedExam.attemptLimit || 0)
+            : Number(course.exam?.maxAttempts || 0);
           const extraAttempts = Number(override?.extraAttempts || 0);
-          const effectiveAttempts = baseAttempts + extraAttempts;
+          const effectiveAttempts =
+            baseAttempts === null ? null : baseAttempts + extraAttempts;
 
           return {
             courseId: course.id,
             courseTitle: course.title,
             courseSlug: course.slug,
+            examMode: advancedExam ? 'advanced' : 'legacy',
             baseAttempts,
             extraAttempts,
             effectiveAttempts,
             attemptsUsed,
-            remainingAttempts: Math.max(effectiveAttempts - attemptsUsed, 0),
+            remainingAttempts:
+              effectiveAttempts === null
+                ? null
+                : Math.max(effectiveAttempts - attemptsUsed, 0),
             passed,
             note: override?.note || '',
           };
@@ -275,7 +366,9 @@ export class CourseExamsService {
       throw new NotFoundException('Course not found');
     }
 
-    if (!course.exam?.questions?.length) {
+    const hasAdvancedExam = await this.hasPublishedAdvancedExam(dto.courseId);
+
+    if (!course.exam?.questions?.length && !hasAdvancedExam) {
       throw new BadRequestException('Selected course does not have a final exam');
     }
 
@@ -303,7 +396,49 @@ export class CourseExamsService {
     override.note = dto.note?.trim() || null;
 
     await this.courseExamAccessOverrideRepository.save(override);
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (user) {
+      this.courseExamEmailProvider.sendAttemptsExtendedSafely(
+        user,
+        course,
+        dto.extraAttempts,
+      );
+    }
     return this.getUserAccessOverview(userId);
+  }
+
+  private async getPublishedAdvancedExamMap(courseIds: number[]) {
+    if (!courseIds.length) {
+      return new Map<number, Exam>();
+    }
+
+    const exams = await this.examRepository
+      .createQueryBuilder('exam')
+      .leftJoinAndSelect('exam.courses', 'course')
+      .where('course.id IN (:...courseIds)', { courseIds })
+      .andWhere('exam.status = :status', { status: ExamStatus.Published })
+      .orderBy('exam.createdAt', 'DESC')
+      .getMany();
+
+    const map = new Map<number, Exam>();
+    for (const exam of exams) {
+      for (const course of exam.courses ?? []) {
+        if (!map.has(course.id)) {
+          map.set(course.id, exam);
+        }
+      }
+    }
+
+    return map;
+  }
+
+  async hasPublishedAdvancedExam(courseId: number) {
+    return this.examRepository
+      .createQueryBuilder('exam')
+      .leftJoin('exam.courses', 'course')
+      .where('course.id = :courseId', { courseId })
+      .andWhere('exam.status = :status', { status: ExamStatus.Published })
+      .getExists();
   }
 
   async getForLearner(courseId: number, userId: number) {
@@ -487,11 +622,13 @@ export class CourseExamsService {
       }),
     );
 
+    this.courseExamEmailProvider.sendLegacyAttemptSubmittedSafely(attempt);
+
     return this.mapAttempt(attempt);
   }
 
   async hasPassedExam(userId: number, courseId: number) {
-    const attempt = await this.courseExamAttemptRepository.findOne({
+    const legacyAttempt = await this.courseExamAttemptRepository.findOne({
       where: {
         user: { id: userId },
         course: { id: courseId },
@@ -500,7 +637,17 @@ export class CourseExamsService {
       order: { attemptNumber: 'DESC' },
     });
 
-    return !!attempt;
+    if (legacyAttempt) {
+      return true;
+    }
+
+    return this.examAttemptRepository.exists({
+      where: {
+        user: { id: userId },
+        course: { id: courseId },
+        passed: true,
+      },
+    });
   }
 
   private async ensureCourseWithExam(courseId: number) {

@@ -1,12 +1,28 @@
 import * as puppeteer from 'puppeteer';
 import * as Handlebars from 'handlebars';
+import { existsSync } from 'fs';
 
 type PdfMode = 'invoice' | 'certificate';
+
+function getExecutablePath() {
+  const candidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+  ].filter(Boolean) as string[];
+
+  return candidates.find((path) => existsSync(path));
+}
 
 async function renderHtmlToPdf(html: string): Promise<Buffer> {
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: getExecutablePath(),
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+    ],
   });
 
   try {

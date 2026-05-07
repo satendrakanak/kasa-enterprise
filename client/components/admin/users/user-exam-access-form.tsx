@@ -104,9 +104,11 @@ export function UserExamAccessForm({
                       {item.courseTitle}
                     </h4>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
-                      Base attempts {item.baseAttempts} • Effective attempts{" "}
-                      {item.effectiveAttempts} • Used {item.attemptsUsed} •
-                      Remaining {item.remainingAttempts}
+                      {item.examMode === "advanced" ? "Advanced exam" : "Legacy exam"} •
+                      Base attempts {formatAttemptCount(item.baseAttempts)} •
+                      Effective attempts {formatAttemptCount(item.effectiveAttempts)} •
+                      Used {item.attemptsUsed} • Remaining{" "}
+                      {formatAttemptCount(item.remainingAttempts)}
                     </p>
                   </div>
                   <span
@@ -163,4 +165,8 @@ export function UserExamAccessForm({
       </div>
     </section>
   );
+}
+
+function formatAttemptCount(value: number | null) {
+  return value === null ? "Unlimited" : value;
 }

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Award, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { CourseExamSection } from "@/components/course/learn/course-exam-section";
 import { CourseQaSection } from "@/components/course/sections/course-qa-section";
 import { CourseRatingReviews } from "@/components/course/sections/course-rating-reviews";
 import { getCourseMeta } from "@/helpers/course-meta";
@@ -23,6 +23,7 @@ interface CourseTabsProps {
 type TabId = "overview" | "exam" | "qa" | "reviews";
 
 export const CourseTabs = ({ course }: CourseTabsProps) => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
 
   const [meta, setMeta] = useState({
@@ -37,15 +38,11 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
 
   const isCourseCompleted = total > 0 && completed >= total;
 
-  const hasPublishedExam =
-    Boolean(course.exam?.isPublished) &&
-    Boolean(course.exam?.questions?.length);
-
   const tabs: { id: TabId; label: string; visible?: boolean }[] = [
     { id: "overview", label: "Overview" },
     { id: "qa", label: "Q&A" },
     { id: "reviews", label: "Reviews" },
-    { id: "exam", label: "Final Exams", visible: hasPublishedExam },
+    { id: "exam", label: "Final Exams" },
   ];
 
   useEffect(() => {
@@ -100,6 +97,7 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
 
   const handleCertificateClick = async () => {
     if (certificate) {
+      console.log("Certificate", certificate);
       downloadCertificate(certificate);
       return;
     }
@@ -132,7 +130,7 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
 
   return (
     <div className="border-t border-border bg-background">
-      <div className="flex flex-wrap gap-5 border-b border-border px-6 pt-4">
+      <div className="flex flex-wrap items-center gap-5 border-b border-border px-6 pt-4">
         {tabs
           .filter((tab) => tab.visible !== false)
           .map((tab) => {
@@ -142,7 +140,13 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  if (tab.id === "exam") {
+                    router.push(`/course/${course.slug}/exams`);
+                    return;
+                  }
+                  setActiveTab(tab.id);
+                }}
                 className={cn(
                   "cursor-pointer border-b-2 pb-2 text-sm font-bold transition-colors",
                   isActive
@@ -156,11 +160,7 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
           })}
       </div>
 
-      {activeTab === "exam" ? (
-        <div className="px-6 py-6">
-          <CourseExamSection course={{ ...course, isEnrolled: true }} />
-        </div>
-      ) : activeTab === "qa" ? (
+      {activeTab === "qa" ? (
         <div className="px-6 py-6">
           <CourseQaSection course={{ ...course, isEnrolled: true }} />
         </div>
@@ -211,7 +211,7 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
                     <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
                       {certificate
                         ? `Certificate ID ${certificate.certificateNumber}. You can download it anytime from here or your profile.`
-                        : hasPublishedExam
+                        : course.exam?.isPublished
                           ? `Complete all ${
                               total || meta.totalLectures
                             } lectures and clear the final exam to generate your official Unitus certificate. Current lecture progress: ${percent}%.`

@@ -6,7 +6,7 @@ export default async function EmailTemplatesPage() {
   let templates: EmailTemplate[] = [];
 
   try {
-    const response = await emailTemplateServerService.getAll();
+    const response = await emailTemplateServerService.getAll({ limit: 100 });
     templates = response.data.data;
   } catch (error) {
     console.error(error);

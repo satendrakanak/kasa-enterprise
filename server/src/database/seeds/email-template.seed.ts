@@ -136,6 +136,105 @@ const templates = [
     }),
   },
   {
+    templateName: 'advanced_exam_passed',
+    subject: 'You passed {{examTitle}}',
+    body: brandShell({
+      eyebrow: 'Exam cleared',
+      title: 'Congratulations, {{name}}!',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">You passed <strong>{{examTitle}}</strong> for <strong>{{courseTitle}}</strong>.</p>
+        <div style="background:#ecfdf5;border:1px solid #bbf7d0;border-radius:18px;padding:18px;margin:24px 0">
+          <p style="margin:0;color:#047857;font-size:13px">Score</p>
+          <p style="margin:6px 0 0;font-size:24px;font-weight:800;color:#111827">{{percentage}}%</p>
+        </div>
+        <p style="font-size:16px;line-height:1.7;color:#475569">Your certificate is now unlocked.</p>
+        ${button('View result', '{{examLink}}')}
+      `,
+    }),
+  },
+  {
+    templateName: 'advanced_exam_failed',
+    subject: 'Your {{examTitle}} result is ready',
+    body: brandShell({
+      eyebrow: 'Exam result',
+      title: 'Your exam needs another attempt',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">Hi {{name}}, your <strong>{{examTitle}}</strong> attempt for <strong>{{courseTitle}}</strong> has been graded.</p>
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:18px;margin:24px 0">
+          <p style="margin:0;color:#9a3412;font-size:13px">Score</p>
+          <p style="margin:6px 0 0;font-size:24px;font-weight:800;color:#111827">{{percentage}}%</p>
+        </div>
+        <p style="font-size:16px;line-height:1.7;color:#475569">You can retry if attempts are available or management has approved extra attempts.</p>
+        ${button('Open exam', '{{examLink}}')}
+      `,
+    }),
+  },
+  {
+    templateName: 'advanced_exam_submitted',
+    subject: 'Your {{examTitle}} was submitted for review',
+    body: brandShell({
+      eyebrow: 'Manual review',
+      title: 'Your exam is submitted',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">Hi {{name}}, your <strong>{{examTitle}}</strong> for <strong>{{courseTitle}}</strong> has been submitted successfully.</p>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:18px;margin:22px 0">
+          <p style="margin:0;color:#475569">Some answers need manual grading. You will see the final result after review.</p>
+        </div>
+        ${button('Open exam', '{{examLink}}')}
+      `,
+    }),
+  },
+  {
+    templateName: 'exam_attempts_extended',
+    subject: 'Your exam attempts have been updated',
+    body: brandShell({
+      eyebrow: 'Attempts updated',
+      title: 'You can retry your exam',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">Hi {{name}}, management has updated your exam access for <strong>{{courseTitle}}</strong>.</p>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:18px;padding:18px;margin:24px 0">
+          <p style="margin:0;color:#1d4ed8;font-size:13px">Extra attempts approved</p>
+          <p style="margin:6px 0 0;font-size:24px;font-weight:800;color:#111827">{{extraAttempts}}</p>
+        </div>
+        ${button('Open exam', '{{examLink}}')}
+      `,
+    }),
+  },
+  {
+    templateName: 'course_exam_passed',
+    subject: 'You passed the final exam for {{courseTitle}}',
+    body: brandShell({
+      eyebrow: 'Exam cleared',
+      title: 'Congratulations, {{name}}!',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">You passed the final exam for <strong>{{courseTitle}}</strong>.</p>
+        <div style="background:#ecfdf5;border:1px solid #bbf7d0;border-radius:18px;padding:18px;margin:24px 0">
+          <p style="margin:0;color:#047857;font-size:13px">Score</p>
+          <p style="margin:6px 0 0;font-size:24px;font-weight:800;color:#111827">{{percentage}}%</p>
+        </div>
+        <p style="font-size:16px;line-height:1.7;color:#475569">Your certificate can now be unlocked once all completion requirements are met.</p>
+        ${button('Open exam', '{{examLink}}')}
+      `,
+    }),
+  },
+  {
+    templateName: 'course_exam_failed',
+    subject: 'Your final exam result for {{courseTitle}} is ready',
+    body: brandShell({
+      eyebrow: 'Exam result',
+      title: 'Your exam needs another attempt',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">Hi {{name}}, your final exam attempt for <strong>{{courseTitle}}</strong> has been graded.</p>
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:18px;margin:24px 0">
+          <p style="margin:0;color:#9a3412;font-size:13px">Score</p>
+          <p style="margin:6px 0 0;font-size:24px;font-weight:800;color:#111827">{{percentage}}%</p>
+        </div>
+        <p style="font-size:16px;line-height:1.7;color:#475569">You can retry if attempts are available or management has approved extra attempts.</p>
+        ${button('Open exam', '{{examLink}}')}
+      `,
+    }),
+  },
+  {
     templateName: 'course_purchase_success',
     subject: 'Your Unitus course purchase is confirmed',
     body: brandShell({

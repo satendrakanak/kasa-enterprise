@@ -10,11 +10,11 @@ import { seedCourseLearningDemo } from './seeds/course-learning-demo.seed';
 
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'shivaan',
-  password: '1234',
-  database: 'unitus',
+  host: process.env.DATABASE_HOST || 'localhost',
+  port: Number(process.env.DATABASE_PORT || 5432),
+  username: process.env.DATABASE_USER || 'shivaan',
+  password: process.env.DATABASE_PASSWORD || '1234',
+  database: process.env.DATABASE_NAME || 'unitus',
   entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
   synchronize: false,
 });

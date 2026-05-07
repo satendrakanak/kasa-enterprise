@@ -75,7 +75,7 @@ export function DataTableContent<TData>({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-x-auto overflow-y-hidden rounded-lg border border-border bg-card">
       <DndContext
         collisionDetection={closestCenter}
         modifiers={[restrictToVerticalAxis]}
@@ -83,7 +83,7 @@ export function DataTableContent<TData>({
         sensors={sensors}
         id={sortableId}
       >
-        <Table>
+        <Table className="min-w-full table-auto">
           {/* 🔥 HEADER */}
           <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur supports-backdrop-filter:bg-muted/60">
             {table.getHeaderGroups().map((headerGroup) => (

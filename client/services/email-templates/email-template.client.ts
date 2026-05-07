@@ -7,12 +7,20 @@ import {
 } from "@/types/email-template";
 
 export const emailTemplateClientService = {
-  getAll: () =>
-    withAuthRetry(() =>
+  getAll: (params?: { page?: number; limit?: number }) => {
+    const query = new URLSearchParams();
+
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+
+    return withAuthRetry(() =>
       apiClient.get<ApiResponse<Paginated<EmailTemplate>>>(
-        "/api/email-templates",
+        `/api/email-templates${suffix}`,
       ),
-    ),
+    );
+  },
 
   create: (data: CreateEmailTemplatePayload) =>
     withAuthRetry(() =>

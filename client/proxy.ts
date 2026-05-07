@@ -33,7 +33,8 @@ export function proxy(request: NextRequest) {
   const isAdminRoute = pathname.startsWith(adminRoutePrefix);
   const isProtectedRoute = matchRoute(protectedRoutes, pathname);
   const isLearningRoute =
-    pathname.startsWith("/course/") && pathname.endsWith("/learn");
+    pathname.startsWith("/course/") &&
+    (pathname.endsWith("/learn") || pathname.endsWith("/exams"));
 
   // =========================
   // 🔐 2. Auth routes (login/signup)

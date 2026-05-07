@@ -13,6 +13,7 @@ import {
   Mail,
   ShieldCheck,
   MessageCircleHeart,
+  ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,6 +48,30 @@ export const sidebarData = {
       url: "/admin/courses",
       icon: BookOpen,
       requiredPermissions: ["view_course", "create_course", "update_course"],
+    },
+
+    {
+      title: "Exams",
+      url: "/admin/exams",
+      icon: ClipboardCheck,
+      requiredPermissions: ["view_course", "create_course", "update_course"],
+      items: [
+        {
+          title: "Exams",
+          url: "/admin/exams",
+          requiredPermissions: ["view_course", "create_course", "update_course"],
+        },
+        {
+          title: "Questions",
+          url: "/admin/exams/questions",
+          requiredPermissions: ["view_course", "create_course", "update_course"],
+        },
+        {
+          title: "Categories",
+          url: "/admin/exams/categories",
+          requiredPermissions: ["view_course", "create_course", "update_course"],
+        },
+      ],
     },
 
     {

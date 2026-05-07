@@ -201,7 +201,9 @@ export class CertificatesService {
     const course = await this.courseRepository.findOne({
       where: { id: courseId },
     });
-    const examRequired = !!course?.exam?.isPublished && !!course?.exam?.questions?.length;
+    const examRequired =
+      (!!course?.exam?.isPublished && !!course?.exam?.questions?.length) ||
+      (await this.courseExamsService.hasPublishedAdvancedExam(courseId));
     const examPassed = examRequired
       ? await this.courseExamsService.hasPassedExam(userId, courseId)
       : true;

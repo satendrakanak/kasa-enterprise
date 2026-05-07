@@ -48,6 +48,7 @@ import { FacultyReviewsModule } from './faculty-reviews/faculty-reviews.module';
 import { ContactLeadsModule } from './contact-leads/contact-leads.module';
 import { CourseExamsModule } from './course-exams/course-exams.module';
 import { RefundsModule } from './refunds/refunds.module';
+import { ExamsModule } from './exams/exams.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -117,6 +118,7 @@ const ENV = process.env.NODE_ENV;
     CartsModule,
     FacultyReviewsModule,
     ContactLeadsModule,
+    ExamsModule,
     CourseExamsModule,
     RefundsModule,
   ],
