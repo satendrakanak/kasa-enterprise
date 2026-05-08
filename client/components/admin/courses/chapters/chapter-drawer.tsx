@@ -29,6 +29,8 @@ interface ChapterDrawerProps {
   onClose: () => void;
   chapter: Chapter;
   courseId: number;
+  isFacultyLed?: boolean;
+  onSaved?: (chapter: Chapter, previousId: number) => void;
 }
 
 export default function ChapterDrawer({
@@ -36,6 +38,8 @@ export default function ChapterDrawer({
   onClose,
   chapter,
   courseId,
+  isFacultyLed = false,
+  onSaved,
 }: ChapterDrawerProps) {
   const router = useRouter();
 
@@ -54,16 +58,17 @@ export default function ChapterDrawer({
       description: chapter.description || "",
       isFree: chapter.isFree || false,
     });
-  }, [chapter]);
+  }, [chapter, form]);
 
   const isTemp = chapter.isTemp;
 
   const { isValid, isSubmitting } = form.formState;
   const onSubmit = async (data: z.input<typeof chapterSchema>) => {
     try {
-      const { isPublished, ...rest } = data;
       const payload = {
-        ...rest,
+        title: data.title,
+        description: data.description,
+        isFree: isFacultyLed ? false : data.isFree,
         courseId,
       };
 
@@ -72,12 +77,14 @@ export default function ChapterDrawer({
       if (!isTemp) {
         // UPDATE
         response = await chapterClientService.update(chapter.id, payload);
-        toast.success("Chapter updated");
+        toast.success(isFacultyLed ? "Module updated" : "Chapter updated");
       } else {
         // CREATE
         response = await chapterClientService.create(payload);
-        toast.success("Chapter created");
+        toast.success(isFacultyLed ? "Module created" : "Chapter created");
       }
+      onSaved?.(response.data, chapter.id);
+      onClose();
       router.refresh();
     } catch (error: unknown) {
       const message = getErrorMessage(error);
@@ -97,31 +104,36 @@ export default function ChapterDrawer({
               {/* LEFT */}
               <div className="min-w-0">
                 <DrawerTitle className="font-semibold">
-                  {isTemp ? "Add New" : "Edit"} Chapter
+                  {isTemp ? "Add New" : "Edit"}{" "}
+                  {isFacultyLed ? "Curriculum Module" : "Chapter"}
                 </DrawerTitle>
                 <DrawerDescription>
-                  Manage course chapters details
+                  {isFacultyLed
+                    ? "Manage the live course module title, description, and order"
+                    : "Manage course chapter details"}
                 </DrawerDescription>
               </div>
 
               {/* RIGHT */}
               <div className="flex items-center gap-3 shrink-0">
-                <Controller
-                  name="isFree"
-                  control={form.control}
-                  render={({ field }) => (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs">
-                        You want to make this chapter free?
-                      </span>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="cursor-pointer"
-                      />
-                    </div>
-                  )}
-                />
+                {!isFacultyLed ? (
+                  <Controller
+                    name="isFree"
+                    control={form.control}
+                    render={({ field }) => (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs">
+                          You want to make this chapter free?
+                        </span>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="cursor-pointer"
+                        />
+                      </div>
+                    )}
+                  />
+                ) : null}
 
                 <SubmitButton
                   type="submit"
@@ -144,7 +156,11 @@ export default function ChapterDrawer({
                   <Field data-invalid={fieldState.invalid}>
                     <Input
                       {...field}
-                      placeholder="e.g. Introduction of the course"
+                      placeholder={
+                        isFacultyLed
+                          ? "e.g. Orientation and learning roadmap"
+                          : "e.g. Introduction of the course"
+                      }
                       className="h-11"
                     />
                     {fieldState.invalid && (
@@ -160,7 +176,11 @@ export default function ChapterDrawer({
                   <Textarea
                     {...field}
                     className="mt-4 h-50 resize-y"
-                    placeholder="Chapter description"
+                    placeholder={
+                      isFacultyLed
+                        ? "Explain what learners will cover in this live course module"
+                        : "Chapter description"
+                    }
                   />
                 )}
               />

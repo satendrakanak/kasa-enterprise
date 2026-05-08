@@ -1,4 +1,8 @@
 import { Course } from '../course.entity';
+import {
+  hasLiveClasses,
+  hasRecordedLearning,
+} from '../constants/course-delivery-mode';
 
 // utils
 const stripHtml = (html: string) => {
@@ -7,16 +11,33 @@ const stripHtml = (html: string) => {
 export const getCoursePublishErrors = (course: Course): string[] => {
   const errors: string[] = [];
 
+  const needsRecordedContent = hasRecordedLearning(course.mode);
+  const needsFacultySetup = hasLiveClasses(course.mode);
+  const hasPublishedCurriculumChapter = (course.chapters ?? []).some(
+    (chapter) =>
+      chapter.isPublished &&
+      Boolean(chapter.title?.trim() && chapter.description?.trim()),
+  );
   const hasValidContent = (course.chapters ?? []).some(
     (chapter) =>
       chapter.isPublished &&
       (chapter.lectures ?? []).some((lecture) => lecture.isPublished),
   );
 
-  if (!hasValidContent) {
+  if (needsRecordedContent && !hasValidContent) {
     errors.push(
       'Course must have at least one published chapter with published lectures',
     );
+  }
+
+  if (!needsRecordedContent && !hasPublishedCurriculumChapter) {
+    errors.push(
+      'Course must have at least one published curriculum chapter with description',
+    );
+  }
+
+  if (needsFacultySetup && !course.faculties?.length) {
+    errors.push('Faculty-led courses must have at least one assigned faculty');
   }
 
   if (!course.title?.trim()) errors.push('Title is required');
@@ -42,7 +63,8 @@ export const getCoursePublishErrors = (course: Course): string[] => {
   if (!course.exams) errors.push('Please add exams');
   if (!course.experienceLevel) errors.push('Please add experience level');
   if (!course.mode) errors.push('Please add mode');
-  if (!course.studyMaterial) errors.push('Please add study material');
+  if (needsRecordedContent && !course.studyMaterial)
+    errors.push('Please add study material');
 
   const price = Number(course.priceInr);
   if (isNaN(price) || price < 0) {

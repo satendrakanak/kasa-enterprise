@@ -10,6 +10,7 @@ export async function seedPermissions(dataSource: DataSource) {
     'update_course',
     'delete_course',
     'view_course',
+    'edit_assigned_course',
     'enroll_course',
     'view_category',
     'create_category',

@@ -22,9 +22,13 @@ import { getErrorMessage } from "@/lib/error-handler";
 
 interface CourseHeaderProps {
   course: Course;
+  canManageActions?: boolean;
 }
 
-export const CourseHeader = ({ course }: CourseHeaderProps) => {
+export const CourseHeader = ({
+  course,
+  canManageActions = true,
+}: CourseHeaderProps) => {
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -112,7 +116,8 @@ export const CourseHeader = ({ course }: CourseHeaderProps) => {
         </div>
 
         {/* 🔥 RIGHT */}
-        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+        {canManageActions ? (
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
           <Button
             size="sm"
             onClick={handleToggleFeatured}
@@ -196,14 +201,21 @@ export const CourseHeader = ({ course }: CourseHeaderProps) => {
             <Trash2 className="size-4" />
             Delete
           </Button>
-        </div>
-        <ConfirmDeleteDialog
-          deleteText="course"
-          open={openDeleteDialog}
-          onClose={() => setOpenDeleteDialog(false)}
-          onConfirm={handleDelete}
-          loading={isDeleting}
-        />
+          </div>
+        ) : (
+          <Badge variant="outline" className="w-fit">
+            Assigned faculty edit
+          </Badge>
+        )}
+        {canManageActions ? (
+          <ConfirmDeleteDialog
+            deleteText="course"
+            open={openDeleteDialog}
+            onClose={() => setOpenDeleteDialog(false)}
+            onConfirm={handleDelete}
+            loading={isDeleting}
+          />
+        ) : null}
       </div>
     </div>
   );

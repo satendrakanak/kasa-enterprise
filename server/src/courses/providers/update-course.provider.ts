@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   Injectable,
   InternalServerErrorException,
@@ -66,6 +67,7 @@ export class UpdateCourseProvider {
         'image',
         'categories',
         'tags',
+        'faculties',
         'video',
         'chapters',
         'chapters.lectures',
@@ -75,6 +77,8 @@ export class UpdateCourseProvider {
     if (!course) {
       throw new NotFoundException('Course not found');
     }
+
+    this.assertCanUpdateCourse(course, patchCourseDto, user);
 
     try {
       let finalSlug = course.slug;
@@ -232,5 +236,55 @@ export class UpdateCourseProvider {
 
       throw new InternalServerErrorException('Failed to update course');
     }
+  }
+
+  private assertCanUpdateCourse(
+    course: Course,
+    patchCourseDto: PatchCourseDto,
+    user: ActiveUserData,
+  ) {
+    if (this.isAdmin(user) || this.hasPermission(user, 'update_course')) {
+      return;
+    }
+
+    const canEditAssignedCourse =
+      this.hasPermission(user, 'edit_assigned_course') &&
+      course.faculties?.some((faculty) => faculty.id === user.sub);
+
+    if (!canEditAssignedCourse) {
+      throw new ForbiddenException('Missing permission: update_course');
+    }
+
+    const protectedFields: Array<keyof PatchCourseDto> = [
+      'facultyIds',
+      'isPublished',
+      'isFeatured',
+      'isFree',
+      'priceInr',
+      'priceUsd',
+      'imageId',
+      'videoId',
+      'categories',
+      'tags',
+      'mode',
+    ];
+
+    const attemptedProtectedField = protectedFields.find(
+      (field) => patchCourseDto[field] !== undefined,
+    );
+
+    if (attemptedProtectedField) {
+      throw new ForbiddenException(
+        `Assigned faculty cannot update ${attemptedProtectedField}`,
+      );
+    }
+  }
+
+  private isAdmin(user: ActiveUserData) {
+    return Boolean(user.roles?.includes('admin'));
+  }
+
+  private hasPermission(user: ActiveUserData, permission: string) {
+    return Boolean(user.permissions?.includes(permission));
   }
 }

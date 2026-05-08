@@ -15,6 +15,11 @@ import { Button } from "../ui/button";
 import { useCartStore } from "@/store/cart-store";
 import { couponClientService } from "@/services/coupons/coupon.client";
 import CoursePrice from "./course-price";
+import {
+  getCourseDeliveryLabel,
+  hasLiveClasses,
+  hasRecordedLearning,
+} from "@/lib/course-delivery";
 
 interface CourseSidebarCardProps {
   course: Course;
@@ -89,6 +94,10 @@ export const CourseSidebarCard = ({ course }: CourseSidebarCardProps) => {
 
   const isEnrolled = course.isEnrolled;
   const percent = course.progress?.progress || 0;
+  const delivery = getCourseDeliveryLabel(course.mode);
+  const recordedLearning = hasRecordedLearning(course);
+  const liveClasses = hasLiveClasses(course);
+  const liveOnly = liveClasses && !recordedLearning;
 
   return (
     <aside className="academy-card overflow-hidden p-4 shadow-[0_28px_90px_color-mix(in_oklab,var(--primary)_14%,transparent)]">
@@ -122,7 +131,7 @@ export const CourseSidebarCard = ({ course }: CourseSidebarCardProps) => {
         {isEnrolled ? (
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Lifetime access unlocked
+            {liveOnly ? "Classroom access active" : "Lifetime access unlocked"}
           </div>
         ) : (
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
@@ -148,26 +157,43 @@ export const CourseSidebarCard = ({ course }: CourseSidebarCardProps) => {
           <AddToCartButton course={course} />
         ) : (
           <>
-            <div className="rounded-2xl border border-border bg-muted/50 p-4">
-              <div className="mb-2 flex justify-between text-xs font-semibold text-muted-foreground">
-                <span>Your Progress</span>
-                <span>{percent}%</span>
+            {liveOnly ? (
+              <div className="rounded-2xl border border-border bg-muted/50 p-4">
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                  <Clock className="h-3.5 w-3.5" />
+                  Live classroom
+                </div>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Batch schedule, class links, and faculty updates are available
+                  inside your classroom.
+                </p>
               </div>
+            ) : (
+              <div className="rounded-2xl border border-border bg-muted/50 p-4">
+                <div className="mb-2 flex justify-between text-xs font-semibold text-muted-foreground">
+                  <span>Your Progress</span>
+                  <span>{percent}%</span>
+                </div>
 
-              <div className="h-2 overflow-hidden rounded-full bg-background">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${percent}%` }}
-                />
+                <div className="h-2 overflow-hidden rounded-full bg-background">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <Button
               asChild
               className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90"
             >
               <Link href={`/course/${course.slug}/learn`}>
-                {percent > 0 ? "Continue Learning" : "Start Learning"}
+                {liveOnly
+                  ? "Open Classroom"
+                  : percent > 0
+                    ? "Continue Learning"
+                    : "Start Learning"}
               </Link>
             </Button>
           </>
@@ -190,12 +216,22 @@ export const CourseSidebarCard = ({ course }: CourseSidebarCardProps) => {
             value={course.duration || "N/A"}
           />
 
-          <CourseFeatureItem title="Lectures" value={meta.totalLectures} />
+          <CourseFeatureItem title="Course Type" value={delivery.shortLabel} />
 
-          <CourseFeatureItem
-            title="Total Video Duration"
-            value={meta.totalDuration}
-          />
+          {recordedLearning ? (
+            <>
+              <CourseFeatureItem title="Lectures" value={meta.totalLectures} />
+
+              <CourseFeatureItem
+                title="Total Video Duration"
+                value={meta.totalDuration}
+              />
+            </>
+          ) : null}
+
+          {liveClasses ? (
+            <CourseFeatureItem title="Live Classes" value="Batch schedule" />
+          ) : null}
 
           <CourseFeatureItem
             title="Experience Level"

@@ -33,6 +33,8 @@ interface ChaptersListProps {
   onDelete: (id: number) => void;
   handleDragEnd: (event: DragEndEvent) => void;
   onLecturePublishChange: (lectureId: number, isPublished: boolean) => void;
+  isFacultyLed?: boolean;
+  onChapterSaved: (chapter: Chapter, previousId: number) => void;
 }
 
 export default function ChaptersList({
@@ -46,6 +48,8 @@ export default function ChaptersList({
   onDelete,
   handleDragEnd,
   onLecturePublishChange,
+  isFacultyLed = false,
+  onChapterSaved,
 }: ChaptersListProps) {
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -53,7 +57,7 @@ export default function ChaptersList({
     <div className="space-y-3 rounded-xl border border-slate-200 bg-white/70 p-3 dark:border-white/10 dark:bg-white/4">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-slate-950 dark:text-white">
-          Chapters
+          {isFacultyLed ? "Curriculum" : "Chapters"}
         </h3>
         <Button size="sm" onClick={addChapter}>
           + Add
@@ -81,6 +85,8 @@ export default function ChaptersList({
                     courseId={courseId}
                     onTooglePublish={onTooglePublish}
                     onLecturePublishChange={onLecturePublishChange}
+                    isFacultyLed={isFacultyLed}
+                    onChapterSaved={onChapterSaved}
                     onDelete={onDelete}
                     viewType={viewType}
                     dragHandle={{

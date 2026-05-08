@@ -46,6 +46,7 @@ interface LectureDrawerProps {
     attributes: DraggableAttributes;
     listeners: SyntheticListenerMap;
   };
+  isFacultyLed?: boolean;
 }
 
 export default function LectureDrawer({
@@ -57,6 +58,7 @@ export default function LectureDrawer({
   onTooglePublish,
   onDelete,
   dragHandle,
+  isFacultyLed = false,
 }: LectureDrawerProps) {
   const [selectedVideo, setSelectedVideo] = useState<FileType | null>();
   const [selectedFiles, setSelectedFiles] = useState<Attachment[]>([]);
@@ -224,7 +226,7 @@ export default function LectureDrawer({
       toast.error(message);
     }
   };
-  const disabled = !canPublishLecture(lecture);
+  const disabled = isFacultyLed ? false : !canPublishLecture(lecture);
   return (
     <Drawer key={lecture.id} direction="right">
       <div
@@ -300,7 +302,7 @@ export default function LectureDrawer({
                   title={
                     disabled
                       ? "Add video or attachment to publish"
-                      : "Publish lecture"
+                      : `Publish ${isFacultyLed ? "topic" : "lecture"}`
                   }
                 >
                   <CheckCircle className="size-3" />
@@ -335,10 +337,12 @@ export default function LectureDrawer({
               {/* LEFT */}
               <div className="min-w-0">
                 <DrawerTitle className="font-semibold text-slate-950 dark:text-white">
-                  {isTemp ? "Add New" : "Edit"} Lecture
+                  {isTemp ? "Add New" : "Edit"} {isFacultyLed ? "Topic" : "Lecture"}
                 </DrawerTitle>
                 <DrawerDescription className="dark:text-slate-300">
-                  Manage chapters lecture details
+                  {isFacultyLed
+                    ? "Manage curriculum topic details. Videos are not used for faculty-led courses."
+                    : "Manage chapters lecture details"}
                 </DrawerDescription>
               </div>
 
@@ -350,7 +354,9 @@ export default function LectureDrawer({
                   render={({ field }) => (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-700 dark:text-slate-200">
-                        You want to make this lecture free?
+                        {isFacultyLed
+                          ? "Mark this topic as preview?"
+                          : "You want to make this lecture free?"}
                       </span>
                       <Switch
                         checked={field.value}
@@ -402,15 +408,16 @@ export default function LectureDrawer({
                   />
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FileUpload
-                  label="Lecture Video"
-                  previewType="video"
-                  value={selectedVideo || lecture.video}
-                  onUpload={handleVideoFileUpload}
-                  className="aspect-video w-full"
-                />
-                <div className="space-y-3">
+              {!isFacultyLed ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <FileUpload
+                    label="Lecture Video"
+                    previewType="video"
+                    value={selectedVideo || lecture.video}
+                    onUpload={handleVideoFileUpload}
+                    className="aspect-video w-full"
+                  />
+                  <div className="space-y-3">
                   <FileUpload
                     label="Lecture Attachments"
                     previewType="file"
@@ -482,8 +489,15 @@ export default function LectureDrawer({
                       </p>
                     </div>
                   )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-xl border bg-muted/40 p-4 text-sm leading-6 text-muted-foreground">
+                  This topic will appear in the public course syllabus. Live
+                  sessions, links, recordings, and reminders are managed from
+                  Faculty Workspace.
+                </div>
+              )}
             </FieldGroup>
           </div>
         </form>

@@ -11,6 +11,11 @@ import { useEffect, useState } from "react";
 import { getCourseMeta } from "@/helpers/course-meta";
 import { CourseProgressBar } from "./course-progress-bar";
 import { CouponApplyResponse } from "@/types/coupon";
+import {
+  getCourseDeliveryLabel,
+  hasLiveClasses,
+  hasRecordedLearning,
+} from "@/lib/course-delivery";
 
 interface CourseCardProps {
   course: Course & {
@@ -64,6 +69,9 @@ export function CourseCard({ course, coupon }: CourseCardProps) {
   );
 
   const isEnrolled = course.isEnrolled;
+  const delivery = getCourseDeliveryLabel(course.mode);
+  const recordedLearning = hasRecordedLearning(course);
+  const liveClasses = hasLiveClasses(course);
   const basePrice = Number(course.priceInr);
   const finalPrice = coupon?.finalAmount ?? basePrice;
   const discount = coupon?.discount ?? 0;
@@ -115,7 +123,7 @@ export function CourseCard({ course, coupon }: CourseCardProps) {
               : "absolute left-3 top-3 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-lg"
           }
         >
-          {isEnrolled ? "Enrolled" : "Bestseller"}
+          {isEnrolled ? "Enrolled" : delivery.shortLabel}
         </span>
       </div>
 
@@ -136,8 +144,13 @@ export function CourseCard({ course, coupon }: CourseCardProps) {
         </div>
 
         <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
-          <span>🎬 {meta.totalLectures} lectures</span>
-          <span>⏱ {meta.totalDuration}</span>
+          {recordedLearning ? (
+            <>
+              <span>🎬 {meta.totalLectures} lectures</span>
+              <span>⏱ {meta.totalDuration}</span>
+            </>
+          ) : null}
+          {liveClasses ? <span>📅 Live batches</span> : null}
           <span>📊 {course.experienceLevel || "All Levels"}</span>
         </div>
 
@@ -145,6 +158,7 @@ export function CourseCard({ course, coupon }: CourseCardProps) {
           <CourseProgressBar
             percent={course.progress.progress}
             slug={course.slug}
+            mode={course.mode}
           />
         ) : (
           <div className="mt-auto flex items-center justify-between gap-4">

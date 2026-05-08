@@ -46,7 +46,8 @@ export function canAccessAdmin(user: User | null | undefined): boolean {
   return (
     hasRole(user, "admin") ||
     hasPermission(user, "view_dashboard") ||
-    hasPermission(user, "manage_users")
+    hasPermission(user, "manage_users") ||
+    hasPermission(user, "edit_assigned_course")
   );
 }
 

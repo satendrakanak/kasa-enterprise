@@ -15,10 +15,14 @@ import {
   Pencil,
   ChevronDown,
   ChevronUp,
+  BookOpenText,
 } from "lucide-react";
 import { Chapter } from "@/types/chapter";
 import { LectureForm } from "./lectures/lecture-form";
-import { canPublishChapter } from "@/helpers/publish-rules";
+import {
+  canPublishChapter,
+  canPublishCurriculumChapter,
+} from "@/helpers/publish-rules";
 import { cn } from "@/lib/utils";
 
 interface ChapterAccordionItemProps {
@@ -36,6 +40,7 @@ interface ChapterAccordionItemProps {
     listeners: SyntheticListenerMap;
   };
   onEdit: (chapter: Chapter) => void;
+  isFacultyLed?: boolean;
 }
 
 export const ChapterAccordionItem = ({
@@ -50,9 +55,17 @@ export const ChapterAccordionItem = ({
   isTemp,
   dragHandle,
   onEdit,
+  isFacultyLed = false,
 }: ChapterAccordionItemProps) => {
   const isActive = activeId === chapter.id;
-  const disabled = !canPublishChapter(chapter);
+  const disabled = isFacultyLed
+    ? !canPublishCurriculumChapter(chapter)
+    : !canPublishChapter(chapter);
+  const publishTitle = disabled
+    ? isFacultyLed
+      ? "Add module title and description first"
+      : "Cannot publish yet"
+    : "Publish";
   return (
     <Collapsible
       open={isActive}
@@ -171,7 +184,7 @@ export const ChapterAccordionItem = ({
                         ? "cursor-not-allowed opacity-40"
                         : "cursor-pointer hover:bg-green-50 dark:hover:bg-emerald-500/10",
                     )}
-                    title={disabled ? "Cannot publish yet" : "Publish"}
+                    title={publishTitle}
                   >
                     <CheckCircle className="size-3" />
                   </div>
@@ -196,10 +209,37 @@ export const ChapterAccordionItem = ({
       {/* CONTENT */}
       <CollapsibleContent className="w-full overflow-hidden">
         <div className="min-h-50 max-h-[60vh] overflow-y-auto rounded-b-md bg-muted/30 px-3 pt-3 pb-4 dark:bg-white/3">
-          <LectureForm
-            chapter={chapter}
-            onLecturePublishChange={onLecturePublishChange}
-          />
+          {isFacultyLed ? (
+            <div className="rounded-xl border border-dashed bg-background p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <BookOpenText className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    {chapter.title || `Curriculum module ${index + 1}`}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {chapter.description?.trim() ||
+                      "Add a clear module description so learners know what this live class section will cover."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onEdit(chapter)}
+                    className="mt-3 text-sm font-semibold text-primary hover:underline"
+                  >
+                    Edit module details
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <LectureForm
+              chapter={chapter}
+              onLecturePublishChange={onLecturePublishChange}
+              isFacultyLed={isFacultyLed}
+            />
+          )}
         </div>
       </CollapsibleContent>
     </Collapsible>

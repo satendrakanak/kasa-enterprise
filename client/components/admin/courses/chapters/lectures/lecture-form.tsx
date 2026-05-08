@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Lecture } from "@/types/lecture";
 
 import { arrayMove } from "@dnd-kit/sortable";
 
-import type { DragEndEvent, DraggableAttributes } from "@dnd-kit/core";
-import { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import type { DragEndEvent } from "@dnd-kit/core";
 import { lectureClientService } from "@/services/lectures/lecture.client";
 import { toast } from "sonner";
 import { LectureList } from "./lectures-list";
@@ -17,21 +16,18 @@ import { getErrorMessage } from "@/lib/error-handler";
 interface LectureFormProps {
   chapter: Chapter;
   onLecturePublishChange: (lectureId: number, isPublished: boolean) => void;
+  isFacultyLed?: boolean;
 }
 
 export const LectureForm = ({
   chapter,
   onLecturePublishChange,
+  isFacultyLed = false,
 }: LectureFormProps) => {
-  const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [lectures, setLectures] = useState<Lecture[]>(() => chapter.lectures ?? []);
   const [activeId, setActiveId] = useState<number | null>(null);
 
   const router = useRouter();
-  useEffect(() => {
-    if (chapter.lectures) {
-      setLectures(chapter.lectures);
-    }
-  }, [chapter]);
 
   const addLecture = () => {
     const newLecture: Lecture = {
@@ -75,10 +71,12 @@ export const LectureForm = ({
         })),
       });
 
-      toast.success("Lectures reordered successfully");
+      toast.success(
+        isFacultyLed ? "Topics reordered successfully" : "Lectures reordered successfully",
+      );
     } catch (error) {
       console.log(error);
-      toast.error("Failed to reorder lectures");
+      toast.error(isFacultyLed ? "Failed to reorder topics" : "Failed to reorder lectures");
     }
   };
 
@@ -95,7 +93,7 @@ export const LectureForm = ({
         isPublished,
       });
       router.refresh();
-      toast.success("Lecture updated successfully");
+      toast.success(isFacultyLed ? "Topic updated successfully" : "Lecture updated successfully");
     } catch (error: unknown) {
       const message = getErrorMessage(error);
       toast.error(message);
@@ -115,7 +113,7 @@ export const LectureForm = ({
 
     try {
       await lectureClientService.delete(id);
-      toast.success("Lecture deleted successfully");
+      toast.success(isFacultyLed ? "Topic deleted successfully" : "Lecture deleted successfully");
     } catch (error) {
       console.log(error);
       toast.error("Failed to delete lecture");
@@ -134,6 +132,7 @@ export const LectureForm = ({
         onDelete={onDelete}
         handleDragEnd={handleDragEnd}
         viewType="all"
+        isFacultyLed={isFacultyLed}
       />
     </div>
   );

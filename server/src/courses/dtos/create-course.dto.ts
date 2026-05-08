@@ -14,7 +14,9 @@ import {
   IsNumber,
   Min,
   ArrayMinSize,
+  IsIn,
 } from 'class-validator';
+import { COURSE_DELIVERY_MODE_VALUES } from '../constants/course-delivery-mode';
 
 class CourseFaqItemDto {
   @IsString()
@@ -192,7 +194,7 @@ export class CreateCourseDto {
   @IsOptional()
   duration?: string;
 
-  @IsString()
+  @IsIn(COURSE_DELIVERY_MODE_VALUES)
   @IsOptional()
   mode?: string;
 

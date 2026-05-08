@@ -3,13 +3,18 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getCourseDeliveryLabel, hasLiveClasses } from "@/lib/course-delivery";
 import type { FacultyWorkspaceCourse } from "@/types/faculty-workspace";
 
 type FacultyCoursesPageProps = {
   courses: FacultyWorkspaceCourse[];
+  canEditAssignedCourses?: boolean;
 };
 
-export function FacultyCoursesPage({ courses }: FacultyCoursesPageProps) {
+export function FacultyCoursesPage({
+  courses,
+  canEditAssignedCourses = false,
+}: FacultyCoursesPageProps) {
   const published = courses.filter((course) => course.isPublished).length;
   const students = courses.reduce((total, course) => total + course.studentsCount, 0);
 
@@ -49,16 +54,25 @@ export function FacultyCoursesPage({ courses }: FacultyCoursesPageProps) {
                 </Badge>
               </div>
               <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                {course.mode ? <Badge variant="outline">{course.mode}</Badge> : null}
+                <Badge variant="outline">
+                  {getCourseDeliveryLabel(course.mode).shortLabel}
+                </Badge>
                 {course.duration ? <Badge variant="outline">{course.duration}</Badge> : null}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/course/${course.slug}`}>View course</Link>
                 </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/faculty/batches">Manage batches</Link>
-                </Button>
+                {hasLiveClasses(course) ? (
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/faculty/batches">Manage batches</Link>
+                  </Button>
+                ) : null}
+                {canEditAssignedCourses ? (
+                  <Button asChild size="sm">
+                    <Link href={`/admin/courses/${course.id}`}>Edit course</Link>
+                  </Button>
+                ) : null}
               </div>
             </div>
           ))

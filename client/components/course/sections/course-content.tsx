@@ -5,6 +5,7 @@ import { FileText, Lock, Minus, PlayCircle, Plus } from "lucide-react";
 
 import VideoPreviewModal from "@/components/modals/video-preview-modal";
 import { getVideoDuration, formatDuration } from "@/helpers/get-section-stats";
+import { hasRecordedLearning, isFacultyLedCourse } from "@/lib/course-delivery";
 import { cn } from "@/lib/utils";
 import { Course } from "@/types/course";
 
@@ -14,6 +15,8 @@ interface CourseContentProps {
 
 export const CourseContent = ({ course }: CourseContentProps) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const recordedLearning = hasRecordedLearning(course);
+  const facultyLedOnly = isFacultyLedCourse(course);
   const [durationMap, setDurationMap] = useState<Record<number, number>>({});
   const [sectionDuration, setSectionDuration] = useState<
     Record<number, number>
@@ -28,6 +31,12 @@ export const CourseContent = ({ course }: CourseContentProps) => {
     let isMounted = true;
 
     const loadDurations = async () => {
+      if (!recordedLearning) {
+        setDurationMap({});
+        setSectionDuration({});
+        return;
+      }
+
       const lectureDurations: Record<number, number> = {};
       const sectionDurations: Record<number, number> = {};
 
@@ -57,7 +66,7 @@ export const CourseContent = ({ course }: CourseContentProps) => {
     return () => {
       isMounted = false;
     };
-  }, [course.chapters]);
+  }, [course.chapters, recordedLearning]);
 
   return (
     <>
@@ -68,8 +77,9 @@ export const CourseContent = ({ course }: CourseContentProps) => {
           </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Explore chapters, lectures, previews, and learning material included
-            in this course.
+            {facultyLedOnly
+              ? "Explore the live course curriculum and module flow before joining your batch."
+              : "Explore chapters, lectures, previews, and learning material included in this course."}
           </p>
         </div>
 
@@ -103,11 +113,17 @@ export const CourseContent = ({ course }: CourseContentProps) => {
                         {chapter.title}
                       </h3>
 
-                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                        {chapter.lectures?.length || 0} lectures
-                      </span>
+                      {facultyLedOnly ? (
+                        <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                          Module {index + 1}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                          {chapter.lectures?.length || 0} lectures
+                        </span>
+                      )}
 
-                      {sectionDuration[chapter.id] > 0 && (
+                      {recordedLearning && sectionDuration[chapter.id] > 0 && (
                         <span className="text-xs font-medium text-muted-foreground">
                           {formatDuration(sectionDuration[chapter.id])}
                         </span>
@@ -144,9 +160,11 @@ export const CourseContent = ({ course }: CourseContentProps) => {
                       </div>
                     )}
 
-                    <div className="space-y-2">
-                      {chapter.lectures?.map((lecture) => {
-                        const isLocked = !lecture.isFree || !chapter.isFree;
+                    {recordedLearning ? (
+                      <div className="space-y-2">
+                        {chapter.lectures?.map((lecture) => {
+                        const isLocked =
+                          recordedLearning && (!lecture.isFree || !chapter.isFree);
                         const hasVideo = Boolean(lecture.video?.path);
                         const hasAttachment = Boolean(
                           lecture.attachments?.length,
@@ -163,7 +181,7 @@ export const CourseContent = ({ course }: CourseContentProps) => {
                                 <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                                   {isLocked ? (
                                     <Lock className="h-4 w-4" />
-                                  ) : hasVideo ? (
+                                  ) : recordedLearning && hasVideo ? (
                                     <PlayCircle className="h-4 w-4 text-primary" />
                                   ) : (
                                     <FileText className="h-4 w-4" />
@@ -184,7 +202,7 @@ export const CourseContent = ({ course }: CourseContentProps) => {
                               </div>
 
                               <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                                {!isLocked && hasVideo && (
+                                {recordedLearning && !isLocked && hasVideo && (
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -199,21 +217,22 @@ export const CourseContent = ({ course }: CourseContentProps) => {
                                   </button>
                                 )}
 
-                                {hasVideo && duration && (
+                                {recordedLearning && hasVideo && duration && (
                                   <span className="whitespace-nowrap">
                                     {formatDuration(duration)}
                                   </span>
                                 )}
 
-                                {!hasVideo && hasAttachment && (
+                                {recordedLearning && !hasVideo && hasAttachment && (
                                   <FileText className="h-4 w-4 text-muted-foreground" />
                                 )}
                               </div>
                             </div>
                           </div>
                         );
-                      })}
-                    </div>
+                        })}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>

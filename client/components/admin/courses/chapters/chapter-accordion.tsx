@@ -21,6 +21,8 @@ interface ChapterAccordionProps {
     attributes: DraggableAttributes;
     listeners: SyntheticListenerMap;
   };
+  isFacultyLed?: boolean;
+  onChapterSaved: (chapter: Chapter, previousId: number) => void;
 }
 
 export default function ChapterAccordion({
@@ -34,6 +36,8 @@ export default function ChapterAccordion({
   onDelete,
   viewType,
   dragHandle,
+  isFacultyLed = false,
+  onChapterSaved,
 }: ChapterAccordionProps) {
   const [open, setOpen] = useState(false);
   const [editingChapter, setEditingChapter] = useState<Chapter>(chapter);
@@ -61,12 +65,15 @@ export default function ChapterAccordion({
         onDelete={onDelete}
         dragHandle={dragHandle}
         onEdit={handleEdit}
+        isFacultyLed={isFacultyLed}
       />
       <ChapterDrawer
         courseId={courseId}
         open={open}
         onClose={() => setOpen(false)}
         chapter={editingChapter}
+        isFacultyLed={isFacultyLed}
+        onSaved={onChapterSaved}
       />
     </>
   );

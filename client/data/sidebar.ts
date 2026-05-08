@@ -47,7 +47,12 @@ export const sidebarData = {
       title: "Courses",
       url: "/admin/courses",
       icon: BookOpen,
-      requiredPermissions: ["view_course", "create_course", "update_course"],
+      requiredPermissions: [
+        "view_course",
+        "create_course",
+        "update_course",
+        "edit_assigned_course",
+      ],
     },
 
     {

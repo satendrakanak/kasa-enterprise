@@ -30,6 +30,8 @@ interface PublishedListProps {
   viewType: string;
   handleDragEnd: (event: DragEndEvent) => void;
   onLecturePublishChange: (lectureId: number, isPublished: boolean) => void;
+  isFacultyLed?: boolean;
+  onChapterSaved: (chapter: Chapter, previousId: number) => void;
 }
 
 export default function PublishedList({
@@ -42,13 +44,15 @@ export default function PublishedList({
   viewType,
   onDelete,
   handleDragEnd,
+  isFacultyLed = false,
+  onChapterSaved,
 }: PublishedListProps) {
   const sensors = useSensors(useSensor(PointerSensor));
 
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/4">
       <h3 className="text-sm font-semibold text-slate-950 dark:text-white">
-        Published Chapters
+        Published {isFacultyLed ? "Curriculum" : "Chapters"}
       </h3>
 
       {chapters.length === 0 && (
@@ -79,6 +83,8 @@ export default function PublishedList({
                       courseId={courseId}
                       onTooglePublish={onTooglePublish}
                       onLecturePublishChange={onLecturePublishChange}
+                      isFacultyLed={isFacultyLed}
+                      onChapterSaved={onChapterSaved}
                       onDelete={onDelete}
                       viewType={viewType}
                       dragHandle={{

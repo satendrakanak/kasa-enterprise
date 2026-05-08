@@ -1,5 +1,11 @@
 import * as z from "zod";
 
+const courseDeliveryModeSchema = z.enum([
+  "self_learning",
+  "faculty_led",
+  "hybrid",
+]);
+
 export const courseSchema = z.object({
   title: z
     .string()
@@ -52,7 +58,7 @@ export const requirementsSchema = z
 export const courseDetailsSchema = z
   .object({
     duration: z.string().optional(),
-    mode: z.string().optional(),
+    mode: z.union([courseDeliveryModeSchema, z.literal("")]).optional(),
     experienceLevel: z.string().optional(),
     language: z.string().optional(),
     certificate: z.string().optional(),

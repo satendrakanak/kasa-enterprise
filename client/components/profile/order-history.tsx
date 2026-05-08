@@ -235,6 +235,7 @@ export function OrderHistory({
                                 <CourseProgressBar
                                   percent={course.progress?.progress || 0}
                                   slug={course.slug}
+                                  mode={course.mode}
                                 />
                               </div>
                             ) : null}

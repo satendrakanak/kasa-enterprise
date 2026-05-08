@@ -11,20 +11,10 @@ import { Course } from "@/types/course";
 import { SubmitButton } from "@/components/submit-button";
 import { getErrorMessage } from "@/lib/error-handler";
 import { Input } from "@/components/ui/input";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
 
 interface CourseDetailsFormProps {
   course: Course;
 }
-
-const deliveryModeOptions = [
-  { value: "self_learning", label: "Self Learning" },
-  { value: "faculty_led", label: "Faculty-led Classes" },
-  { value: "hybrid", label: "Hybrid" },
-];
 
 export const CourseDetailsForm = ({ course }: CourseDetailsFormProps) => {
   const router = useRouter();
@@ -34,7 +24,6 @@ export const CourseDetailsForm = ({ course }: CourseDetailsFormProps) => {
     mode: "onChange",
     defaultValues: {
       duration: course.duration ?? "",
-      mode: course.mode ?? "",
       experienceLevel: course.experienceLevel ?? "",
       language: course.language ?? "",
       certificate: course.certificate ?? "",
@@ -84,37 +73,6 @@ export const CourseDetailsForm = ({ course }: CourseDetailsFormProps) => {
                 className="h-11 w-full rounded-xl px-3 text-sm"
               />
             )}
-          />
-
-          {/* Mode */}
-          <Controller
-            name="mode"
-            control={form.control}
-            render={({ field }) => {
-              const hasCustomValue =
-                field.value &&
-                !deliveryModeOptions.some((option) => option.value === field.value);
-
-              return (
-                <NativeSelect
-                  value={field.value ?? ""}
-                  onChange={field.onChange}
-                  className="h-11 w-full rounded-xl px-3 text-sm"
-                >
-                  <NativeSelectOption value="">Select delivery mode</NativeSelectOption>
-                  {hasCustomValue ? (
-                    <NativeSelectOption value={field.value ?? ""}>
-                      {field.value}
-                    </NativeSelectOption>
-                  ) : null}
-                  {deliveryModeOptions.map((option) => (
-                    <NativeSelectOption key={option.value} value={option.value}>
-                      {option.label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              );
-            }}
           />
 
           {/* Experience */}
