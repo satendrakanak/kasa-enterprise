@@ -15,6 +15,7 @@ import {
   Video,
 } from "lucide-react";
 
+import { OpenClassroomButton } from "@/components/classroom/open-classroom-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -365,12 +366,12 @@ function ClassRow({
           Delete
         </Button>
         {canStart ? (
-          <Button asChild size="sm">
-            <Link href={`/classroom/${session.id}?role=faculty`}>
-              <Video className="mr-2 size-4" />
-              {session.bbbIsRunning ? "Open class" : "Start class"}
-            </Link>
-          </Button>
+          <OpenClassroomButton
+            label={session.bbbIsRunning ? "Open classroom" : "Start classroom"}
+            role="faculty"
+            sessionId={session.id}
+            size="sm"
+          />
         ) : null}
       </div>
     </article>

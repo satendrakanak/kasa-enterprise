@@ -138,6 +138,16 @@ export function buildDashboardData(
       certificatesIssued: examOverview.certificatesIssued,
       averageExamScore: examOverview.averageScore,
     },
+    learningOps: {
+      selfLearningCourses: courses.filter(
+        (course) => !course.mode || course.mode === "self_learning",
+      ).length,
+      facultyLedCourses: courses.filter((course) => course.mode === "faculty_led")
+        .length,
+      hybridCourses: courses.filter((course) => course.mode === "hybrid").length,
+      publishedCourses: courses.filter((course) => course.isPublished).length,
+      draftCourses: courses.filter((course) => !course.isPublished).length,
+    },
     revenueTrend: Array.from(monthMap.values()),
     orderStatusDistribution: Object.entries(orderStatuses).map(
       ([name, value]) => ({

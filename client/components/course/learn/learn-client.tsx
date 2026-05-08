@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { CalendarDays, Video } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 
+import { OpenClassroomButton } from "@/components/classroom/open-classroom-button";
 import { LearnFooter } from "@/components/layout/learn-footer";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   getNextLecture,
   getResumeLecture,
@@ -34,19 +33,9 @@ interface LearnClientProps {
 }
 
 export const LearnClient = ({ course, liveSessions = [] }: LearnClientProps) => {
-  const router = useRouter();
   const [courseData, setCourseData] = useState(course);
   const [currentLecture, setCurrentLecture] = useState<Lecture | null>(null);
   const showLiveSessions = hasLiveClasses(course) && liveSessions.length > 0;
-
-  const joinClass = (session: FacultyClassSession) => {
-    if (session.meetingUrl) {
-      window.location.assign(session.meetingUrl);
-      return;
-    }
-
-    router.push(`/classroom/${session.id}`);
-  };
 
   useEffect(() => {
     if (!hasRecordedLearning(course)) {
@@ -166,7 +155,7 @@ export const LearnClient = ({ course, liveSessions = [] }: LearnClientProps) => 
                         </h3>
                       </div>
                       <Badge variant="secondary">
-                        {liveSessions.length} scheduled
+                        {liveSessions.length} upcoming
                       </Badge>
                     </div>
 
@@ -192,14 +181,10 @@ export const LearnClient = ({ course, liveSessions = [] }: LearnClientProps) => 
                             </p>
                           </div>
 
-                          <Button
-                            type="button"
+                          <OpenClassroomButton
+                            sessionId={session.id}
                             variant="outline"
-                            onClick={() => joinClass(session)}
-                          >
-                            <Video className="mr-2 size-4" />
-                            Join
-                          </Button>
+                          />
                         </div>
                       ))}
                     </div>

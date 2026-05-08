@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { WebsiteNavUser } from "@/components/auth/website-nav-user";
+import { OpenClassroomButton } from "@/components/classroom/open-classroom-button";
 import Logo from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,27 +29,19 @@ export function FacultyLedLearningClient({
   course,
   sessions,
 }: FacultyLedLearningClientProps) {
-  const router = useRouter();
   const nextSession = sessions[0] ?? null;
-  const publishedChapters = course.chapters.filter((chapter) => chapter.isPublished);
-
-  const joinClass = (session: FacultyClassSession) => {
-    if (session.meetingUrl) {
-      window.location.assign(session.meetingUrl);
-      return;
-    }
-
-    router.push(`/classroom/${session.id}`);
-  };
+  const publishedChapters = course.chapters.filter(
+    (chapter) => chapter.isPublished,
+  );
 
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b bg-card/95 px-4 py-3 shadow-sm backdrop-blur md:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
-            <Link href="/" className="shrink-0" aria-label="Go to home">
+            <div className="shrink-0">
               <Logo />
-            </Link>
+            </div>
             <div className="hidden h-6 w-px bg-border sm:block" />
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
@@ -94,8 +86,8 @@ export function FacultyLedLearningClient({
             <InfoTile
               icon={Video}
               title="Live sessions"
-              value={nextSession ? "Next class ready" : "Awaiting schedule"}
-              description="Join from your account when the class link is active."
+              value={nextSession ? "Classroom ready" : "Awaiting schedule"}
+              description="Join only from this classroom so timing and access stay controlled."
             />
             <InfoTile
               icon={GraduationCap}
@@ -130,10 +122,10 @@ export function FacultyLedLearningClient({
                   </p>
                 ) : null}
               </div>
-              <Button className="w-full" onClick={() => joinClass(nextSession)}>
-                <Video className="mr-2 size-4" />
-                Join class
-              </Button>
+              <OpenClassroomButton
+                className="w-full"
+                sessionId={nextSession.id}
+              />
             </div>
           ) : (
             <div className="mt-4 rounded-2xl border border-dashed bg-muted/40 p-6 text-center">
@@ -153,9 +145,13 @@ export function FacultyLedLearningClient({
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">
                 Course syllabus
               </p>
-              <h3 className="mt-1 text-xl font-semibold">What your faculty will cover</h3>
+              <h3 className="mt-1 text-xl font-semibold">
+                What your faculty will cover
+              </h3>
             </div>
-            <Badge variant="secondary">{publishedChapters.length} modules</Badge>
+            <Badge variant="secondary">
+              {publishedChapters.length} modules
+            </Badge>
           </div>
 
           {publishedChapters.length ? (
@@ -204,7 +200,7 @@ export function FacultyLedLearningClient({
               </p>
               <h3 className="mt-1 text-xl font-semibold">Upcoming sessions</h3>
             </div>
-            <Badge variant="secondary">{sessions.length} scheduled</Badge>
+            <Badge variant="secondary">{sessions.length} upcoming</Badge>
           </div>
 
           {sessions.length ? (
@@ -224,13 +220,7 @@ export function FacultyLedLearningClient({
                       Batch: {session.batch.name}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => joinClass(session)}
-                  >
-                    Join
-                  </Button>
+                  <OpenClassroomButton sessionId={session.id} size="sm" />
                 </div>
               ))}
             </div>
@@ -263,7 +253,9 @@ function InfoTile({
       </div>
       <h3 className="font-semibold">{title}</h3>
       <p className="mt-1 text-sm font-semibold text-primary">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        {description}
+      </p>
     </div>
   );
 }

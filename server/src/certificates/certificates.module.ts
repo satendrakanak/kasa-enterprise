@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Chapter } from 'src/chapters/chapter.entity';
 import { Course } from 'src/courses/course.entity';
 import { EmailTemplatesModule } from 'src/email-templates/email-templates.module';
+import { Enrollment } from 'src/enrollments/enrollment.entity';
 import { Lecture } from 'src/lectures/lecture.entity';
 import { MailModule } from 'src/mail/mail.module';
 import { UploadsModule } from 'src/uploads/uploads.module';
@@ -21,6 +22,7 @@ import { CertificatesService } from './providers/certificates.service';
       Certificate,
       User,
       Course,
+      Enrollment,
       Chapter,
       Lecture,
       UserProgres,

@@ -54,6 +54,8 @@ export async function seedPermissions(dataSource: DataSource) {
     'create_email_template',
     'update_email_template',
     'delete_email_template',
+    'view_certificate',
+    'manage_certificate',
     'manage_users',
     'approve_faculty',
     'view_exam',

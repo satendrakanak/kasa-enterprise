@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   Video,
   BellRing,
+  Award,
   type LucideIcon,
 } from "lucide-react";
 
@@ -107,6 +108,13 @@ export const sidebarData = {
       url: "/admin/recordings",
       icon: Video,
       requiredPermissions: ["view_faculty_workspace"],
+    },
+
+    {
+      title: "Certificates",
+      url: "/admin/certificates",
+      icon: Award,
+      requiredPermissions: ["view_certificate"],
     },
 
     {

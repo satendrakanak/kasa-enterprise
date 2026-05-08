@@ -21,4 +21,11 @@ export const certificateClientService = {
         `/api/certificates/course/${courseId}/generate`,
       ),
     ),
+
+  generateForUserCourse: (userId: number, courseId: number) =>
+    withAuthRetry(() =>
+      apiClient.post<ApiResponse<Certificate>>(
+        `/api/certificates/admin/users/${userId}/courses/${courseId}/generate`,
+      ),
+    ),
 };

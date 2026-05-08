@@ -7,6 +7,7 @@ import { getErrorMessage } from "@/lib/error-handler";
 import { EnrollmentGate } from "@/components/layout/enrollment-gate";
 import { facultyWorkspaceServer } from "@/services/faculty/faculty-workspace.server";
 import type { FacultyClassSession } from "@/types/faculty-workspace";
+import { getLearnerUpcomingSessions } from "@/lib/learner-class-sessions";
 
 export default async function LearnPage({
   params,
@@ -29,8 +30,11 @@ export default async function LearnPage({
       await courseServerService.getLearningCourseBySlug(courseSlug);
 
     course = response.data;
-    liveSessions = (await facultyWorkspaceServer.getMySessions()).filter(
-      (session) => session.course.slug === courseSlug,
+    liveSessions = getLearnerUpcomingSessions(
+      (await facultyWorkspaceServer.getMySessions()).filter(
+        (session) => session.course.slug === courseSlug,
+      ),
+      new Date().toISOString(),
     );
   } catch (error: unknown) {
     const message = getErrorMessage(error);

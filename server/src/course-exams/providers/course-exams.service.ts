@@ -159,6 +159,7 @@ export class CourseExamsService {
     const normalizedAttempts = [
       ...attempts.map((attempt) => ({
         id: attempt.id,
+        source: 'legacy',
         learnerName:
           `${attempt.user?.firstName || ''} ${attempt.user?.lastName || ''}`.trim() ||
           attempt.user?.email ||
@@ -174,6 +175,7 @@ export class CourseExamsService {
       })),
       ...advancedAttempts.map((attempt) => ({
         id: attempt.id,
+        source: 'advanced',
         learnerName:
           `${attempt.user?.firstName || ''} ${attempt.user?.lastName || ''}`.trim() ||
           attempt.user?.email ||
@@ -248,6 +250,7 @@ export class CourseExamsService {
       passRate,
       recentAttempts: normalizedAttempts.slice(0, 6).map((attempt) => ({
         id: attempt.id,
+        source: attempt.source,
         learnerName: attempt.learnerName,
         courseTitle: attempt.courseTitle,
         score: attempt.score,

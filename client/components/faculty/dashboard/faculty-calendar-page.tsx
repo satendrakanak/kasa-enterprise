@@ -10,9 +10,9 @@ import {
   ListFilter,
   Plus,
   RefreshCw,
-  Video,
 } from "lucide-react";
 
+import { OpenClassroomButton } from "@/components/classroom/open-classroom-button";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -501,7 +501,6 @@ export function SessionSheet({
     [batches, session],
   );
   const [isSaving, setIsSaving] = useState(false);
-  const [isStartingBbb, setIsStartingBbb] = useState(false);
   const [isSyncingRecordings, setIsSyncingRecordings] = useState(false);
   const [recordings, setRecordings] = useState<FacultyClassRecording[]>(
     session?.recordings ?? [],
@@ -629,13 +628,6 @@ export function SessionSheet({
     } finally {
       setIsDeleting(false);
     }
-  }
-
-  async function handleStartBbbClass() {
-    if (!session) return;
-
-    setIsStartingBbb(true);
-    router.push(`/classroom/${session.id}?role=faculty`);
   }
 
   async function handleSyncRecordings() {
@@ -828,15 +820,12 @@ export function SessionSheet({
               {isSaving ? "Saving..." : "Save Class"}
             </Button>
             {session && displayStatus === "scheduled" ? (
-              <Button
-                type="button"
+              <OpenClassroomButton
+                label="Start classroom"
+                role="faculty"
+                sessionId={session.id}
                 variant="outline"
-                disabled={isStartingBbb}
-                onClick={handleStartBbbClass}
-              >
-                <Video className="size-4" />
-                {isStartingBbb ? "Opening..." : "Start BBB Class"}
-              </Button>
+              />
             ) : null}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

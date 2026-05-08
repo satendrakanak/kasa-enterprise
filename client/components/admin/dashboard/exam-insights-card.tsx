@@ -99,7 +99,7 @@ export function ExamInsightsCard({ data }: { data: AdminDashboardData }) {
             ) : (
               data.examOverview.recentAttempts.map((attempt) => (
                 <div
-                  key={attempt.id}
+                  key={`${attempt.source ?? "exam"}-${attempt.id}`}
                   className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between"
                 >
                   <div>

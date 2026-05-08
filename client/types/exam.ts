@@ -17,6 +17,7 @@ export type ExamHistoryRecord = {
 
 export type AdminExamRecentAttempt = {
   id: number;
+  source?: "legacy" | "advanced";
   learnerName: string;
   courseTitle: string;
   score: number;

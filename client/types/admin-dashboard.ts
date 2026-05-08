@@ -57,6 +57,13 @@ export type AdminRecentOrderPoint = {
 
 export type AdminDashboardData = {
   summary: AdminDashboardSummary;
+  learningOps: {
+    selfLearningCourses: number;
+    facultyLedCourses: number;
+    hybridCourses: number;
+    publishedCourses: number;
+    draftCourses: number;
+  };
   revenueTrend: AdminRevenuePoint[];
   orderStatusDistribution: AdminStatusPoint[];
   topCourses: AdminTopCoursePoint[];
@@ -67,6 +74,7 @@ export type AdminDashboardData = {
     passRate: number;
     recentAttempts: {
       id: number;
+      source?: "legacy" | "advanced";
       learnerName: string;
       courseTitle: string;
       score: number;

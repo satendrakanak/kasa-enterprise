@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   Clock,
@@ -13,6 +12,7 @@ import {
   Video,
 } from "lucide-react";
 
+import { OpenClassroomButton } from "@/components/classroom/open-classroom-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,10 +38,8 @@ type ClassesViewProps = {
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function ClassesView({ nowIso, recordings, sessions }: ClassesViewProps) {
-  const router = useRouter();
   const now = new Date(nowIso).getTime();
   const [query, setQuery] = useState("");
-  const [joiningSessionId, setJoiningSessionId] = useState<number | null>(null);
   const [monthAnchor, setMonthAnchor] = useState(() =>
     startOfMonth(sessions[0]?.startsAt ? new Date(sessions[0].startsAt) : new Date()),
   );
@@ -80,8 +78,7 @@ export function ClassesView({ nowIso, recordings, sessions }: ClassesViewProps) 
   }, [filteredSessions]);
 
   const nextClass =
-    sessions.find((session) => new Date(session.endsAt).getTime() >= now) ??
-    null;
+    sessions.find((session) => isJoinableSession(session, now)) ?? null;
   const completedSessions = sessions.filter(
     (session) => new Date(session.endsAt).getTime() <= now,
   );
@@ -95,11 +92,6 @@ export function ClassesView({ nowIso, recordings, sessions }: ClassesViewProps) 
     ? Math.round((attendedSessions.length / completedSessions.length) * 100)
     : 100;
 
-  function handleJoinClass(sessionId: number) {
-    setJoiningSessionId(sessionId);
-    router.push(`/classroom/${sessionId}`);
-  }
-
   return (
     <div className="space-y-6">
       <section className="academy-card overflow-hidden">
@@ -109,14 +101,14 @@ export function ClassesView({ nowIso, recordings, sessions }: ClassesViewProps) 
               Live class calendar
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-card-foreground">
-              Your upcoming classes
+              Your live class timeline
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
               Track faculty-led sessions, join BBB classes from one place, and
               keep your course schedule clear.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <Metric label="Scheduled" value={sessions.length} />
+              <Metric label="Total classes" value={sessions.length} />
               <Metric
                 label="Attended"
                 value={`${attendedSessions.length}/${completedSessions.length}`}
@@ -157,15 +149,10 @@ export function ClassesView({ nowIso, recordings, sessions }: ClassesViewProps) 
                     />
                   ) : null}
                 </div>
-                <Button
-                  type="button"
+                <OpenClassroomButton
                   className="mt-5 w-full"
-                  disabled={joiningSessionId === nextClass.id}
-                  onClick={() => handleJoinClass(nextClass.id)}
-                >
-                  <Video className="size-4" />
-                  {joiningSessionId === nextClass.id ? "Opening..." : "Join class"}
-                </Button>
+                  sessionId={nextClass.id}
+                />
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed bg-background p-6 text-center">
@@ -225,10 +212,8 @@ export function ClassesView({ nowIso, recordings, sessions }: ClassesViewProps) 
                   {daySessions.map((session) => (
                     <ClassCard
                       key={session.id}
-                      joining={joiningSessionId === session.id}
                       now={now}
                       session={session}
-                      onJoin={() => handleJoinClass(session.id)}
                     />
                   ))}
                 </div>
@@ -252,10 +237,8 @@ export function ClassesView({ nowIso, recordings, sessions }: ClassesViewProps) 
       </section>
 
       <ClassDetailSheet
-        joining={selectedSession ? joiningSessionId === selectedSession.id : false}
         now={now}
         session={selectedSession}
-        onJoin={handleJoinClass}
         onOpenChange={(open) => {
           if (!open) setSelectedSession(null);
         }}
@@ -366,7 +349,8 @@ function ReadOnlyClassCalendar({
 
       {sessions.length ? (
         <div className="border-t bg-muted/20 p-3 text-xs text-muted-foreground">
-          Click any class in the calendar to view details and join.
+          Click any class in the calendar to view details. Upcoming and live
+          classes can be opened from the classroom button.
         </div>
       ) : null}
     </div>
@@ -374,16 +358,12 @@ function ReadOnlyClassCalendar({
 }
 
 function ClassDetailSheet({
-  joining,
   now,
   session,
-  onJoin,
   onOpenChange,
 }: {
-  joining: boolean;
   now: number;
   session: FacultyClassSession | null;
-  onJoin: (sessionId: number) => void;
   onOpenChange: (open: boolean) => void;
 }) {
   const facultyName = session?.faculty
@@ -391,9 +371,8 @@ function ClassDetailSheet({
         .filter(Boolean)
         .join(" ")
     : "";
-  const isCompleted = session
-    ? new Date(session.endsAt).getTime() <= now
-    : false;
+  const isCompleted = session ? isCompletedSession(session, now) : false;
+  const canJoin = session ? isJoinableSession(session, now) : false;
   const attended = Boolean(session?.attendance?.attended);
 
   return (
@@ -446,14 +425,11 @@ function ClassDetailSheet({
               <Button asChild variant="outline">
                 <Link href={`/course/${session.course.slug}`}>Open course</Link>
               </Button>
-              <Button
-                type="button"
-                disabled={joining || isCompleted}
-                onClick={() => onJoin(session.id)}
-              >
-                <Video className="size-4" />
-                {joining ? "Opening..." : isCompleted ? "Class ended" : "Join class"}
-              </Button>
+              <OpenClassroomButton
+                disabled={!canJoin}
+                disabledLabel={isCompleted ? "Class ended" : undefined}
+                sessionId={session.id}
+              />
             </div>
           </div>
         ) : null}
@@ -463,22 +439,19 @@ function ClassDetailSheet({
 }
 
 function ClassCard({
-  joining,
   now,
   session,
-  onJoin,
 }: {
-  joining: boolean;
   now: number;
   session: FacultyClassSession;
-  onJoin: () => void;
 }) {
   const facultyName = session.faculty
     ? [session.faculty.firstName, session.faculty.lastName]
         .filter(Boolean)
         .join(" ")
     : "";
-  const isCompleted = new Date(session.endsAt).getTime() <= now;
+  const isCompleted = isCompletedSession(session, now);
+  const canJoin = isJoinableSession(session, now);
   const attended = Boolean(session.attendance?.attended);
 
   return (
@@ -522,15 +495,12 @@ function ClassCard({
           <Button asChild variant="outline" size="sm">
             <Link href={`/course/${session.course.slug}`}>Course</Link>
           </Button>
-          <Button
-            type="button"
+          <OpenClassroomButton
+            disabled={!canJoin}
+            disabledLabel={isCompleted ? "Class ended" : undefined}
+            sessionId={session.id}
             size="sm"
-            disabled={joining || isCompleted}
-            onClick={onJoin}
-          >
-            <Video className="size-4" />
-            {joining ? "Opening..." : isCompleted ? "Class ended" : "Join class"}
-          </Button>
+          />
         </div>
       </div>
     </article>
@@ -569,6 +539,27 @@ function groupSessionsByDate(sessions: FacultyClassSession[]) {
     map.set(key, items);
     return map;
   }, new Map<string, FacultyClassSession[]>());
+}
+
+function isCompletedSession(session: FacultyClassSession, now: number) {
+  const status = session.status?.toLowerCase();
+  return (
+    status === "completed" ||
+    status === "cancelled" ||
+    new Date(session.endsAt).getTime() <= now
+  );
+}
+
+function isJoinableSession(session: FacultyClassSession, now: number) {
+  const status = session.status?.toLowerCase();
+  const endsAt = new Date(session.endsAt).getTime();
+
+  return (
+    Number.isFinite(endsAt) &&
+    endsAt >= now &&
+    status !== "completed" &&
+    status !== "cancelled"
+  );
 }
 
 function getMonthDays(monthAnchor: Date) {

@@ -10,6 +10,7 @@ import { randomUUID } from 'crypto';
 import { Repository } from 'typeorm';
 import { Course } from 'src/courses/course.entity';
 import { EmailTemplatesService } from 'src/email-templates/providers/email-templates.service';
+import { Enrollment } from 'src/enrollments/enrollment.entity';
 import { Lecture } from 'src/lectures/lecture.entity';
 import { MailService } from 'src/mail/providers/mail.service';
 import { parseTemplate } from 'src/mail/utils/template-parser';
@@ -41,6 +42,9 @@ export class CertificatesService {
 
     @InjectRepository(Course)
     private readonly courseRepository: Repository<Course>,
+
+    @InjectRepository(Enrollment)
+    private readonly enrollmentRepository: Repository<Enrollment>,
 
     @InjectRepository(Lecture)
     private readonly lectureRepository: Repository<Lecture>,
@@ -101,6 +105,112 @@ export class CertificatesService {
       throw new BadRequestException(
         'Complete the course to unlock certificate',
       );
+    }
+
+    return this.toResponse(certificate);
+  }
+
+  async getAdminDashboard() {
+    const [enrollments, certificates] = await Promise.all([
+      this.enrollmentRepository.find({
+        where: { isActive: true },
+        relations: ['user', 'course'],
+        order: { enrolledAt: 'DESC' },
+      }),
+      this.certificateRepository.find({
+        relations: ['user', 'course', 'file'],
+        order: { issuedAt: 'DESC' },
+      }),
+    ]);
+
+    const certificateMap = new Map(
+      certificates.map((certificate) => [
+        this.getUserCourseKey(certificate.user.id, certificate.course.id),
+        certificate,
+      ]),
+    );
+
+    const rows = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const user = enrollment.user;
+        const course = enrollment.course;
+        const certificate = certificateMap.get(
+          this.getUserCourseKey(user.id, course.id),
+        );
+        const completion = await this.getCourseCompletion(user.id, course.id);
+        const status = certificate
+          ? 'issued'
+          : completion.isCompleted
+            ? 'ready_to_generate'
+            : completion.examRequired && !completion.examPassed
+              ? 'exam_pending'
+              : 'course_incomplete';
+
+        return {
+          id: enrollment.id,
+          enrolledAt: enrollment.enrolledAt,
+          learner: {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+          },
+          course: {
+            id: course.id,
+            title: course.title,
+            slug: course.slug,
+          },
+          progress: completion.progress,
+          totalLectures: completion.totalLectures,
+          completedLectures: completion.completedLectures,
+          examRequired: completion.examRequired,
+          examPassed: completion.examPassed,
+          courseCompleted: completion.isCompleted,
+          status,
+          actionHint: this.getCertificateActionHint(status),
+          certificate: certificate ? this.toResponse(certificate) : null,
+        };
+      }),
+    );
+
+    return {
+      summary: {
+        enrolledLearners: rows.length,
+        issuedCertificates: rows.filter((row) => row.status === 'issued').length,
+        readyToGenerate: rows.filter((row) => row.status === 'ready_to_generate')
+          .length,
+        examPending: rows.filter((row) => row.status === 'exam_pending').length,
+        courseIncomplete: rows.filter((row) => row.status === 'course_incomplete')
+          .length,
+      },
+      rows: rows.sort((left, right) => {
+        const priority: Record<string, number> = {
+          ready_to_generate: 0,
+          exam_pending: 1,
+          course_incomplete: 2,
+          issued: 3,
+        };
+
+        return (
+          (priority[left.status] ?? 9) - (priority[right.status] ?? 9) ||
+          new Date(right.enrolledAt).getTime() -
+            new Date(left.enrolledAt).getTime()
+        );
+      }),
+    };
+  }
+
+  async generateForUserCourse(
+    userId: number,
+    courseId: number,
+  ): Promise<CertificateResponse> {
+    const certificate = await this.ensureCertificateForCourse(userId, courseId, {
+      throwIfIncomplete: true,
+      sendEmail: true,
+    });
+
+    if (!certificate) {
+      throw new BadRequestException('Certificate could not be generated');
     }
 
     return this.toResponse(certificate);
@@ -376,6 +486,23 @@ export class CertificatesService {
   private createCertificateNumber(courseId: number) {
     const suffix = randomUUID().split('-')[0].toUpperCase();
     return `CWK-${courseId}-${new Date().getFullYear()}-${suffix}`;
+  }
+
+  private getUserCourseKey(userId: number, courseId: number) {
+    return `${userId}:${courseId}`;
+  }
+
+  private getCertificateActionHint(status: string) {
+    switch (status) {
+      case 'issued':
+        return 'Certificate is ready. Download or print it for dispatch.';
+      case 'ready_to_generate':
+        return 'Learner is eligible. Generate the certificate and email it.';
+      case 'exam_pending':
+        return 'Course is complete but final exam is not passed yet.';
+      default:
+        return 'Learner still needs to complete course progress.';
+    }
   }
 
   private toResponse(certificate: Certificate): CertificateResponse {

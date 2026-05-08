@@ -18,14 +18,9 @@ export function CourseExamPageClient({ course }: { course: Course }) {
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur">
         <div className="flex h-16 items-center justify-between px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-4">
-            <button
-              type="button"
-              onClick={() => router.push("/")}
-              className="shrink-0 cursor-pointer"
-              aria-label="Go to home"
-            >
+            <div className="shrink-0">
               <Logo />
-            </button>
+            </div>
             <div className="hidden h-5 w-px bg-border sm:block" />
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">

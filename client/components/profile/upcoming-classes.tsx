@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { CalendarDays, Clock, MapPin, Video } from "lucide-react";
+import { CalendarDays, Clock, MapPin } from "lucide-react";
 import Link from "next/link";
 
+import { OpenClassroomButton } from "@/components/classroom/open-classroom-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { FacultyClassSession } from "@/types/faculty-workspace";
@@ -21,14 +20,12 @@ export function UpcomingClasses({
   limit,
   showViewAll = true,
 }: UpcomingClassesProps) {
-  const router = useRouter();
-  const [joiningSessionId, setJoiningSessionId] = useState<number | null>(null);
-  const visibleSessions = sessions.slice(0, limit ?? sessions.length);
-
-  function handleJoinClass(sessionId: number) {
-    setJoiningSessionId(sessionId);
-    router.push(`/classroom/${sessionId}`);
-  }
+  const visibleSessions = sessions
+    .filter((classSession) => {
+      const status = classSession.status?.toLowerCase();
+      return status !== "completed" && status !== "cancelled";
+    })
+    .slice(0, limit ?? sessions.length);
 
   return (
     <div className="space-y-4">
@@ -38,12 +35,12 @@ export function UpcomingClasses({
             Live Classes
           </p>
           <h3 className="mt-2 text-2xl font-semibold text-card-foreground">
-            Upcoming classes
+            Upcoming & live classes
           </h3>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {visibleSessions.length ? (
-            <Badge variant="secondary">{visibleSessions.length} scheduled</Badge>
+            <Badge variant="secondary">{visibleSessions.length} upcoming</Badge>
           ) : null}
           {showViewAll ? (
             <Button asChild variant="outline" size="sm">
@@ -95,15 +92,7 @@ export function UpcomingClasses({
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/course/${session.course.slug}`}>Course</Link>
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={joiningSessionId === session.id}
-                  onClick={() => handleJoinClass(session.id)}
-                >
-                  <Video className="mr-2 size-4" />
-                  {joiningSessionId === session.id ? "Opening..." : "Join class"}
-                </Button>
+                <OpenClassroomButton sessionId={session.id} size="sm" />
               </div>
             </div>
           ))}

@@ -99,6 +99,7 @@ export type CreateBroadcastPayload = {
   message: string;
   href?: string | null;
   imageUrl?: string | null;
+  type?: string;
   audience: EngagementAudience;
   channels: NotificationChannel[];
   audienceFilters?: Record<string, unknown> | null;

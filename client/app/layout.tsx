@@ -93,24 +93,6 @@ export default async function RootLayout({
         <meta name="application-name" content="Code With Kasa" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <script
-          id="theme-init"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var storedTheme = localStorage.getItem("theme") || "light";
-                  var systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-                  var resolvedTheme = storedTheme === "system" ? systemTheme : storedTheme;
-                  var root = document.documentElement;
-                  root.classList.remove("light", "dark");
-                  root.classList.add(resolvedTheme);
-                  root.style.colorScheme = resolvedTheme;
-                } catch (error) {}
-              })();
-            `,
-          }}
-        />
       </head>
       <body className="min-h-full bg-background text-foreground">
         <ThemeProvider>

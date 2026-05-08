@@ -113,6 +113,14 @@ export class FacultyWorkspaceService {
       summary: {
         assignedCourses: courses.length,
         publishedCourses: courses.filter((course) => course.isPublished).length,
+        selfLearningCourses: courses.filter(
+          (course) => !course.mode || course.mode === 'self_learning',
+        ).length,
+        facultyLedCourses: courses.filter(
+          (course) => course.mode === 'faculty_led',
+        ).length,
+        hybridCourses: courses.filter((course) => course.mode === 'hybrid')
+          .length,
         activeStudents: studentsCount,
         assignedExams: exams.length,
         pendingManualReviews: recentAttempts.filter(

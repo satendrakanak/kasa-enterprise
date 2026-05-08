@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
 import { WebsiteNavUser } from "@/components/auth/website-nav-user";
@@ -15,7 +14,6 @@ interface Props {
 }
 
 export const PlayerHeader = ({ course }: Props) => {
-  const router = useRouter();
   const { total, completed, percent } = getCourseProgress(course);
 
   const [open, setOpen] = useState(false);
@@ -23,14 +21,9 @@ export const PlayerHeader = ({ course }: Props) => {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6 text-card-foreground shadow-sm">
       <div className="flex min-w-0 items-center gap-4">
-        <button
-          type="button"
-          onClick={() => router.push("/")}
-          className="shrink-0 cursor-pointer"
-          aria-label="Go to home"
-        >
+        <div className="shrink-0">
           <Logo />
-        </button>
+        </div>
 
         <div className="h-5 w-px bg-border" />
 

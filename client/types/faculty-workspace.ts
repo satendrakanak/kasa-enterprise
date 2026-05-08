@@ -265,6 +265,9 @@ export type FacultyWorkspaceData = {
   summary: {
     assignedCourses: number;
     publishedCourses: number;
+    selfLearningCourses: number;
+    facultyLedCourses: number;
+    hybridCourses: number;
     activeStudents: number;
     assignedExams: number;
     pendingManualReviews: number;

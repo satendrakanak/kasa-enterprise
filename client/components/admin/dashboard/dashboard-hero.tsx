@@ -21,28 +21,28 @@ export function DashboardHero({ summary }: { summary: AdminDashboardSummary }) {
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
-            <p className="text-xs uppercase tracking-[0.24em] text-white/60">
+        <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+          <div className="flex min-h-30 flex-col justify-between rounded-2xl border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/60">
               AOV
             </p>
-            <p className="mt-2 text-2xl font-bold">
+            <p className="mt-3 break-words text-2xl font-bold leading-tight">
               {currencyFormatter.format(summary.averageOrderValue)}
             </p>
           </div>
-          <div className="rounded-2xl border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
-            <p className="text-xs uppercase tracking-[0.24em] text-white/60">
+          <div className="flex min-h-30 flex-col justify-between rounded-2xl border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/60">
               Orders
             </p>
-            <p className="mt-2 text-2xl font-bold">
+            <p className="mt-3 break-words text-2xl font-bold leading-tight">
               {compactNumberFormatter.format(summary.paidOrders)}
             </p>
           </div>
-          <div className="rounded-2xl border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
-            <p className="text-xs uppercase tracking-[0.24em] text-white/60">
+          <div className="flex min-h-30 flex-col justify-between rounded-2xl border border-white/14 bg-white/10 p-4 backdrop-blur-sm">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/60">
               Coupons
             </p>
-            <p className="mt-2 text-2xl font-bold">
+            <p className="mt-3 break-words text-2xl font-bold leading-tight">
               {compactNumberFormatter.format(summary.totalCoupons)}
             </p>
           </div>

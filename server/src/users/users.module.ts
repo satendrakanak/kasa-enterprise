@@ -28,6 +28,9 @@ import { EnrollmentsModule } from 'src/enrollments/enrollments.module';
 import { Certificate } from 'src/certificates/certificate.entity';
 import { CourseExamAttempt } from 'src/course-exams/course-exam-attempt.entity';
 import { Enrollment } from 'src/enrollments/enrollment.entity';
+import { ExamAttempt } from 'src/exams/exam-attempt.entity';
+import { ClassAttendance } from 'src/faculty-workspace/class-attendance.entity';
+import { ClassSession } from 'src/faculty-workspace/class-session.entity';
 import { UserProgres } from 'src/user-progress/user-progres.entity';
 import { Course } from 'src/courses/course.entity';
 
@@ -37,9 +40,12 @@ import { Course } from 'src/courses/course.entity';
       User,
       UserProgres,
       CourseExamAttempt,
+      ExamAttempt,
       Certificate,
       Enrollment,
       Course,
+      ClassSession,
+      ClassAttendance,
     ]),
     forwardRef(() => AuthModule),
     ConfigModule.forFeature(jwtConfig),

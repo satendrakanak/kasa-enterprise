@@ -3,12 +3,14 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
+  ArrowRight,
   Award,
   BarChart3,
   BookOpenCheck,
   CalendarDays,
   ClipboardCheck,
   GraduationCap,
+  RadioTower,
 } from "lucide-react";
 
 import { CourseCard } from "../courses/course-card";
@@ -21,6 +23,7 @@ import { Order } from "@/types/order";
 import { ExamHistoryRecord } from "@/types/exam";
 import type { FacultyClassSession } from "@/types/faculty-workspace";
 import { UpcomingClasses } from "./upcoming-classes";
+import { Progress } from "@/components/ui/progress";
 
 const ProgressChart = dynamic(
   () => import("@/components/profile/progress-chart"),
@@ -46,6 +49,45 @@ export default function DashboardClient({
   user,
   upcomingClasses,
 }: DashboardClientProps) {
+  const learningSummary = stats.learningSummary;
+  const learningCards = [
+    {
+      title: "Recorded learning",
+      value: learningSummary
+        ? `${learningSummary.recordedCourses} course${learningSummary.recordedCourses === 1 ? "" : "s"}`
+        : "0 courses",
+      description: "Lecture and chapter based progress",
+      href: "/my-courses",
+      icon: BookOpenCheck,
+    },
+    {
+      title: "Live attendance",
+      value: learningSummary
+        ? `${learningSummary.attendedLiveClasses}/${learningSummary.completedLiveClasses}`
+        : "0/0",
+      description:
+        learningSummary?.missedLiveClasses
+          ? `${learningSummary.missedLiveClasses} missed completed class${learningSummary.missedLiveClasses === 1 ? "" : "es"}`
+          : "Completed live classes attended",
+      href: "/classes",
+      icon: RadioTower,
+    },
+    {
+      title: "Exam readiness",
+      value: `${stats.examsPassed}/${stats.examsTaken}`,
+      description: "Passed attempts out of total submissions",
+      href: "/exams",
+      icon: ClipboardCheck,
+    },
+    {
+      title: "Certificates",
+      value: stats.certificatesEarned,
+      description: "Unlocked certificates",
+      href: "/certificates",
+      icon: Award,
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
@@ -94,6 +136,94 @@ export default function DashboardClient({
       </div>
 
       <ProgressChart weeklyProgress={weeklyProgress} />
+
+      <section className="academy-card p-5 md:p-6">
+        <div className="mb-5 flex flex-col gap-2 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
+              Learning Progress
+            </p>
+            <h3 className="mt-2 text-2xl font-semibold text-card-foreground">
+              Your course journey
+            </h3>
+          </div>
+          <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+            A compact view across self-learning, live classes, exams, and
+            certificates. Open each page for full details.
+          </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-4">
+          {learningCards.map((card) => (
+            <Link
+              key={card.title}
+              href={card.href}
+              className="group rounded-2xl border border-border bg-background p-4 transition hover:border-primary/40 hover:bg-primary/5"
+            >
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <card.icon className="size-5" />
+                </span>
+                <ArrowRight className="size-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+              </div>
+              <p className="text-xl font-semibold text-card-foreground">
+                {card.value}
+              </p>
+              <p className="mt-1 text-sm font-medium text-card-foreground">
+                {card.title}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                {card.description}
+              </p>
+            </Link>
+          ))}
+        </div>
+
+        {learningSummary?.courses?.length ? (
+          <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            {learningSummary.courses.slice(0, 3).map((course) => (
+              <Link
+                key={course.courseId}
+                href={`/course/${course.slug}/learn`}
+                className="rounded-2xl border border-border bg-muted/30 p-4 transition hover:border-primary/40"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-card-foreground">
+                      {course.title}
+                    </p>
+                    <p className="mt-1 text-xs capitalize text-muted-foreground">
+                      {course.mode.replace("_", " ")}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                    {course.overallProgress}%
+                  </span>
+                </div>
+                <Progress value={course.overallProgress} className="mt-4 h-2" />
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                  {course.recorded.enabled ? (
+                    <span>
+                      {course.recorded.completedLectures}/
+                      {course.recorded.totalLectures} lectures
+                    </span>
+                  ) : (
+                    <span>No lectures</span>
+                  )}
+                  {course.live.enabled ? (
+                    <span>
+                      {course.live.attendedClasses}/
+                      {course.live.completedClasses} classes
+                    </span>
+                  ) : (
+                    <span>No live classes</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </section>
 
       <section className="academy-card p-5 md:p-6">
         <UpcomingClasses sessions={upcomingClasses} limit={3} />

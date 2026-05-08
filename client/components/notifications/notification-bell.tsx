@@ -245,7 +245,7 @@ export function NotificationBell() {
           </Button>
         </div>
 
-        <div className="max-h-[420px] overflow-y-auto p-2">
+        <div className="max-h-105 overflow-y-auto p-2">
           {loading && !notifications.length ? (
             <div className="flex items-center justify-center p-8 text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" />

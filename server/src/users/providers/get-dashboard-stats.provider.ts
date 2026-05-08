@@ -2,8 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Certificate } from 'src/certificates/certificate.entity';
 import { CourseExamAttempt } from 'src/course-exams/course-exam-attempt.entity';
+import {
+  hasLiveClasses,
+  hasRecordedLearning,
+} from 'src/courses/constants/course-delivery-mode';
 import { Course } from 'src/courses/course.entity';
 import { EnrollmentsService } from 'src/enrollments/providers/enrollments.service';
+import { ExamAttempt } from 'src/exams/exam-attempt.entity';
+import { ClassAttendance } from 'src/faculty-workspace/class-attendance.entity';
+import { ClassSession } from 'src/faculty-workspace/class-session.entity';
+import { ClassSessionStatus } from 'src/faculty-workspace/enums/class-session-status.enum';
 import { WeeklyProgress } from 'src/user-progress/interfaces/weekly-progress.interface';
 import { UserProgres } from 'src/user-progress/user-progres.entity';
 import { Repository } from 'typeorm';
@@ -23,45 +31,73 @@ export class GetDashboardStatsProvider {
     @InjectRepository(UserProgres)
     private readonly userProgressRepository: Repository<UserProgres>,
 
-    @InjectRepository(CourseExamAttempt)
-    private readonly courseExamAttemptRepository: Repository<CourseExamAttempt>,
+  @InjectRepository(CourseExamAttempt)
+  private readonly courseExamAttemptRepository: Repository<CourseExamAttempt>,
 
-    @InjectRepository(Certificate)
-    private readonly certificateRepository: Repository<Certificate>,
+    @InjectRepository(ExamAttempt)
+    private readonly examAttemptRepository: Repository<ExamAttempt>,
 
-    @InjectRepository(Course)
-    private readonly courseRepository: Repository<Course>,
+  @InjectRepository(Certificate)
+  private readonly certificateRepository: Repository<Certificate>,
+
+  @InjectRepository(Course)
+  private readonly courseRepository: Repository<Course>,
+
+    @InjectRepository(ClassSession)
+    private readonly classSessionRepository: Repository<ClassSession>,
+
+    @InjectRepository(ClassAttendance)
+    private readonly classAttendanceRepository: Repository<ClassAttendance>,
   ) {}
 
   async getDashboardStats(userId: number) {
     const [
-      courses,
-      completed,
-      progress,
+      learningSummary,
       examsTaken,
       examsPassed,
       certificatesEarned,
     ] = await Promise.all([
-      this.enrollmentsService.getUserCourseCount(userId),
-      this.getCompletedCoursesCount(userId),
-      this.getAverageProgress(userId),
-      this.courseExamAttemptRepository.count({
-        where: { user: { id: userId } },
-      }),
-      this.courseExamAttemptRepository.count({
-        where: { user: { id: userId }, passed: true },
-      }),
+      this.getLearningSummary(userId),
+      this.getExamAttemptsCount(userId),
+      this.getPassedExamAttemptsCount(userId),
       this.certificateRepository.count({ where: { user: { id: userId } } }),
     ]);
 
     return {
-      courses,
-      completed,
-      progress,
+      courses: learningSummary.totalCourses,
+      completed: learningSummary.completedCourses,
+      progress: learningSummary.averageProgress,
       examsTaken,
       examsPassed,
       certificatesEarned,
+      learningSummary,
     };
+  }
+
+  private async getExamAttemptsCount(userId: number) {
+    const [legacyAttempts, advancedAttempts] = await Promise.all([
+      this.courseExamAttemptRepository.count({
+        where: { user: { id: userId } },
+      }),
+      this.examAttemptRepository.count({
+        where: { user: { id: userId } },
+      }),
+    ]);
+
+    return legacyAttempts + advancedAttempts;
+  }
+
+  private async getPassedExamAttemptsCount(userId: number) {
+    const [legacyAttempts, advancedAttempts] = await Promise.all([
+      this.courseExamAttemptRepository.count({
+        where: { user: { id: userId }, passed: true },
+      }),
+      this.examAttemptRepository.count({
+        where: { user: { id: userId }, passed: true },
+      }),
+    ]);
+
+    return legacyAttempts + advancedAttempts;
   }
 
   async getWeeklyProgress(userId: number): Promise<WeeklyProgress[]> {
@@ -126,42 +162,7 @@ export class GetDashboardStatsProvider {
     return days;
   }
 
-  private async getCompletedCoursesCount(userId: number): Promise<number> {
-    const courses = await this.userProgressRepository
-      .createQueryBuilder('progress')
-      .leftJoin('progress.lecture', 'lecture')
-      .leftJoin('lecture.chapter', 'chapter')
-      .leftJoin('chapter.course', 'course')
-      .select('course.id', 'courseId')
-      .addSelect('COUNT(lecture.id)', 'completedLectures')
-      .where('progress.userId = :userId', { userId })
-      .andWhere('progress.isCompleted = true')
-      .groupBy('course.id')
-      .getRawMany();
-
-    let completedCourses = 0;
-
-    for (const course of courses) {
-      const totalLectures = await this.userProgressRepository.manager
-        .getRepository('Lecture')
-        .count({
-          where: {
-            chapter: {
-              course: { id: course.courseId },
-            },
-            isPublished: true,
-          },
-        });
-
-      if (Number(course.completedLectures) === totalLectures) {
-        completedCourses++;
-      }
-    }
-
-    return completedCourses;
-  }
-
-  private async getAverageProgress(userId: number): Promise<number> {
+  private async getLearningSummary(userId: number) {
     const courses = await this.courseRepository
       .createQueryBuilder('course')
       .innerJoin(
@@ -176,27 +177,167 @@ export class GetDashboardStatsProvider {
         userId,
       })
       .select('course.id', 'courseId')
+      .addSelect('course.title', 'title')
+      .addSelect('course.slug', 'slug')
+      .addSelect('course.mode', 'mode')
       .addSelect('COUNT(DISTINCT lecture.id)', 'totalLectures')
       .addSelect(
-        `COUNT(DISTINCT CASE WHEN progress.progress >= 100 THEN lecture.id END)`,
+        `COUNT(DISTINCT CASE WHEN progress.isCompleted = true THEN lecture.id END)`,
         'completedLectures',
       )
       .where('course.isPublished = true')
       .groupBy('course.id')
+      .addGroupBy('course.title')
+      .addGroupBy('course.slug')
+      .addGroupBy('course.mode')
       .getRawMany();
 
-    if (!courses.length) return 0;
+    const courseSummaries = await Promise.all(
+      courses.map(async (course) => {
+        const courseId = Number(course.courseId);
+        const totalLectures = Number(course.totalLectures) || 0;
+        const completedLectures = Number(course.completedLectures) || 0;
+        const recordedEnabled = hasRecordedLearning(course.mode);
+        const liveEnabled = hasLiveClasses(course.mode);
+        const recordedProgress =
+          recordedEnabled && totalLectures
+            ? Math.round((completedLectures / totalLectures) * 100)
+            : recordedEnabled
+              ? 0
+              : null;
+        const liveStats = liveEnabled
+          ? await this.getLiveAttendanceStats(courseId, userId)
+          : null;
+        const progressParts = [
+          recordedProgress,
+          liveStats?.progress ?? null,
+        ].filter((value): value is number => value !== null);
+        const overallProgress = progressParts.length
+          ? Math.round(
+              progressParts.reduce((sum, value) => sum + value, 0) /
+                progressParts.length,
+            )
+          : 0;
 
-    const totalProgress = courses.reduce((sum, course) => {
-      const totalLectures = Number(course.totalLectures) || 0;
-      const completedLectures = Number(course.completedLectures) || 0;
+        return {
+          courseId,
+          title: course.title,
+          slug: course.slug,
+          mode: course.mode || 'self_learning',
+          overallProgress,
+          recorded: {
+            enabled: recordedEnabled,
+            totalLectures,
+            completedLectures,
+            progress: recordedProgress ?? 0,
+          },
+          live: {
+            enabled: liveEnabled,
+            completedClasses: liveStats?.completedClasses ?? 0,
+            attendedClasses: liveStats?.attendedClasses ?? 0,
+            missedClasses: liveStats?.missedClasses ?? 0,
+            upcomingClasses: liveStats?.upcomingClasses ?? 0,
+            progress: liveStats?.progress ?? 0,
+          },
+        };
+      }),
+    );
 
-      const courseProgress =
-        totalLectures === 0 ? 0 : (completedLectures / totalLectures) * 100;
+    const totalCourses = courseSummaries.length;
+    const completedCourses = courseSummaries.filter(
+      (course) => course.overallProgress >= 100,
+    ).length;
+    const averageProgress = totalCourses
+      ? Math.round(
+          courseSummaries.reduce(
+            (sum, course) => sum + course.overallProgress,
+            0,
+          ) / totalCourses,
+        )
+      : 0;
 
-      return sum + courseProgress;
-    }, 0);
+    return {
+      totalCourses,
+      completedCourses,
+      averageProgress,
+      recordedCourses: courseSummaries.filter((course) => course.recorded.enabled)
+        .length,
+      liveCourses: courseSummaries.filter((course) => course.live.enabled).length,
+      upcomingLiveClasses: courseSummaries.reduce(
+        (sum, course) => sum + course.live.upcomingClasses,
+        0,
+      ),
+      completedLiveClasses: courseSummaries.reduce(
+        (sum, course) => sum + course.live.completedClasses,
+        0,
+      ),
+      attendedLiveClasses: courseSummaries.reduce(
+        (sum, course) => sum + course.live.attendedClasses,
+        0,
+      ),
+      missedLiveClasses: courseSummaries.reduce(
+        (sum, course) => sum + course.live.missedClasses,
+        0,
+      ),
+      courses: courseSummaries,
+    };
+  }
 
-    return Math.round(totalProgress / courses.length);
+  private async getLiveAttendanceStats(courseId: number, userId: number) {
+    const baseQuery = this.classSessionRepository
+      .createQueryBuilder('session')
+      .innerJoin('session.batch', 'batch')
+      .innerJoin('batch.students', 'batchStudent')
+      .innerJoin('batchStudent.student', 'student')
+      .where('session.courseId = :courseId', { courseId })
+      .andWhere('student.id = :userId', { userId })
+      .andWhere('batchStudent.status = :studentStatus', {
+        studentStatus: 'active',
+      })
+      .andWhere('session.status != :cancelled', {
+        cancelled: ClassSessionStatus.Cancelled,
+      });
+
+    const now = new Date();
+    const [completedClasses, upcomingClasses, attendedClasses] =
+      await Promise.all([
+        baseQuery
+          .clone()
+          .andWhere('session.endsAt <= :now', { now })
+          .getCount(),
+        baseQuery
+          .clone()
+          .andWhere('session.endsAt > :now', { now })
+          .getCount(),
+        this.classAttendanceRepository
+          .createQueryBuilder('attendance')
+          .innerJoin('attendance.session', 'session')
+          .innerJoin('session.batch', 'batch')
+          .innerJoin('batch.students', 'batchStudent')
+          .innerJoin('batchStudent.student', 'student')
+          .where('session.courseId = :courseId', { courseId })
+          .andWhere('student.id = :userId', { userId })
+          .andWhere('attendance.userId = :userId', { userId })
+          .andWhere('attendance.role = :role', { role: 'learner' })
+          .andWhere('batchStudent.status = :studentStatus', {
+            studentStatus: 'active',
+          })
+          .andWhere('session.status != :cancelled', {
+            cancelled: ClassSessionStatus.Cancelled,
+          })
+          .andWhere('session.endsAt <= :now', { now })
+          .getCount(),
+      ]);
+    const missedClasses = Math.max(completedClasses - attendedClasses, 0);
+
+    return {
+      completedClasses,
+      upcomingClasses,
+      attendedClasses,
+      missedClasses,
+      progress: completedClasses
+        ? Math.round((attendedClasses / completedClasses) * 100)
+        : 0,
+    };
   }
 }
