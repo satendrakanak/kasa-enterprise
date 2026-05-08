@@ -141,16 +141,18 @@ export type FacultyClassRecording = {
   access?: {
     learnerAccessAllowed: boolean;
     learnerVisible: boolean;
-    sessionEnded: boolean;
     readyForLearners: boolean;
-    activeLearnerCount: number;
+    attendeeCount: number;
     reasons: string[];
   };
-  learners?: Array<{
+  attendees?: Array<{
     id: number;
     firstName: string;
     lastName?: string;
     email: string;
+    role: string;
+    joinedAt: string;
+    lastSeenAt: string;
   }>;
 };
 
@@ -170,6 +172,10 @@ export type FacultyClassSession = {
   allowRecordingAccess?: boolean;
   location?: string | null;
   status: string;
+  attendance?: {
+    attended: boolean;
+    joinedAt?: string | null;
+  };
   reminderBeforeMinutes: number;
   reminderOffsetsMinutes?: number[];
   sentReminderOffsetsMinutes?: number[];

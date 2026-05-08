@@ -267,6 +267,9 @@ export class UpdateCourseProvider {
       'categories',
       'tags',
       'mode',
+      'monthlyLiveClassLimit',
+      'liveClassAttendanceRequirementType',
+      'liveClassAttendanceRequirementValue',
     ];
 
     const attemptedProtectedField = protectedFields.find(

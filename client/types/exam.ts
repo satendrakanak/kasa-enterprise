@@ -56,6 +56,7 @@ export type UserExamAccessOverview = {
   attemptsUsed: number;
   remainingAttempts: number | null;
   passed: boolean;
+  bypassAttendanceRequirement: boolean;
   note: string;
 };
 

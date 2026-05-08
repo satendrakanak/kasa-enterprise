@@ -11,6 +11,7 @@ import { Upload } from 'src/uploads/upload.entity';
 import { UploadsModule } from 'src/uploads/uploads.module';
 import { User } from 'src/users/user.entity';
 import { BatchStudent } from './batch-student.entity';
+import { ClassAttendance } from './class-attendance.entity';
 import { ClassRecording } from './class-recording.entity';
 import { ClassSession } from './class-session.entity';
 import { ClassSessionsController } from './class-sessions.controller';
@@ -35,6 +36,7 @@ import { FacultyWorkspaceService } from './providers/faculty-workspace.service';
       User,
       CourseBatch,
       BatchStudent,
+      ClassAttendance,
       ClassSession,
       ClassRecording,
       Upload,

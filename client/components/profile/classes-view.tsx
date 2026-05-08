@@ -32,12 +32,14 @@ import { ClassRecordings } from "./class-recordings";
 type ClassesViewProps = {
   sessions: FacultyClassSession[];
   recordings: FacultyClassRecording[];
+  nowIso: string;
 };
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function ClassesView({ recordings, sessions }: ClassesViewProps) {
+export function ClassesView({ nowIso, recordings, sessions }: ClassesViewProps) {
   const router = useRouter();
+  const now = new Date(nowIso).getTime();
   const [query, setQuery] = useState("");
   const [joiningSessionId, setJoiningSessionId] = useState<number | null>(null);
   const [monthAnchor, setMonthAnchor] = useState(() =>
@@ -77,7 +79,21 @@ export function ClassesView({ recordings, sessions }: ClassesViewProps) {
     }, new Map<string, FacultyClassSession[]>());
   }, [filteredSessions]);
 
-  const nextClass = sessions[0] ?? null;
+  const nextClass =
+    sessions.find((session) => new Date(session.endsAt).getTime() >= now) ??
+    null;
+  const completedSessions = sessions.filter(
+    (session) => new Date(session.endsAt).getTime() <= now,
+  );
+  const attendedSessions = completedSessions.filter(
+    (session) => session.attendance?.attended,
+  );
+  const absentSessions = completedSessions.filter(
+    (session) => !session.attendance?.attended,
+  );
+  const attendancePercent = completedSessions.length
+    ? Math.round((attendedSessions.length / completedSessions.length) * 100)
+    : 100;
 
   function handleJoinClass(sessionId: number) {
     setJoiningSessionId(sessionId);
@@ -102,14 +118,21 @@ export function ClassesView({ recordings, sessions }: ClassesViewProps) {
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <Metric label="Scheduled" value={sessions.length} />
               <Metric
-                label="Courses"
-                value={new Set(sessions.map((session) => session.course.id)).size}
+                label="Attended"
+                value={`${attendedSessions.length}/${completedSessions.length}`}
               />
-              <Metric
-                label="Batches"
-                value={new Set(sessions.map((session) => session.batch.id)).size}
-              />
+              <Metric label="Attendance" value={`${attendancePercent}%`} />
             </div>
+            {absentSessions.length ? (
+              <div className="mt-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-100">
+                <p className="font-semibold">Attendance warning</p>
+                <p className="mt-1 leading-6">
+                  You missed {absentSessions.length} completed class
+                  {absentSessions.length === 1 ? "" : "es"}. Faculty-led and
+                  hybrid course exams may stay locked until attendance is clear.
+                </p>
+              </div>
+            ) : null}
           </div>
           <div className="border-t bg-muted/25 p-6 lg:border-l lg:border-t-0">
             {nextClass ? (
@@ -203,6 +226,7 @@ export function ClassesView({ recordings, sessions }: ClassesViewProps) {
                     <ClassCard
                       key={session.id}
                       joining={joiningSessionId === session.id}
+                      now={now}
                       session={session}
                       onJoin={() => handleJoinClass(session.id)}
                     />
@@ -229,6 +253,7 @@ export function ClassesView({ recordings, sessions }: ClassesViewProps) {
 
       <ClassDetailSheet
         joining={selectedSession ? joiningSessionId === selectedSession.id : false}
+        now={now}
         session={selectedSession}
         onJoin={handleJoinClass}
         onOpenChange={(open) => {
@@ -350,11 +375,13 @@ function ReadOnlyClassCalendar({
 
 function ClassDetailSheet({
   joining,
+  now,
   session,
   onJoin,
   onOpenChange,
 }: {
   joining: boolean;
+  now: number;
   session: FacultyClassSession | null;
   onJoin: (sessionId: number) => void;
   onOpenChange: (open: boolean) => void;
@@ -364,6 +391,10 @@ function ClassDetailSheet({
         .filter(Boolean)
         .join(" ")
     : "";
+  const isCompleted = session
+    ? new Date(session.endsAt).getTime() <= now
+    : false;
+  const attended = Boolean(session?.attendance?.attended);
 
   return (
     <Sheet open={Boolean(session)} onOpenChange={onOpenChange}>
@@ -374,7 +405,17 @@ function ClassDetailSheet({
         {session ? (
           <div className="space-y-5 p-6">
             <div>
-              <Badge variant="secondary">{session.status}</Badge>
+              <Badge
+                variant={
+                  isCompleted
+                    ? attended
+                      ? "default"
+                      : "destructive"
+                    : "secondary"
+                }
+              >
+                {isCompleted ? (attended ? "Attended" : "Absent") : session.status}
+              </Badge>
               <h2 className="mt-3 text-2xl font-semibold">{session.title}</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 {session.course.title} · {session.batch.name}
@@ -385,6 +426,12 @@ function ClassDetailSheet({
               <InfoRow icon={CalendarDays} text={formatDateTime(session.endsAt)} />
               {facultyName ? (
                 <InfoRow icon={UserRound} text={`Faculty: ${facultyName}`} />
+              ) : null}
+              {attended && session.attendance?.joinedAt ? (
+                <InfoRow
+                  icon={Video}
+                  text={`Joined ${formatDateTime(session.attendance.joinedAt)}`}
+                />
               ) : null}
               {session.location ? (
                 <InfoRow icon={MapPin} text={session.location} />
@@ -401,11 +448,11 @@ function ClassDetailSheet({
               </Button>
               <Button
                 type="button"
-                disabled={joining}
+                disabled={joining || isCompleted}
                 onClick={() => onJoin(session.id)}
               >
                 <Video className="size-4" />
-                {joining ? "Opening..." : "Join class"}
+                {joining ? "Opening..." : isCompleted ? "Class ended" : "Join class"}
               </Button>
             </div>
           </div>
@@ -417,10 +464,12 @@ function ClassDetailSheet({
 
 function ClassCard({
   joining,
+  now,
   session,
   onJoin,
 }: {
   joining: boolean;
+  now: number;
   session: FacultyClassSession;
   onJoin: () => void;
 }) {
@@ -429,13 +478,25 @@ function ClassCard({
         .filter(Boolean)
         .join(" ")
     : "";
+  const isCompleted = new Date(session.endsAt).getTime() <= now;
+  const attended = Boolean(session.attendance?.attended);
 
   return (
     <article className="rounded-2xl border bg-background p-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">{session.status}</Badge>
+            <Badge
+              variant={
+                isCompleted
+                  ? attended
+                    ? "default"
+                    : "destructive"
+                  : "outline"
+              }
+            >
+              {isCompleted ? (attended ? "Attended" : "Absent") : session.status}
+            </Badge>
             <span className="text-xs text-muted-foreground">
               {formatTime(session.startsAt)} - {formatTime(session.endsAt)}
             </span>
@@ -446,6 +507,9 @@ function ClassCard({
           </p>
           <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
             {facultyName ? <span>Faculty: {facultyName}</span> : null}
+            {attended && session.attendance?.joinedAt ? (
+              <span>Joined: {formatDateTime(session.attendance.joinedAt)}</span>
+            ) : null}
             {session.location ? (
               <span className="inline-flex items-center gap-1">
                 <MapPin className="size-3.5" />
@@ -458,9 +522,14 @@ function ClassCard({
           <Button asChild variant="outline" size="sm">
             <Link href={`/course/${session.course.slug}`}>Course</Link>
           </Button>
-          <Button type="button" size="sm" disabled={joining} onClick={onJoin}>
+          <Button
+            type="button"
+            size="sm"
+            disabled={joining || isCompleted}
+            onClick={onJoin}
+          >
             <Video className="size-4" />
-            {joining ? "Opening..." : "Join class"}
+            {joining ? "Opening..." : isCompleted ? "Class ended" : "Join class"}
           </Button>
         </div>
       </div>
@@ -468,7 +537,7 @@ function ClassCard({
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-2xl border bg-background p-4">
       <p className="text-2xl font-semibold">{value}</p>

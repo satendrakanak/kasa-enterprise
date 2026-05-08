@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class UpsertCourseExamAccessOverrideDto {
   @Type(() => Number)
@@ -11,6 +11,10 @@ export class UpsertCourseExamAccessOverrideDto {
   @Min(0)
   @Max(100)
   extraAttempts!: number;
+
+  @IsOptional()
+  @IsBoolean()
+  bypassAttendanceRequirement?: boolean;
 
   @IsOptional()
   @IsString()

@@ -23,5 +23,11 @@ export default async function ClassesPage() {
     recordings = [];
   }
 
-  return <ClassesView recordings={recordings} sessions={sessions} />;
+  return (
+    <ClassesView
+      nowIso={new Date().toISOString()}
+      recordings={recordings}
+      sessions={sessions}
+    />
+  );
 }

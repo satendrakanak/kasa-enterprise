@@ -19,6 +19,7 @@ import { NotificationType } from 'src/notifications/enums/notification-type.enum
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { FileTypes } from 'src/uploads/enums/file-types.enum';
 import { UploadStatus } from 'src/uploads/enums/upload-status.enum';
+import { UploadsService } from 'src/uploads/providers/uploads.service';
 import { S3Provider } from 'src/uploads/providers/s3.provider';
 import { Upload } from 'src/uploads/upload.entity';
 import { User } from 'src/users/user.entity';
@@ -30,6 +31,7 @@ import { GradeExamAttemptDto } from '../dtos/grade-exam-attempt.dto';
 import { UpdateClassSessionDto } from '../dtos/update-class-session.dto';
 import { UpdateCourseBatchDto } from '../dtos/update-course-batch.dto';
 import { BatchStudent } from '../batch-student.entity';
+import { ClassAttendance } from '../class-attendance.entity';
 import { ClassRecording } from '../class-recording.entity';
 import { ClassSession } from '../class-session.entity';
 import { CourseBatch } from '../course-batch.entity';
@@ -67,6 +69,9 @@ export class FacultyWorkspaceService {
     @InjectRepository(BatchStudent)
     private readonly batchStudentRepository: Repository<BatchStudent>,
 
+    @InjectRepository(ClassAttendance)
+    private readonly classAttendanceRepository: Repository<ClassAttendance>,
+
     @InjectRepository(ClassSession)
     private readonly classSessionRepository: Repository<ClassSession>,
 
@@ -78,6 +83,7 @@ export class FacultyWorkspaceService {
 
     private readonly bigBlueButtonProvider: BigBlueButtonProvider,
     private readonly s3Provider: S3Provider,
+    private readonly uploadsService: UploadsService,
     private readonly mediaFileMappingService: MediaFileMappingService,
     private readonly notificationsService: NotificationsService,
   ) {}
@@ -256,6 +262,13 @@ export class FacultyWorkspaceService {
       .leftJoinAndSelect('session.batch', 'batch')
       .leftJoinAndSelect('session.course', 'course')
       .leftJoinAndSelect('session.faculty', 'faculty')
+      .leftJoinAndSelect(
+        'session.attendances',
+        'attendance',
+        'attendance.userId = :userId AND attendance.role = :learnerRole',
+        { userId: user.sub, learnerRole: 'learner' },
+      )
+      .leftJoinAndSelect('attendance.user', 'attendanceUser')
       .leftJoin('batch.students', 'batchStudent')
       .leftJoin('batchStudent.student', 'student')
       .where('student.id = :userId', { userId: user.sub })
@@ -265,7 +278,6 @@ export class FacultyWorkspaceService {
       .andWhere('session.status != :cancelled', {
         cancelled: ClassSessionStatus.Cancelled,
       })
-      .andWhere('session.endsAt >= :now', { now: new Date() })
       .orderBy('session.startsAt', 'ASC')
       .getMany();
 
@@ -278,6 +290,16 @@ export class FacultyWorkspaceService {
     const recordings = await this.classRecordingRepository
       .createQueryBuilder('recording')
       .leftJoinAndSelect('recording.session', 'session')
+      .leftJoin(
+        'session.attendances',
+        'learnerAttendance',
+        'learnerAttendance.role = :learnerRole',
+      )
+      .leftJoin(
+        'learnerAttendance.user',
+        'attendanceUser',
+        'attendanceUser.id = :userId',
+      )
       .leftJoinAndSelect('recording.course', 'course')
       .leftJoinAndSelect('recording.batch', 'batch')
       .leftJoinAndSelect('recording.faculty', 'faculty')
@@ -285,6 +307,7 @@ export class FacultyWorkspaceService {
       .leftJoin('batch.students', 'batchStudent')
       .leftJoin('batchStudent.student', 'student')
       .where('student.id = :userId', { userId: user.sub })
+      .setParameter('learnerRole', 'learner')
       .andWhere('batchStudent.status = :studentStatus', {
         studentStatus: BatchStudentStatus.Active,
       })
@@ -292,7 +315,17 @@ export class FacultyWorkspaceService {
       .andWhere('session.status != :cancelled', {
         cancelled: ClassSessionStatus.Cancelled,
       })
-      .andWhere('session.endsAt <= :now', { now: new Date() })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('attendanceUser.id = :userId').orWhere(
+            `NOT EXISTS (
+              SELECT 1 FROM class_attendance attendance_check
+              WHERE attendance_check."sessionId" = session.id
+              AND attendance_check.role = :learnerRole
+            )`,
+          );
+        }),
+      )
       .andWhere('recording.status IN (:...statuses)', {
         statuses: [
           ClassRecordingStatus.Available,
@@ -483,12 +516,12 @@ export class FacultyWorkspaceService {
       .leftJoinAndSelect('recording.course', 'course')
       .leftJoinAndSelect('recording.batch', 'batch')
       .leftJoinAndSelect(
-        'batch.students',
-        'recordingBatchStudent',
-        'recordingBatchStudent.status = :activeStudent',
-        { activeStudent: BatchStudentStatus.Active },
+        'session.attendances',
+        'recordingAttendance',
+        'recordingAttendance.role = :learnerAttendanceRole',
+        { learnerAttendanceRole: 'learner' },
       )
-      .leftJoinAndSelect('recordingBatchStudent.student', 'recordingLearner')
+      .leftJoinAndSelect('recordingAttendance.user', 'recordingLearner')
       .leftJoinAndSelect('recording.faculty', 'faculty')
       .leftJoinAndSelect('recording.upload', 'upload')
       .orderBy('recording.recordedAt', 'DESC', 'NULLS LAST')
@@ -501,6 +534,33 @@ export class FacultyWorkspaceService {
     const recordings = await query.getMany();
 
     return recordings.map((recording) => this.mapClassRecording(recording));
+  }
+
+  async deleteRecording(id: number, user: ActiveUserData) {
+    this.assertFaculty(user);
+
+    const recording = await this.classRecordingRepository.findOne({
+      where: { id },
+      relations: ['faculty', 'upload'],
+    });
+
+    if (!recording) {
+      throw new NotFoundException('Recording not found');
+    }
+
+    if (!this.isAdmin(user) && recording.faculty?.id !== user.sub) {
+      throw new ForbiddenException('You cannot delete this recording');
+    }
+
+    const uploadId = recording.upload?.id;
+
+    if (uploadId) {
+      await this.uploadsService.delete(uploadId);
+    }
+
+    await this.classRecordingRepository.delete(id);
+
+    return { message: 'Recording deleted successfully' };
   }
 
   async getExamAttempts(user: ActiveUserData) {
@@ -602,6 +662,7 @@ export class FacultyWorkspaceService {
 
     this.assertBatchCanScheduleClass(batch);
     this.assertValidSessionWindow(startsAt, endsAt);
+    await this.assertCourseMonthlyClassLimit(batch.course, startsAt);
 
     const session = await this.classSessionRepository.save(
       this.classSessionRepository.create({
@@ -655,6 +716,9 @@ export class FacultyWorkspaceService {
     const startsAt = dto.startsAt ? new Date(dto.startsAt) : session.startsAt;
     const endsAt = dto.endsAt ? new Date(dto.endsAt) : session.endsAt;
     this.assertValidSessionWindow(startsAt, endsAt);
+    if (dto.startsAt !== undefined || dto.batchId !== undefined) {
+      await this.assertCourseMonthlyClassLimit(session.course, startsAt, session.id);
+    }
 
     if (dto.title !== undefined) session.title = dto.title;
     if (dto.description !== undefined)
@@ -717,6 +781,7 @@ export class FacultyWorkspaceService {
       password: prepared.bbbModeratorPassword!,
       userID: `faculty-${session.faculty.id}`,
     });
+    await this.trackClassAttendance(session, session.faculty, 'faculty');
 
     return { joinUrl };
   }
@@ -736,6 +801,7 @@ export class FacultyWorkspaceService {
       password: session.bbbAttendeePassword!,
       userID: `learner-${user.sub}`,
     });
+    await this.trackClassAttendance(session, learner, 'learner');
 
     return { joinUrl };
   }
@@ -759,6 +825,8 @@ export class FacultyWorkspaceService {
       'batch.students.student',
       'course',
       'faculty',
+      'attendances',
+      'attendances.user',
       'recordings',
       'recordings.upload',
     ]);
@@ -775,6 +843,8 @@ export class FacultyWorkspaceService {
       'batch.students.student',
       'course',
       'faculty',
+      'attendances',
+      'attendances.user',
       'recordings',
       'recordings.upload',
     ]);
@@ -839,10 +909,10 @@ export class FacultyWorkspaceService {
       where: { session: { id: session.id } },
       relations: [
         'session',
+        'session.attendances',
+        'session.attendances.user',
         'course',
         'batch',
-        'batch.students',
-        'batch.students.student',
         'faculty',
         'upload',
       ],
@@ -1310,6 +1380,17 @@ export class FacultyWorkspaceService {
       allowRecordingAccess: session.allowRecordingAccess,
       location: session.location,
       status: session.status,
+      attendance: {
+        attended: Boolean(
+          session.attendances?.some(
+            (attendance) => attendance.role === 'learner',
+          ),
+        ),
+        joinedAt:
+          session.attendances?.find(
+            (attendance) => attendance.role === 'learner',
+          )?.joinedAt ?? null,
+      },
       reminderBeforeMinutes: session.reminderBeforeMinutes,
       reminderOffsetsMinutes: this.getReminderOffsets(session),
       sentReminderOffsetsMinutes: session.sentReminderOffsetsMinutes ?? [],
@@ -1367,9 +1448,6 @@ export class FacultyWorkspaceService {
   }
 
   private mapClassRecording(recording: ClassRecording) {
-    const sessionEnded = recording.session
-      ? recording.session.endsAt.getTime() <= Date.now()
-      : false;
     const learnerAccessAllowed = Boolean(
       recording.session?.allowRecordingAccess,
     );
@@ -1377,18 +1455,18 @@ export class FacultyWorkspaceService {
       ClassRecordingStatus.Available,
       ClassRecordingStatus.Archived,
     ].includes(recording.status);
-    const activeLearners =
-      recording.batch?.students
-        ?.filter((item) => item.status === BatchStudentStatus.Active)
-        .map((item) => item.student)
-        .filter((student): student is User => Boolean(student)) ?? [];
+    const learnerAttendances =
+      recording.session?.attendances?.filter(
+        (attendance) => attendance.role === 'learner' && attendance.user,
+      ) ?? [];
     const learnerVisibilityReasons = [
       learnerAccessAllowed
         ? null
         : 'Learner recording access is turned off for this class.',
-      sessionEnded ? null : 'Class end time has not passed yet.',
       isReadyForLearners ? null : 'Recording is not available for learners yet.',
-      activeLearners.length ? null : 'No active learners are assigned to this batch.',
+      learnerAttendances.length
+        ? null
+        : 'No learner attendance has been recorded for this class yet.',
     ].filter((reason): reason is string => Boolean(reason));
 
     return {
@@ -1441,21 +1519,98 @@ export class FacultyWorkspaceService {
         learnerAccessAllowed,
         learnerVisible:
           learnerAccessAllowed &&
-          sessionEnded &&
           isReadyForLearners &&
-          activeLearners.length > 0,
-        sessionEnded,
+          learnerAttendances.length > 0,
         readyForLearners: isReadyForLearners,
-        activeLearnerCount: activeLearners.length,
+        attendeeCount: learnerAttendances.length,
         reasons: learnerVisibilityReasons,
       },
-      learners: activeLearners.map((student) => ({
-        id: student.id,
-        firstName: student.firstName,
-        lastName: student.lastName,
-        email: student.email,
+      attendees: learnerAttendances.map((attendance) => ({
+        id: attendance.user.id,
+        firstName: attendance.user.firstName,
+        lastName: attendance.user.lastName,
+        email: attendance.user.email,
+        role: attendance.role,
+        joinedAt: attendance.joinedAt,
+        lastSeenAt: attendance.lastSeenAt,
       })),
     };
+  }
+
+  private async trackClassAttendance(
+    session: ClassSession,
+    user: User | null,
+    role: 'faculty' | 'learner',
+  ) {
+    if (!user) return;
+
+    const now = new Date();
+    const existing = await this.classAttendanceRepository.findOne({
+      where: {
+        session: { id: session.id },
+        user: { id: user.id },
+        role,
+      },
+    });
+
+    if (existing) {
+      existing.lastSeenAt = now;
+      await this.classAttendanceRepository.save(existing);
+      return;
+    }
+
+    await this.classAttendanceRepository.save(
+      this.classAttendanceRepository.create({
+        session,
+        user,
+        role,
+        joinedAt: now,
+        lastSeenAt: now,
+      }),
+    );
+  }
+
+  private async assertCourseMonthlyClassLimit(
+    course: Course,
+    startsAt: Date,
+    ignoreSessionId?: number,
+  ) {
+    const limit = course.monthlyLiveClassLimit;
+
+    if (!limit || limit < 1) {
+      return;
+    }
+
+    const monthStart = new Date(
+      startsAt.getFullYear(),
+      startsAt.getMonth(),
+      1,
+    );
+    const nextMonthStart = new Date(
+      startsAt.getFullYear(),
+      startsAt.getMonth() + 1,
+      1,
+    );
+    const query = this.classSessionRepository
+      .createQueryBuilder('session')
+      .where('session.courseId = :courseId', { courseId: course.id })
+      .andWhere('session.startsAt >= :monthStart', { monthStart })
+      .andWhere('session.startsAt < :nextMonthStart', { nextMonthStart })
+      .andWhere('session.status != :cancelled', {
+        cancelled: ClassSessionStatus.Cancelled,
+      });
+
+    if (ignoreSessionId) {
+      query.andWhere('session.id != :ignoreSessionId', { ignoreSessionId });
+    }
+
+    const existingCount = await query.getCount();
+
+    if (existingCount >= limit) {
+      throw new BadRequestException(
+        `This course allows only ${limit} live classes in this month`,
+      );
+    }
   }
 
   private async archiveRecordingToS3(

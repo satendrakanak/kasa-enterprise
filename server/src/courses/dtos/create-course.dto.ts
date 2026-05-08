@@ -198,6 +198,20 @@ export class CreateCourseDto {
   @IsOptional()
   mode?: string;
 
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  monthlyLiveClassLimit?: number;
+
+  @IsIn(['none', 'all', 'percentage', 'fixed'])
+  @IsOptional()
+  liveClassAttendanceRequirementType?: string;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  liveClassAttendanceRequirementValue?: number;
+
   @IsString()
   @IsOptional()
   certificate?: string;

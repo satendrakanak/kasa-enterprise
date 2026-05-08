@@ -9,6 +9,8 @@ import { UserProgres } from 'src/user-progress/user-progres.entity';
 import { User } from 'src/users/user.entity';
 import { ExamAttempt } from 'src/exams/exam-attempt.entity';
 import { Exam } from 'src/exams/exam.entity';
+import { ClassAttendance } from 'src/faculty-workspace/class-attendance.entity';
+import { ClassSession } from 'src/faculty-workspace/class-session.entity';
 import { CourseExamAccessOverride } from './course-exam-access-override.entity';
 import { CourseExamAttempt } from './course-exam-attempt.entity';
 import { CourseExamsController } from './course-exams.controller';
@@ -28,6 +30,8 @@ import { CourseExamsService } from './providers/course-exams.service';
       CourseExamAttempt,
       Exam,
       ExamAttempt,
+      ClassAttendance,
+      ClassSession,
     ]),
     EmailTemplatesModule,
   ],

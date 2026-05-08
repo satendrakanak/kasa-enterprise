@@ -6,6 +6,7 @@ import { courseExamsClientService } from "@/services/course-exams/course-exams.c
 import { UserExamAccessOverview } from "@/types/exam";
 import { getErrorMessage } from "@/lib/error-handler";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -20,12 +21,22 @@ export function UserExamAccessForm({
 }: UserExamAccessFormProps) {
   const [items, setItems] = useState(initialItems);
   const [isPending, startTransition] = useTransition();
-  const [drafts, setDrafts] = useState<Record<number, { extraAttempts: string; note: string }>>(
+  const [drafts, setDrafts] = useState<
+    Record<
+      number,
+      {
+        extraAttempts: string;
+        bypassAttendanceRequirement: boolean;
+        note: string;
+      }
+    >
+  >(
     Object.fromEntries(
       initialItems.map((item) => [
         item.courseId,
         {
           extraAttempts: String(item.extraAttempts ?? 0),
+          bypassAttendanceRequirement: Boolean(item.bypassAttendanceRequirement),
           note: item.note || "",
         },
       ]),
@@ -36,13 +47,15 @@ export function UserExamAccessForm({
 
   const updateDraft = (
     courseId: number,
-    key: "extraAttempts" | "note",
-    value: string,
+    key: "extraAttempts" | "bypassAttendanceRequirement" | "note",
+    value: string | boolean,
   ) => {
     setDrafts((current) => ({
       ...current,
       [courseId]: {
         extraAttempts: current[courseId]?.extraAttempts ?? "0",
+        bypassAttendanceRequirement:
+          current[courseId]?.bypassAttendanceRequirement ?? false,
         note: current[courseId]?.note ?? "",
         [key]: value,
       },
@@ -50,7 +63,11 @@ export function UserExamAccessForm({
   };
 
   const saveOverride = (courseId: number) => {
-    const draft = drafts[courseId] || { extraAttempts: "0", note: "" };
+    const draft = drafts[courseId] || {
+      extraAttempts: "0",
+      bypassAttendanceRequirement: false,
+      note: "",
+    };
 
     startTransition(async () => {
       try {
@@ -59,6 +76,7 @@ export function UserExamAccessForm({
           {
             courseId,
             extraAttempts: Number(draft.extraAttempts || 0),
+            bypassAttendanceRequirement: draft.bypassAttendanceRequirement,
             note: draft.note,
           },
         );
@@ -89,6 +107,9 @@ export function UserExamAccessForm({
         {items.map((item) => {
           const draft = drafts[item.courseId] || {
             extraAttempts: String(item.extraAttempts ?? 0),
+            bypassAttendanceRequirement: Boolean(
+              item.bypassAttendanceRequirement,
+            ),
             note: item.note || "",
           };
 
@@ -136,6 +157,27 @@ export function UserExamAccessForm({
                       }
                     />
                   </div>
+                  <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-white/5">
+                    <Checkbox
+                      checked={draft.bypassAttendanceRequirement}
+                      onCheckedChange={(checked) =>
+                        updateDraft(
+                          item.courseId,
+                          "bypassAttendanceRequirement",
+                          checked === true,
+                        )
+                      }
+                    />
+                    <span>
+                      <span className="block font-medium text-slate-800 dark:text-slate-100">
+                        Waive live-class attendance gate
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-slate-500 dark:text-slate-300">
+                        Use this for genuine medical, technical, or management
+                        exceptions. Attempts still follow the limit above.
+                      </span>
+                    </span>
+                  </label>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">
                       Internal note

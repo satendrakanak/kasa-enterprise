@@ -107,6 +107,9 @@ export type CreateCoursePayload = {
 
   duration?: string;
   mode?: string;
+  monthlyLiveClassLimit?: number | null;
+  liveClassAttendanceRequirementType?: string | null;
+  liveClassAttendanceRequirementValue?: number | null;
 
   certificate?: string;
 
@@ -153,6 +156,9 @@ export type Course = {
   priceUsd: string | null;
   duration: string | null;
   mode: string | null;
+  monthlyLiveClassLimit: number | null;
+  liveClassAttendanceRequirementType: string | null;
+  liveClassAttendanceRequirementValue: number | null;
   certificate: string | null;
   exams: string | null;
   experienceLevel: string | null;

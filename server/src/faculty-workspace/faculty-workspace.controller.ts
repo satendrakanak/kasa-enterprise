@@ -120,6 +120,15 @@ export class FacultyWorkspaceController {
     return this.facultyWorkspaceService.getRecordings(user);
   }
 
+  @Delete('recordings/:id')
+  deleteRecording(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'manage_faculty_calendar');
+    return this.facultyWorkspaceService.deleteRecording(id, user);
+  }
+
   @Get('exam-attempts')
   getExamAttempts(@ActiveUser() user: ActiveUserData) {
     this.assertPermission(user, 'view_faculty_workspace');

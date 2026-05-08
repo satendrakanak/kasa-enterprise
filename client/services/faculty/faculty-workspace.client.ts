@@ -117,6 +117,13 @@ export const facultyWorkspaceClient = {
       ),
     ),
 
+  deleteRecording: (id: number) =>
+    withAuthRetry(() =>
+      apiClient.delete<ApiResponse<{ message: string }>>(
+        `/api/faculty/recordings/${id}`,
+      ),
+    ),
+
   joinBbbSession: (id: number) =>
     withAuthRetry(() =>
       apiClient.post<ApiResponse<{ joinUrl: string }>>(

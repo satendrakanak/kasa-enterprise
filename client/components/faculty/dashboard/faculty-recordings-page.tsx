@@ -12,13 +12,23 @@ import {
   EyeOff,
   ExternalLink,
   Info,
+  MoreHorizontal,
   RefreshCw,
   Search,
+  Trash2,
   Users,
   Video,
 } from "lucide-react";
 
+import { ConfirmDeleteDialog } from "@/components/modals/confirm-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -63,7 +73,10 @@ export function FacultyRecordingsPage({
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [selectedRecording, setSelectedRecording] =
     useState<FacultyClassRecording | null>(null);
+  const [recordingToDelete, setRecordingToDelete] =
+    useState<FacultyClassRecording | null>(null);
   const [updatingAccessId, setUpdatingAccessId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [accessOverrides, setAccessOverrides] = useState<Record<number, boolean>>(
     {},
   );
@@ -180,6 +193,25 @@ export function FacultyRecordingsPage({
     }
   }
 
+  async function handleDeleteRecording() {
+    if (!recordingToDelete) return;
+
+    try {
+      setDeletingId(recordingToDelete.id);
+      await facultyWorkspaceClient.deleteRecording(recordingToDelete.id);
+      toast.success("Recording deleted");
+      if (selectedRecording?.id === recordingToDelete.id) {
+        setSelectedRecording(null);
+      }
+      setRecordingToDelete(null);
+      router.refresh();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
@@ -284,52 +316,69 @@ export function FacultyRecordingsPage({
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-start gap-2 xl:justify-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={!sessionId || syncingSessionId === sessionId}
-                      onClick={() => handleSync(sessionId)}
-                    >
-                      <RefreshCw
-                        className={[
-                          "size-4",
-                          syncingSessionId === sessionId ? "animate-spin" : "",
-                        ].join(" ")}
-                      />
-                      Sync
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setSelectedRecording(recording)}
-                    >
-                      <Info className="size-4" />
-                      Details
-                    </Button>
-                    {recording.file?.path ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={downloadingId === recording.id}
-                        onClick={() => handleDownload(recording)}
-                      >
-                        <Download className="size-4" />
-                        {downloadingId === recording.id ? "Downloading" : "Download"}
-                      </Button>
-                    ) : null}
-                    {recording.playbackUrl ? (
-                      <Button asChild type="button">
-                        <a
-                          href={recording.playbackUrl}
-                          target="_blank"
-                          rel="noreferrer"
+                  <div className="flex items-start xl:justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" variant="outline" size="sm">
+                          <MoreHorizontal className="size-4" />
+                          Actions
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onSelect={() => setSelectedRecording(recording)}
                         >
-                          <ExternalLink className="size-4" />
-                          Review
-                        </a>
-                      </Button>
-                    ) : null}
+                          <Info className="size-4" />
+                          Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={!sessionId || syncingSessionId === sessionId}
+                          onSelect={() => {
+                            if (sessionId) void handleSync(sessionId);
+                          }}
+                        >
+                          <RefreshCw
+                            className={[
+                              "size-4",
+                              syncingSessionId === sessionId ? "animate-spin" : "",
+                            ].join(" ")}
+                          />
+                          Sync
+                        </DropdownMenuItem>
+                        {recording.file?.path ? (
+                          <DropdownMenuItem
+                            disabled={downloadingId === recording.id}
+                            onSelect={() => void handleDownload(recording)}
+                          >
+                            <Download className="size-4" />
+                            {downloadingId === recording.id
+                              ? "Downloading"
+                              : "Download"}
+                          </DropdownMenuItem>
+                        ) : null}
+                        {recording.playbackUrl ? (
+                          <DropdownMenuItem asChild>
+                            <a
+                              href={recording.playbackUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <ExternalLink className="size-4" />
+                              Review
+                            </a>
+                          </DropdownMenuItem>
+                        ) : null}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          disabled={deletingId === recording.id}
+                          onSelect={() => setRecordingToDelete(recording)}
+                        >
+                          <Trash2 className="size-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </article>
               );
@@ -365,6 +414,20 @@ export function FacultyRecordingsPage({
           if (!open) setSelectedRecording(null);
         }}
         onToggleAccess={handleSetRecordingAccess}
+        onDelete={(recording) => {
+          setSelectedRecording(null);
+          setRecordingToDelete(recording);
+        }}
+      />
+
+      <ConfirmDeleteDialog
+        deleteText="recording"
+        open={Boolean(recordingToDelete)}
+        onClose={() => {
+          if (!deletingId) setRecordingToDelete(null);
+        }}
+        onConfirm={handleDeleteRecording}
+        loading={Boolean(deletingId)}
       />
 
       {syncableSessions.length ? (
@@ -433,12 +496,14 @@ function RecordingDetailsDialog({
   recording,
   onOpenChange,
   onToggleAccess,
+  onDelete,
 }: {
   accessOverride?: boolean;
   isUpdatingAccess: boolean;
   recording: FacultyClassRecording | null;
   onOpenChange: (open: boolean) => void;
   onToggleAccess: (recording: FacultyClassRecording, allowed: boolean) => void;
+  onDelete: (recording: FacultyClassRecording) => void;
 }) {
   if (!recording) {
     return <Dialog open={false} onOpenChange={onOpenChange} />;
@@ -447,11 +512,12 @@ function RecordingDetailsDialog({
   const accessAllowed =
     accessOverride ?? recording.access?.learnerAccessAllowed ?? false;
   const readyForLearners = recording.access?.readyForLearners ?? false;
-  const sessionEnded = recording.access?.sessionEnded ?? false;
-  const activeLearnerCount =
-    recording.access?.activeLearnerCount ?? recording.learners?.length ?? 0;
+  const attendeeCount =
+    recording.access?.attendeeCount ?? recording.attendees?.length ?? 0;
+  const bbbParticipantCount = Number(recording.participants ?? 0);
+  const hasUntrackedBbbParticipants = bbbParticipantCount > attendeeCount;
   const learnerVisible =
-    accessAllowed && readyForLearners && sessionEnded && activeLearnerCount > 0;
+    accessAllowed && readyForLearners && attendeeCount > 0;
   const reasons = getLearnerVisibilityReasons(recording, accessAllowed);
   const facultyName = recording.faculty
     ? [recording.faculty.firstName, recording.faculty.lastName]
@@ -504,8 +570,8 @@ function RecordingDetailsDialog({
                 value={formatDuration(recording.durationSeconds)}
               />
               <DetailStat
-                label="BBB participants"
-                value={String(recording.participants ?? 0)}
+                label="Total BBB participants"
+                value={`${bbbParticipantCount} total`}
               />
             </div>
           </div>
@@ -516,8 +582,8 @@ function RecordingDetailsDialog({
                 <div>
                   <p className="text-sm font-semibold">Learner visibility</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Control whether assigned learners can see this recording in
-                    their dashboard.
+                    Control whether app-tracked learners who attended this class
+                    can see this recording in their dashboard.
                   </p>
                 </div>
                 <Switch
@@ -552,10 +618,17 @@ function RecordingDetailsDialog({
                     reasons.map((reason) => <p key={reason}>{reason}</p>)
                   ) : (
                     <p>
-                      Active learners assigned to this batch can now view this
+                      Learners who attended this class can now view this
                       recording.
                     </p>
                   )}
+                  {hasUntrackedBbbParticipants ? (
+                    <p>
+                      BBB reported {bbbParticipantCount} total participant
+                      {bbbParticipantCount === 1 ? "" : "s"}, but learner names
+                      are available only when they join through the app classroom.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </section>
@@ -588,10 +661,12 @@ function RecordingDetailsDialog({
           <section className="rounded-2xl border">
             <div className="flex items-center justify-between gap-3 border-b p-4">
               <div>
-                <p className="text-sm font-semibold">Assigned learners</p>
+                <p className="text-sm font-semibold">
+                  App-tracked learner attendance
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {activeLearnerCount} active learner
-                  {activeLearnerCount === 1 ? "" : "s"} in this batch.
+                  {attendeeCount} learner{attendeeCount === 1 ? "" : "s"} joined
+                  this class through the app.
                 </p>
               </div>
               <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -599,9 +674,9 @@ function RecordingDetailsDialog({
               </span>
             </div>
 
-            {recording.learners?.length ? (
+            {recording.attendees?.length ? (
               <div className="max-h-72 divide-y overflow-y-auto">
-                {recording.learners.map((learner) => (
+                {recording.attendees.map((learner) => (
                   <div
                     key={learner.id}
                     className="flex items-center justify-between gap-4 p-4"
@@ -615,6 +690,9 @@ function RecordingDetailsDialog({
                       <p className="truncate text-sm text-muted-foreground">
                         {learner.email}
                       </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Joined {formatDateTime(learner.joinedAt)}
+                      </p>
                     </div>
                     <span
                       className={[
@@ -624,17 +702,49 @@ function RecordingDetailsDialog({
                           : "bg-muted text-muted-foreground",
                       ].join(" ")}
                     >
-                      {learnerVisible ? "Can view" : "No access"}
+                      {learnerVisible ? "Can view" : "Waiting"}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-6 text-sm text-muted-foreground">
-                No active learners are assigned to this batch.
+              <div className="space-y-3 p-6 text-sm text-muted-foreground">
+                <p>
+                  No learner attendance has been recorded through the app yet.
+                  Attendance is captured when a learner joins through the
+                  classroom page.
+                </p>
+                {bbbParticipantCount ? (
+                  <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-amber-700 dark:text-amber-200">
+                    BBB only exposes the recording participant count here (
+                    {bbbParticipantCount} total, including faculty/moderators).
+                    It does not give us learner identity from the recording API,
+                    so names cannot be reconstructed for direct BBB joins.
+                  </p>
+                ) : null}
               </div>
             )}
           </section>
+
+          <div className="flex flex-col gap-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-destructive">
+                Delete recording
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Remove this recording and its archived file if it is no longer
+                needed.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => onDelete(recording)}
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -673,7 +783,8 @@ function getLearnerVisibilityReasons(
       : "Learner recording access is turned off for this class.",
     ...reasons.filter(
       (reason) =>
-        reason !== "Learner recording access is turned off for this class.",
+        reason !== "Learner recording access is turned off for this class." &&
+        reason !== "Class end time has not passed yet.",
     ),
   ].filter((reason): reason is string => Boolean(reason));
 }

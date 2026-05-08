@@ -25,6 +25,9 @@ export class CourseExamAccessOverride {
   @Column({ type: 'int', default: 0 })
   extraAttempts!: number;
 
+  @Column({ type: 'boolean', default: false })
+  bypassAttendanceRequirement!: boolean;
+
   @Column({ type: 'text', nullable: true })
   note?: string | null;
 

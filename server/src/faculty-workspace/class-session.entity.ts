@@ -11,6 +11,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ClassRecording } from './class-recording.entity';
+import { ClassAttendance } from './class-attendance.entity';
 import { CourseBatch } from './course-batch.entity';
 import { ClassSessionStatus } from './enums/class-session-status.enum';
 
@@ -33,6 +34,9 @@ export class ClassSession {
 
   @OneToMany(() => ClassRecording, (recording) => recording.session)
   recordings?: ClassRecording[];
+
+  @OneToMany(() => ClassAttendance, (attendance) => attendance.session)
+  attendances?: ClassAttendance[];
 
   @Column({ type: 'varchar', length: 180 })
   title!: string;

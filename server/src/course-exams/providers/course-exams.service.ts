@@ -6,9 +6,16 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Certificate } from 'src/certificates/certificate.entity';
+import {
+  hasLiveClasses,
+  hasRecordedLearning,
+} from 'src/courses/constants/course-delivery-mode';
 import { Course } from 'src/courses/course.entity';
 import { Enrollment } from 'src/enrollments/enrollment.entity';
 import { Lecture } from 'src/lectures/lecture.entity';
+import { ClassAttendance } from 'src/faculty-workspace/class-attendance.entity';
+import { ClassSession } from 'src/faculty-workspace/class-session.entity';
+import { ClassSessionStatus } from 'src/faculty-workspace/enums/class-session-status.enum';
 import { UserProgres } from 'src/user-progress/user-progres.entity';
 import { User } from 'src/users/user.entity';
 import { Not, Repository } from 'typeorm';
@@ -51,6 +58,10 @@ export class CourseExamsService {
     private readonly examRepository: Repository<Exam>,
     @InjectRepository(ExamAttempt)
     private readonly examAttemptRepository: Repository<ExamAttempt>,
+    @InjectRepository(ClassSession)
+    private readonly classSessionRepository: Repository<ClassSession>,
+    @InjectRepository(ClassAttendance)
+    private readonly classAttendanceRepository: Repository<ClassAttendance>,
     private readonly courseExamEmailProvider: CourseExamEmailProvider,
   ) {}
 
@@ -346,6 +357,9 @@ export class CourseExamsService {
                 ? null
                 : Math.max(effectiveAttempts - attemptsUsed, 0),
             passed,
+            bypassAttendanceRequirement: Boolean(
+              override?.bypassAttendanceRequirement,
+            ),
             note: override?.note || '',
           };
         }),
@@ -393,6 +407,9 @@ export class CourseExamsService {
     }
 
     override.extraAttempts = dto.extraAttempts;
+    override.bypassAttendanceRequirement = Boolean(
+      dto.bypassAttendanceRequirement,
+    );
     override.note = dto.note?.trim() || null;
 
     await this.courseExamAccessOverrideRepository.save(override);
@@ -449,7 +466,7 @@ export class CourseExamsService {
       where: { course: { id: courseId }, user: { id: userId } },
       order: { attemptNumber: 'DESC', createdAt: 'DESC' },
     });
-    const unlockState = await this.getUnlockState(courseId, userId);
+    const unlockState = await this.getUnlockState(course, userId);
 
     const exam = course.exam!;
     const latestAttempt = attempts[0] ? this.mapAttempt(attempts[0]) : null;
@@ -487,7 +504,7 @@ export class CourseExamsService {
     await this.ensureEnrolled(courseId, userId);
 
     const exam = course.exam!;
-    const unlockState = await this.getUnlockState(courseId, userId);
+    const unlockState = await this.getUnlockState(course, userId);
 
     if (!exam.isPublished) {
       throw new ForbiddenException('Exam is not published yet');
@@ -697,7 +714,44 @@ export class CourseExamsService {
     };
   }
 
-  private async getUnlockState(courseId: number, userId: number) {
+  private async getUnlockState(course: Course, userId: number) {
+    const override = await this.courseExamAccessOverrideRepository.findOne({
+      where: { user: { id: userId }, course: { id: course.id } },
+    });
+    const checks: Array<{
+      unlocked: boolean;
+      progress: number;
+      message: string;
+    }> = [];
+
+    if (hasRecordedLearning(course.mode)) {
+      checks.push(await this.getLectureUnlockState(course.id, userId));
+    }
+
+    if (hasLiveClasses(course.mode)) {
+      checks.push(
+        await this.getLiveClassUnlockState(
+          course,
+          userId,
+          Boolean(override?.bypassAttendanceRequirement),
+        ),
+      );
+    }
+
+    if (!checks.length) {
+      checks.push(await this.getLectureUnlockState(course.id, userId));
+    }
+
+    const lockedCheck = checks.find((check) => !check.unlocked);
+
+    return {
+      isUnlocked: !lockedCheck,
+      progress: Math.min(...checks.map((check) => check.progress)),
+      message: lockedCheck?.message ?? 'Final exam is now unlocked.',
+    };
+  }
+
+  private async getLectureUnlockState(courseId: number, userId: number) {
     const totalLectures = await this.lectureRepository.count({
       where: {
         isPublished: true,
@@ -710,7 +764,7 @@ export class CourseExamsService {
 
     if (!totalLectures) {
       return {
-        isUnlocked: false,
+        unlocked: false,
         progress: 0,
         message: 'Final exam will unlock once course lectures are published.',
       };
@@ -732,12 +786,117 @@ export class CourseExamsService {
     );
 
     return {
-      isUnlocked: completedLectures >= totalLectures,
+      unlocked: completedLectures >= totalLectures,
       progress,
       message:
         completedLectures >= totalLectures
-          ? 'Final exam is now unlocked.'
+          ? 'Recorded course content is complete.'
           : `Complete all course lectures before attempting the final exam. Current progress: ${progress}%.`,
+    };
+  }
+
+  private async getLiveClassUnlockState(
+    course: Course,
+    userId: number,
+    bypassAttendanceRequirement = false,
+  ) {
+    if (bypassAttendanceRequirement) {
+      return {
+        unlocked: true,
+        progress: 100,
+        message: 'Live class attendance requirement was waived for this learner.',
+      };
+    }
+
+    const requirementType =
+      course.liveClassAttendanceRequirementType || 'percentage';
+    const requirementValue =
+      Number(course.liveClassAttendanceRequirementValue || 0) ||
+      (requirementType === 'percentage' ? 75 : 1);
+
+    if (requirementType === 'none') {
+      return {
+        unlocked: true,
+        progress: 100,
+        message: 'Live class attendance is not required for this exam.',
+      };
+    }
+
+    const courseId = course.id;
+    const completedSessions = await this.classSessionRepository
+      .createQueryBuilder('session')
+      .innerJoin('session.batch', 'batch')
+      .innerJoin('batch.students', 'batchStudent')
+      .innerJoin('batchStudent.student', 'student')
+      .where('session.courseId = :courseId', { courseId })
+      .andWhere('student.id = :userId', { userId })
+      .andWhere('batchStudent.status = :studentStatus', {
+        studentStatus: 'active',
+      })
+      .andWhere('session.status != :cancelled', {
+        cancelled: ClassSessionStatus.Cancelled,
+      })
+      .andWhere('session.endsAt <= :now', { now: new Date() })
+      .getCount();
+
+    if (!completedSessions) {
+      return {
+        unlocked: false,
+        progress: 0,
+        message:
+          'Final exam will unlock once your faculty-led classes are completed and attendance is recorded.',
+      };
+    }
+
+    const attendedSessions = await this.classAttendanceRepository
+      .createQueryBuilder('attendance')
+      .innerJoin('attendance.session', 'session')
+      .innerJoin('session.batch', 'batch')
+      .innerJoin('batch.students', 'batchStudent')
+      .innerJoin('batchStudent.student', 'student')
+      .where('session.courseId = :courseId', { courseId })
+      .andWhere('student.id = :userId', { userId })
+      .andWhere('attendance.userId = :userId', { userId })
+      .andWhere('attendance.role = :role', { role: 'learner' })
+      .andWhere('batchStudent.status = :studentStatus', {
+        studentStatus: 'active',
+      })
+      .andWhere('session.status != :cancelled', {
+        cancelled: ClassSessionStatus.Cancelled,
+      })
+      .andWhere('session.endsAt <= :now', { now: new Date() })
+      .getCount();
+
+    const requiredAttendance =
+      requirementType === 'all'
+        ? completedSessions
+        : requirementType === 'fixed'
+          ? requirementValue
+          : Math.ceil((completedSessions * requirementValue) / 100);
+    const progressDenominator =
+      requirementType === 'fixed' ? requiredAttendance : completedSessions;
+    const progress = Math.min(
+      100,
+      Math.round((attendedSessions / Math.max(progressDenominator, 1)) * 100),
+    );
+    const remaining = Math.max(requiredAttendance - attendedSessions, 0);
+    const attendancePercent = Math.round(
+      (attendedSessions / completedSessions) * 100,
+    );
+    const policyMessage =
+      requirementType === 'all'
+        ? 'all completed live classes'
+        : requirementType === 'fixed'
+          ? `${requiredAttendance} live class${requiredAttendance === 1 ? '' : 'es'}`
+          : `${requirementValue}% live class attendance`;
+
+    return {
+      unlocked: remaining === 0,
+      progress,
+      message:
+        remaining === 0
+          ? 'Live class attendance requirement is complete.'
+          : `Attend ${remaining} more live class${remaining === 1 ? '' : 'es'} before attempting the final exam. Required: ${policyMessage}. Current: ${attendedSessions}/${completedSessions} completed classes attended (${attendancePercent}%).`,
     };
   }
 

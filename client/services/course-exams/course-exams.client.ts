@@ -34,7 +34,12 @@ export const courseExamsClientService = {
 
   upsertUserAccessOverride: (
     userId: number,
-    data: { courseId: number; extraAttempts: number; note?: string },
+    data: {
+      courseId: number;
+      extraAttempts: number;
+      bypassAttendanceRequirement?: boolean;
+      note?: string;
+    },
   ) =>
     withAuthRetry(() =>
       apiClient.post<ApiResponse<UserExamAccessOverview[]>>(

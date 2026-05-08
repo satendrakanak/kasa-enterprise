@@ -108,6 +108,15 @@ export class Course {
   @Column({ type: 'varchar', length: 100, nullable: true })
   mode?: string;
 
+  @Column({ type: 'int', nullable: true })
+  monthlyLiveClassLimit?: number | null;
+
+  @Column({ type: 'varchar', length: 24, default: 'percentage' })
+  liveClassAttendanceRequirementType!: string;
+
+  @Column({ type: 'int', nullable: true, default: 75 })
+  liveClassAttendanceRequirementValue?: number | null;
+
   @Column({ type: 'varchar', length: 512, nullable: true })
   certificate!: string;
 
