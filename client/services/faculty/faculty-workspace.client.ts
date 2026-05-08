@@ -4,6 +4,7 @@ import type {
   CreateFacultyBatchPayload,
   CreateFacultySessionPayload,
   FacultyClassSession,
+  FacultyClassRecording,
   FacultyCourseBatch,
   FacultyCourseStudent,
   FacultyExamAttempt,
@@ -72,6 +73,41 @@ export const facultyWorkspaceClient = {
     withAuthRetry(() =>
       apiClient.delete<ApiResponse<{ message: string }>>(
         `/api/faculty/sessions/${id}`,
+      ),
+    ),
+
+  startBbbSession: (id: number) =>
+    withAuthRetry(() =>
+      apiClient.post<ApiResponse<{ joinUrl: string }>>(
+        `/api/faculty/sessions/${id}/bbb/start`,
+      ),
+    ),
+
+  getSessionRecordings: (id: number) =>
+    withAuthRetry(() =>
+      apiClient.get<ApiResponse<FacultyClassRecording[]>>(
+        `/api/faculty/sessions/${id}/recordings`,
+      ),
+    ),
+
+  syncSessionRecordings: (id: number) =>
+    withAuthRetry(() =>
+      apiClient.post<ApiResponse<FacultyClassRecording[]>>(
+        `/api/faculty/sessions/${id}/recordings/sync`,
+      ),
+    ),
+
+  getRecordings: () =>
+    withAuthRetry(() =>
+      apiClient.get<ApiResponse<FacultyClassRecording[]>>(
+        "/api/faculty/recordings",
+      ),
+    ),
+
+  joinBbbSession: (id: number) =>
+    withAuthRetry(() =>
+      apiClient.post<ApiResponse<{ joinUrl: string }>>(
+        `/api/class-sessions/${id}/bbb/join`,
       ),
     ),
 

@@ -2,6 +2,7 @@ import { apiServer } from "@/lib/api/server";
 import { ApiResponse } from "@/types/api";
 import {
   AwsStorageSettings,
+  BbbSettings,
   EmailSettings,
   Gateway,
   PaymentGatewayAdmin,
@@ -25,6 +26,8 @@ export const settingsServerService = {
 
   getAwsStorageSettings: () =>
     apiServer.get<ApiResponse<AwsStorageSettings>>("/settings/aws-storage"),
+  getBbbSettings: () =>
+    apiServer.get<ApiResponse<BbbSettings>>("/settings/bbb"),
 
   getSocialAuthSettings: () =>
     apiServer.get<ApiResponse<{ providers: SocialAuthProvider[] }>>(

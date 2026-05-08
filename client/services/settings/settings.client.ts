@@ -2,6 +2,7 @@ import { apiClient, withAuthRetry } from "@/lib/api/client";
 import { ApiResponse } from "@/types/api";
 import {
   AwsStorageSettings,
+  BbbSettings,
   EmailSettings,
   PaymentGatewayAdmin,
   PublicSettingsBundle,
@@ -68,6 +69,16 @@ export const settingsClientService = {
         "/api/settings/aws-storage",
         data,
       ),
+    ),
+
+  getBbbSettings: () =>
+    withAuthRetry(() =>
+      apiClient.get<ApiResponse<BbbSettings>>("/api/settings/bbb"),
+    ),
+
+  upsertBbbSettings: (data: Partial<BbbSettings>) =>
+    withAuthRetry(() =>
+      apiClient.post<ApiResponse<BbbSettings>>("/api/settings/bbb", data),
     ),
 
   getSocialAuthSettings: () =>

@@ -7,6 +7,7 @@ import {
   Award,
   BarChart3,
   BookOpenCheck,
+  CalendarDays,
   ClipboardCheck,
   GraduationCap,
 } from "lucide-react";
@@ -65,7 +66,7 @@ export default function DashboardClient({
         <DateRangeFilter value={dateRange} onChange={handleDateRangeApply} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <StatCard
           icon={BookOpenCheck}
           title="Courses Completed"
@@ -100,6 +101,13 @@ export default function DashboardClient({
           title="Certificates"
           value={stats.certificatesEarned}
           description="Certificates unlocked after completion milestones."
+        />
+
+        <StatCard
+          icon={CalendarDays}
+          title="Live Classes"
+          value={upcomingClasses.length}
+          description="Upcoming scheduled classes from your active batches."
         />
       </div>
 

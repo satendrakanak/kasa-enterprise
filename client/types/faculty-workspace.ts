@@ -62,6 +62,8 @@ export type FacultyWorkspaceSession = {
   endsAt: string;
   status: string;
   meetingUrl?: string | null;
+  hasBbbMeeting?: boolean;
+  allowRecordingAccess?: boolean;
   reminderOffsetsMinutes?: number[];
   sentReminderOffsetsMinutes?: number[];
 };
@@ -90,6 +92,49 @@ export type FacultyBatchStudent = {
   };
 };
 
+export type FacultyClassRecording = {
+  id: number;
+  bbbRecordId: string;
+  name: string;
+  format: string;
+  playbackUrl?: string | null;
+  durationSeconds?: number | null;
+  participants?: number | null;
+  status: string;
+  archiveError?: string | null;
+  recordedAt?: string | null;
+  syncedAt?: string | null;
+  file?: {
+    id: number;
+    name: string;
+    path: string;
+    mime: string;
+    size: number;
+  } | null;
+  session?: {
+    id: number;
+    title: string;
+    startsAt: string;
+    endsAt: string;
+    status: string;
+  } | null;
+  course?: {
+    id: number;
+    title: string;
+    slug: string;
+  } | null;
+  batch?: {
+    id: number;
+    name: string;
+  } | null;
+  faculty?: {
+    id: number;
+    firstName: string;
+    lastName?: string;
+    email: string;
+  } | null;
+};
+
 export type FacultyClassSession = {
   id: number;
   title: string;
@@ -98,11 +143,14 @@ export type FacultyClassSession = {
   endsAt: string;
   timezone: string;
   meetingUrl?: string | null;
+  hasBbbMeeting?: boolean;
+  allowRecordingAccess?: boolean;
   location?: string | null;
   status: string;
   reminderBeforeMinutes: number;
   reminderOffsetsMinutes?: number[];
   sentReminderOffsetsMinutes?: number[];
+  recordings?: FacultyClassRecording[];
   batch: {
     id: number;
     name: string;
@@ -180,6 +228,7 @@ export type CreateFacultySessionPayload = {
   status?: string;
   reminderBeforeMinutes?: number;
   reminderOffsetsMinutes?: number[];
+  allowRecordingAccess?: boolean;
 };
 
 export type FacultyWorkspaceData = {

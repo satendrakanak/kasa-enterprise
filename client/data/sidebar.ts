@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   MessageCircleHeart,
   ClipboardCheck,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 
@@ -98,6 +99,13 @@ export const sidebarData = {
       url: "/admin/refunds",
       icon: HandCoins,
       requiredPermissions: ["view_order", "update_order"],
+    },
+
+    {
+      title: "Recordings",
+      url: "/admin/recordings",
+      icon: Video,
+      requiredPermissions: ["view_faculty_workspace"],
     },
 
     {

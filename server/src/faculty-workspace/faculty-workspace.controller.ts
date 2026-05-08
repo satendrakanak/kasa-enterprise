@@ -114,6 +114,12 @@ export class FacultyWorkspaceController {
     return this.facultyWorkspaceService.getSessions(user);
   }
 
+  @Get('recordings')
+  getRecordings(@ActiveUser() user: ActiveUserData) {
+    this.assertPermission(user, 'view_faculty_workspace');
+    return this.facultyWorkspaceService.getRecordings(user);
+  }
+
   @Get('exam-attempts')
   getExamAttempts(@ActiveUser() user: ActiveUserData) {
     this.assertPermission(user, 'view_faculty_workspace');
@@ -167,11 +173,41 @@ export class FacultyWorkspaceController {
     return this.facultyWorkspaceService.deleteSession(id, user);
   }
 
+  @Post('sessions/:id/bbb/start')
+  startBbbSession(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'manage_faculty_calendar');
+    return this.facultyWorkspaceService.startBbbSession(id, user);
+  }
+
+  @Get('sessions/:id/recordings')
+  getSessionRecordings(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'view_faculty_workspace');
+    return this.facultyWorkspaceService.getSessionRecordings(id, user);
+  }
+
+  @Post('sessions/:id/recordings/sync')
+  syncSessionRecordings(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'manage_faculty_calendar');
+    return this.facultyWorkspaceService.syncSessionRecordings(id, user);
+  }
+
   private isAdmin(user?: ActiveUserData) {
     return Boolean(user?.roles?.includes('admin'));
   }
 
-  private assertPermission(user: ActiveUserData | undefined, permission: string) {
+  private assertPermission(
+    user: ActiveUserData | undefined,
+    permission: string,
+  ) {
     if (this.isAdmin(user) || user?.permissions?.includes(permission)) {
       return;
     }

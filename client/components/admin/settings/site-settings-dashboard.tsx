@@ -12,6 +12,7 @@ import { getErrorMessage } from "@/lib/error-handler";
 import { settingsClientService } from "@/services/settings/settings.client";
 import {
   AwsStorageSettings,
+  BbbSettings,
   EmailSettings,
   PaymentGatewayAdmin,
   PaymentMode,
@@ -29,6 +30,7 @@ import {
   Mail,
   Settings2,
   Shield,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MediaModal } from "@/components/media/media-modal";
@@ -117,6 +119,17 @@ const defaultAwsStorageSettings: AwsStorageSettings = {
   accessKeySecret: "",
 };
 
+const defaultBbbSettings: BbbSettings = {
+  isEnabled: false,
+  apiUrl: "",
+  sharedSecret: "",
+  hasSharedSecret: false,
+  defaultRecord: false,
+  autoStartRecording: false,
+  allowStartStopRecording: true,
+  meetingExpireIfNoUserJoinedInMinutes: 60,
+};
+
 const defaultSocialProviders: SocialAuthProvider[] = [
   {
     provider: "GOOGLE",
@@ -149,12 +162,14 @@ export function SiteSettingsDashboard({
   siteSettings,
   emailSettings,
   awsStorageSettings,
+  bbbSettings,
   socialProviders,
 }: {
   gateways: PaymentGatewayAdmin[];
   siteSettings: SiteSettings | null;
   emailSettings: EmailSettings | null;
   awsStorageSettings: AwsStorageSettings | null;
+  bbbSettings: BbbSettings | null;
   socialProviders: SocialAuthProvider[];
 }) {
   const router = useRouter();
@@ -170,6 +185,10 @@ export function SiteSettingsDashboard({
   const [awsForm, setAwsForm] = useState<AwsStorageSettings>({
     ...defaultAwsStorageSettings,
     ...(awsStorageSettings || {}),
+  });
+  const [bbbForm, setBbbForm] = useState<BbbSettings>({
+    ...defaultBbbSettings,
+    ...(bbbSettings || {}),
   });
   const [socialForm, setSocialForm] = useState<SocialAuthProvider[]>(
     socialProviders.length ? socialProviders : defaultSocialProviders,
@@ -213,6 +232,13 @@ export function SiteSettingsDashboard({
     value: AwsStorageSettings[K],
   ) => {
     setAwsForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const updateBbbField = <K extends keyof BbbSettings>(
+    key: K,
+    value: BbbSettings[K],
+  ) => {
+    setBbbForm((current) => ({ ...current, [key]: value }));
   };
 
   const updateSocialField = (
@@ -332,6 +358,33 @@ export function SiteSettingsDashboard({
     });
   };
 
+  const saveBbbSettings = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    startTransition(async () => {
+      try {
+        const bbbPayload = { ...bbbForm };
+        Reflect.deleteProperty(bbbPayload, "hasSharedSecret");
+        const { sharedSecret, ...rest } = bbbPayload;
+        const payload = {
+          ...rest,
+          ...(sharedSecret?.trim()
+            ? { sharedSecret: sharedSecret.trim() }
+            : {}),
+        };
+
+        const response = await settingsClientService.upsertBbbSettings(payload);
+        setBbbForm({
+          ...response.data,
+          sharedSecret: "",
+        });
+        toast.success("BigBlueButton settings updated");
+        router.refresh();
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+      }
+    });
+  };
+
   const saveGateway = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     startTransition(async () => {
@@ -369,7 +422,7 @@ export function SiteSettingsDashboard({
       title="Site Settings"
       description="Manage brand assets, support details, SMTP delivery, social auth toggles, and payment gateways from one dashboard."
     >
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <StatCard
           icon={Settings2}
           label="Site identity"
@@ -393,6 +446,12 @@ export function SiteSettingsDashboard({
           label="Storage & checkout"
           value={activeGateway?.displayName || "No gateway"}
           meta={awsForm.bucketName || "AWS storage not configured"}
+        />
+        <StatCard
+          icon={Video}
+          label="Live classes"
+          value={bbbForm.isEnabled ? "BBB active" : "BBB off"}
+          meta={bbbForm.apiUrl || "BigBlueButton not configured"}
         />
       </div>
 
@@ -806,6 +865,112 @@ export function SiteSettingsDashboard({
               <div className="flex justify-end">
                 <Button type="submit" disabled={isPending}>
                   {isPending ? "Saving..." : "Save email config"}
+                </Button>
+              </div>
+            </form>
+          </SettingsCard>
+
+          <SettingsCard
+            eyebrow="Live classes"
+            title="BigBlueButton configuration"
+            description="Store BBB API URL and shared secret encrypted in the database. Faculty and learners receive signed join links from the backend."
+          >
+            <form onSubmit={saveBbbSettings} className="space-y-4">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/6">
+                <div>
+                  <p className="font-semibold text-slate-900 dark:text-white">
+                    Enable BigBlueButton
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-300">
+                    When enabled, calendar classes can start and join BBB rooms.
+                  </p>
+                </div>
+                <Switch
+                  checked={bbbForm.isEnabled}
+                  onCheckedChange={(checked) =>
+                    updateBbbField("isEnabled", checked)
+                  }
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="BBB API URL">
+                  <Input
+                    placeholder="https://bbb.example.com/bigbluebutton/api"
+                    value={bbbForm.apiUrl}
+                    onChange={(event) =>
+                      updateBbbField("apiUrl", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Shared secret">
+                  <Input
+                    type="password"
+                    placeholder={
+                      bbbForm.hasSharedSecret
+                        ? "Saved already, enter a new secret to rotate"
+                        : "Enter BBB shared secret"
+                    }
+                    value={bbbForm.sharedSecret || ""}
+                    onChange={(event) =>
+                      updateBbbField("sharedSecret", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Meeting expiry without users">
+                  <Input
+                    type="number"
+                    min="5"
+                    value={bbbForm.meetingExpireIfNoUserJoinedInMinutes}
+                    onChange={(event) =>
+                      updateBbbField(
+                        "meetingExpireIfNoUserJoinedInMinutes",
+                        Number(event.target.value),
+                      )
+                    }
+                  />
+                </Field>
+                <Field label="Allow recording controls">
+                  <div className="flex h-11 items-center rounded-xl border border-slate-200 px-3 dark:border-white/10 dark:bg-white/6">
+                    <Switch
+                      checked={bbbForm.allowStartStopRecording}
+                      onCheckedChange={(checked) =>
+                        updateBbbField("allowStartStopRecording", checked)
+                      }
+                    />
+                  </div>
+                </Field>
+                <Field label="Record meetings by default">
+                  <div className="flex h-11 items-center rounded-xl border border-slate-200 px-3 dark:border-white/10 dark:bg-white/6">
+                    <Switch
+                      checked={bbbForm.defaultRecord}
+                      onCheckedChange={(checked) =>
+                        updateBbbField("defaultRecord", checked)
+                      }
+                    />
+                  </div>
+                </Field>
+                <Field label="Auto-start recording">
+                  <div className="flex h-11 items-center rounded-xl border border-slate-200 px-3 dark:border-white/10 dark:bg-white/6">
+                    <Switch
+                      checked={bbbForm.autoStartRecording}
+                      onCheckedChange={(checked) =>
+                        updateBbbField("autoStartRecording", checked)
+                      }
+                    />
+                  </div>
+                </Field>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-white/10 dark:bg-white/6 dark:text-slate-300">
+                Run <code>bbb-conf --secret</code> on your BBB server to get
+                the API URL and shared secret. The secret is encrypted before it
+                is stored.
+              </div>
+
+              <div className="flex justify-end">
+                <Button type="submit" disabled={isPending}>
+                  {isPending ? "Saving..." : "Save BBB config"}
                 </Button>
               </div>
             </form>

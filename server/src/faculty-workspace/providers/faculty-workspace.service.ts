@@ -1,3 +1,4 @@
+import { randomBytes, randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ForbiddenException,
@@ -5,13 +6,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import type { ActiveUserData } from 'src/auth/interfaces/active-user-data.interface';
+import { MediaFileMappingService } from 'src/common/media-file-mapping/providers/media-file-mapping.service';
 import { Course } from 'src/courses/course.entity';
 import { Enrollment } from 'src/enrollments/enrollment.entity';
 import { ExamAttempt } from 'src/exams/exam-attempt.entity';
 import { Exam } from 'src/exams/exam.entity';
 import { ExamAttemptStatus } from 'src/exams/enums/exam-attempt-status.enum';
 import { ExamStatus } from 'src/exams/enums/exam-status.enum';
+import { FileTypes } from 'src/uploads/enums/file-types.enum';
+import { UploadStatus } from 'src/uploads/enums/upload-status.enum';
+import { S3Provider } from 'src/uploads/providers/s3.provider';
+import { Upload } from 'src/uploads/upload.entity';
 import { User } from 'src/users/user.entity';
 import { Brackets, Repository } from 'typeorm';
 import { AddBatchStudentDto } from '../dtos/add-batch-student.dto';
@@ -21,11 +28,14 @@ import { GradeExamAttemptDto } from '../dtos/grade-exam-attempt.dto';
 import { UpdateClassSessionDto } from '../dtos/update-class-session.dto';
 import { UpdateCourseBatchDto } from '../dtos/update-course-batch.dto';
 import { BatchStudent } from '../batch-student.entity';
+import { ClassRecording } from '../class-recording.entity';
 import { ClassSession } from '../class-session.entity';
 import { CourseBatch } from '../course-batch.entity';
+import { ClassRecordingStatus } from '../enums/class-recording-status.enum';
 import { BatchStudentStatus } from '../enums/batch-student-status.enum';
 import { ClassSessionStatus } from '../enums/class-session-status.enum';
 import { CourseBatchStatus } from '../enums/course-batch-status.enum';
+import { BigBlueButtonProvider } from './bigbluebutton.provider';
 
 @Injectable()
 export class FacultyWorkspaceService {
@@ -53,6 +63,16 @@ export class FacultyWorkspaceService {
 
     @InjectRepository(ClassSession)
     private readonly classSessionRepository: Repository<ClassSession>,
+
+    @InjectRepository(ClassRecording)
+    private readonly classRecordingRepository: Repository<ClassRecording>,
+
+    @InjectRepository(Upload)
+    private readonly uploadRepository: Repository<Upload>,
+
+    private readonly bigBlueButtonProvider: BigBlueButtonProvider,
+    private readonly s3Provider: S3Provider,
+    private readonly mediaFileMappingService: MediaFileMappingService,
   ) {}
 
   async getWorkspace(user: ActiveUserData) {
@@ -62,21 +82,17 @@ export class FacultyWorkspaceService {
     const facultyId = user.sub;
     const courses = await this.getAssignedCourses(facultyId);
     const courseIds = courses.map((course) => course.id);
-    const [
-      studentsCount,
-      exams,
-      recentAttempts,
-      upcomingSessions,
-      batches,
-    ] = await Promise.all([
-      this.getStudentsCount(courseIds),
-      this.getAssignedExams(facultyId, courseIds),
-      this.getRecentAttempts(courseIds),
-      this.getUpcomingSessions(facultyId),
-      this.getDashboardBatches(facultyId),
-    ]);
+    const [studentsCount, exams, recentAttempts, upcomingSessions, batches] =
+      await Promise.all([
+        this.getStudentsCount(courseIds),
+        this.getAssignedExams(facultyId, courseIds),
+        this.getRecentAttempts(courseIds),
+        this.getUpcomingSessions(facultyId),
+        this.getDashboardBatches(facultyId),
+      ]);
     const reminderCount = upcomingSessions.reduce(
-      (total, session) => total + this.getPendingReminderOffsets(session).length,
+      (total, session) =>
+        total + this.getPendingReminderOffsets(session).length,
       0,
     );
 
@@ -87,7 +103,8 @@ export class FacultyWorkspaceService {
         activeStudents: studentsCount,
         assignedExams: exams.length,
         pendingManualReviews: recentAttempts.filter(
-          (attempt) => attempt.status === ExamAttemptStatus.PendingManualGrading,
+          (attempt) =>
+            attempt.status === ExamAttemptStatus.PendingManualGrading,
         ).length,
         upcomingClasses: upcomingSessions.length,
         activeBatches: batches.filter(
@@ -105,21 +122,24 @@ export class FacultyWorkspaceService {
         isPublished: course.isPublished,
         mode: course.mode,
         duration: course.duration,
-        studentsCount: course.enrollments?.filter((item) => item.isActive).length ?? 0,
+        studentsCount:
+          course.enrollments?.filter((item) => item.isActive).length ?? 0,
       })),
       exams: exams.slice(0, 6).map((exam) => ({
         id: exam.id,
         title: exam.title,
         slug: exam.slug,
         status: exam.status,
-        courses: exam.courses?.map((course) => ({
-          id: course.id,
-          title: course.title,
-          slug: course.slug,
-        })) ?? [],
-        attemptsCount: exam.attempts?.filter(
-          (attempt) => attempt.status !== ExamAttemptStatus.InProgress,
-        ).length ?? 0,
+        courses:
+          exam.courses?.map((course) => ({
+            id: course.id,
+            title: course.title,
+            slug: course.slug,
+          })) ?? [],
+        attemptsCount:
+          exam.attempts?.filter(
+            (attempt) => attempt.status !== ExamAttemptStatus.InProgress,
+          ).length ?? 0,
       })),
       recentAttempts: recentAttempts.slice(0, 8).map((attempt) => ({
         id: attempt.id,
@@ -145,6 +165,7 @@ export class FacultyWorkspaceService {
         endsAt: session.endsAt,
         status: session.status,
         meetingUrl: session.meetingUrl,
+        hasBbbMeeting: Boolean(session.bbbMeetingId),
         reminderOffsetsMinutes: this.getReminderOffsets(session),
         sentReminderOffsetsMinutes: session.sentReminderOffsetsMinutes ?? [],
       })),
@@ -157,8 +178,9 @@ export class FacultyWorkspaceService {
         startDate: batch.startDate,
         endDate: batch.endDate,
         studentsCount:
-          batch.students?.filter((student) => student.status === BatchStudentStatus.Active)
-            .length ?? 0,
+          batch.students?.filter(
+            (student) => student.status === BatchStudentStatus.Active,
+          ).length ?? 0,
         sessionsCount: batch.sessions?.length ?? 0,
       })),
     };
@@ -169,7 +191,13 @@ export class FacultyWorkspaceService {
 
     return this.courseBatchRepository.find({
       where: this.isAdmin(user) ? {} : { faculty: { id: user.sub } },
-      relations: ['course', 'faculty', 'students', 'students.student', 'sessions'],
+      relations: [
+        'course',
+        'faculty',
+        'students',
+        'students.student',
+        'sessions',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
@@ -185,7 +213,8 @@ export class FacultyWorkspaceService {
       isPublished: course.isPublished,
       mode: course.mode,
       duration: course.duration,
-      studentsCount: course.enrollments?.filter((item) => item.isActive).length ?? 0,
+      studentsCount:
+        course.enrollments?.filter((item) => item.isActive).length ?? 0,
     }));
   }
 
@@ -233,33 +262,39 @@ export class FacultyWorkspaceService {
       .orderBy('session.startsAt', 'ASC')
       .getMany();
 
-    return sessions.map((session) => ({
-      id: session.id,
-      title: session.title,
-      description: session.description,
-      startsAt: session.startsAt,
-      endsAt: session.endsAt,
-      timezone: session.timezone,
-      meetingUrl: session.meetingUrl,
-      location: session.location,
-      status: session.status,
-      reminderBeforeMinutes: session.reminderBeforeMinutes,
-      reminderOffsetsMinutes: this.getReminderOffsets(session),
-      batch: {
-        id: session.batch.id,
-        name: session.batch.name,
-      },
-      course: {
-        id: session.course.id,
-        title: session.course.title,
-        slug: session.course.slug,
-      },
-      faculty: {
-        id: session.faculty.id,
-        firstName: session.faculty.firstName,
-        lastName: session.faculty.lastName,
-      },
-    }));
+    return sessions.map((session) => this.mapClassSession(session));
+  }
+
+  async getLearnerRecordings(user: ActiveUserData) {
+    const recordings = await this.classRecordingRepository
+      .createQueryBuilder('recording')
+      .leftJoinAndSelect('recording.session', 'session')
+      .leftJoinAndSelect('recording.course', 'course')
+      .leftJoinAndSelect('recording.batch', 'batch')
+      .leftJoinAndSelect('recording.faculty', 'faculty')
+      .leftJoinAndSelect('recording.upload', 'upload')
+      .leftJoin('batch.students', 'batchStudent')
+      .leftJoin('batchStudent.student', 'student')
+      .where('student.id = :userId', { userId: user.sub })
+      .andWhere('batchStudent.status = :studentStatus', {
+        studentStatus: BatchStudentStatus.Active,
+      })
+      .andWhere('session.allowRecordingAccess = true')
+      .andWhere('session.status != :cancelled', {
+        cancelled: ClassSessionStatus.Cancelled,
+      })
+      .andWhere('session.endsAt <= :now', { now: new Date() })
+      .andWhere('recording.status IN (:...statuses)', {
+        statuses: [
+          ClassRecordingStatus.Available,
+          ClassRecordingStatus.Archived,
+        ],
+      })
+      .orderBy('recording.recordedAt', 'DESC', 'NULLS LAST')
+      .addOrderBy('recording.createdAt', 'DESC')
+      .getMany();
+
+    return recordings.map((recording) => this.mapClassRecording(recording));
   }
 
   async createBatch(user: ActiveUserData, dto: CreateCourseBatchDto) {
@@ -316,7 +351,8 @@ export class FacultyWorkspaceService {
 
     if (dto.name !== undefined) batch.name = dto.name;
     if (dto.code !== undefined) batch.code = dto.code || null;
-    if (dto.description !== undefined) batch.description = dto.description || null;
+    if (dto.description !== undefined)
+      batch.description = dto.description || null;
     if (dto.status !== undefined) batch.status = dto.status;
     if (dto.startDate !== undefined) batch.startDate = dto.startDate || null;
     if (dto.endDate !== undefined) batch.endDate = dto.endDate || null;
@@ -414,11 +450,41 @@ export class FacultyWorkspaceService {
     this.assertFaculty(user);
     await this.markPastSessionsCompleted(new Date());
 
-    return this.classSessionRepository.find({
+    const sessions = await this.classSessionRepository.find({
       where: this.isAdmin(user) ? {} : { faculty: { id: user.sub } },
-      relations: ['batch', 'course', 'faculty'],
+      relations: [
+        'batch',
+        'course',
+        'faculty',
+        'recordings',
+        'recordings.upload',
+      ],
       order: { startsAt: 'ASC' },
     });
+
+    return sessions.map((session) => this.mapClassSession(session));
+  }
+
+  async getRecordings(user: ActiveUserData) {
+    this.assertFaculty(user);
+
+    const query = this.classRecordingRepository
+      .createQueryBuilder('recording')
+      .leftJoinAndSelect('recording.session', 'session')
+      .leftJoinAndSelect('recording.course', 'course')
+      .leftJoinAndSelect('recording.batch', 'batch')
+      .leftJoinAndSelect('recording.faculty', 'faculty')
+      .leftJoinAndSelect('recording.upload', 'upload')
+      .orderBy('recording.recordedAt', 'DESC', 'NULLS LAST')
+      .addOrderBy('recording.createdAt', 'DESC');
+
+    if (!this.isAdmin(user)) {
+      query.where('faculty.id = :facultyId', { facultyId: user.sub });
+    }
+
+    const recordings = await query.getMany();
+
+    return recordings.map((recording) => this.mapClassRecording(recording));
   }
 
   async getExamAttempts(user: ActiveUserData) {
@@ -475,7 +541,10 @@ export class FacultyWorkspaceService {
         return result;
       }
 
-      const score = Math.min(Math.max(manual.score, 0), Number(result.maxScore || 0));
+      const score = Math.min(
+        Math.max(manual.score, 0),
+        Number(result.maxScore || 0),
+      );
 
       return {
         ...result,
@@ -533,6 +602,7 @@ export class FacultyWorkspaceService {
         status: dto.status ?? ClassSessionStatus.Scheduled,
         reminderBeforeMinutes: dto.reminderBeforeMinutes ?? 60,
         reminderOffsetsMinutes: this.normalizeReminderOffsets(dto),
+        allowRecordingAccess: dto.allowRecordingAccess ?? false,
       }),
     );
 
@@ -568,11 +638,14 @@ export class FacultyWorkspaceService {
     this.assertValidSessionWindow(startsAt, endsAt);
 
     if (dto.title !== undefined) session.title = dto.title;
-    if (dto.description !== undefined) session.description = dto.description || null;
+    if (dto.description !== undefined)
+      session.description = dto.description || null;
     session.startsAt = startsAt;
     session.endsAt = endsAt;
-    if (dto.timezone !== undefined) session.timezone = dto.timezone || 'Asia/Kolkata';
-    if (dto.meetingUrl !== undefined) session.meetingUrl = dto.meetingUrl || null;
+    if (dto.timezone !== undefined)
+      session.timezone = dto.timezone || 'Asia/Kolkata';
+    if (dto.meetingUrl !== undefined)
+      session.meetingUrl = dto.meetingUrl || null;
     if (dto.location !== undefined) session.location = dto.location || null;
     if (dto.status !== undefined) session.status = dto.status;
     if (dto.reminderBeforeMinutes !== undefined) {
@@ -594,10 +667,133 @@ export class FacultyWorkspaceService {
       session.sentReminderOffsetsMinutes = null;
       session.reminderSentAt = null;
     }
+    if (dto.allowRecordingAccess !== undefined) {
+      session.allowRecordingAccess = dto.allowRecordingAccess;
+    }
 
     const savedSession = await this.classSessionRepository.save(session);
 
     return savedSession;
+  }
+
+  async startBbbSession(id: number, user: ActiveUserData) {
+    const session = await this.getSessionForFaculty(id, user);
+    const prepared = await this.ensureBbbMeeting(session);
+    const joinUrl = await this.bigBlueButtonProvider.getJoinUrl({
+      meetingID: prepared.bbbMeetingId!,
+      fullName: this.getUserDisplayName(session.faculty),
+      role: 'MODERATOR',
+      password: prepared.bbbModeratorPassword!,
+      userID: `faculty-${session.faculty.id}`,
+    });
+
+    return { joinUrl };
+  }
+
+  async joinBbbSession(id: number, user: ActiveUserData) {
+    const session = await this.getSessionForLearner(id, user);
+    const prepared = await this.ensureBbbMeeting(session);
+    const learner = await this.userRepository.findOne({
+      where: { id: user.sub },
+    });
+
+    const joinUrl = await this.bigBlueButtonProvider.getJoinUrl({
+      meetingID: prepared.bbbMeetingId!,
+      fullName: this.getUserDisplayName(learner),
+      role: 'VIEWER',
+      password: prepared.bbbAttendeePassword!,
+      userID: `learner-${user.sub}`,
+    });
+
+    return { joinUrl };
+  }
+
+  async getSessionRecordings(id: number, user: ActiveUserData) {
+    const session = await this.getSessionForFaculty(id, user, [
+      'batch',
+      'course',
+      'faculty',
+      'recordings',
+      'recordings.upload',
+    ]);
+
+    return (session.recordings ?? []).map((recording) =>
+      this.mapClassRecording(recording),
+    );
+  }
+
+  async syncSessionRecordings(id: number, user: ActiveUserData) {
+    const session = await this.getSessionForFaculty(id, user, [
+      'batch',
+      'course',
+      'faculty',
+      'recordings',
+      'recordings.upload',
+    ]);
+
+    if (!session.bbbMeetingId) {
+      throw new BadRequestException(
+        'Start this BBB class before syncing recordings',
+      );
+    }
+
+    const bbbRecordings = await this.bigBlueButtonProvider.getRecordings(
+      session.bbbMeetingId,
+    );
+
+    for (const bbbRecording of bbbRecordings) {
+      const existing = await this.classRecordingRepository.findOne({
+        where: { bbbRecordId: bbbRecording.recordID },
+        relations: ['session', 'upload'],
+      });
+      const recording =
+        existing ??
+        this.classRecordingRepository.create({
+          session,
+          course: session.course,
+          batch: session.batch,
+          faculty: session.faculty,
+          bbbRecordId: bbbRecording.recordID,
+        });
+
+      recording.name = bbbRecording.name || session.title;
+      recording.format = bbbRecording.playback?.type || 'presentation';
+      recording.playbackUrl = bbbRecording.playback?.url ?? null;
+      recording.durationSeconds = bbbRecording.playback?.lengthSeconds ?? null;
+      recording.participants = bbbRecording.participants;
+      recording.recordedAt = bbbRecording.startTime;
+      recording.syncedAt = new Date();
+      recording.status = bbbRecording.playback
+        ? ClassRecordingStatus.Available
+        : ClassRecordingStatus.Processing;
+      recording.archiveError = null;
+
+      if (bbbRecording.playback?.url && !recording.upload) {
+        try {
+          recording.upload = await this.archiveRecordingToS3(
+            session,
+            bbbRecording.recordID,
+            bbbRecording.playback.url,
+            bbbRecording.playback.type,
+          );
+          recording.status = ClassRecordingStatus.Archived;
+        } catch (error) {
+          recording.status = ClassRecordingStatus.Failed;
+          recording.archiveError =
+            error instanceof Error ? error.message : 'Recording archive failed';
+        }
+      }
+
+      await this.classRecordingRepository.save(recording);
+    }
+
+    const recordings = await this.classRecordingRepository.find({
+      where: { session: { id: session.id } },
+      relations: ['upload'],
+      order: { recordedAt: 'DESC', createdAt: 'DESC' },
+    });
+
+    return recordings.map((recording) => this.mapClassRecording(recording));
   }
 
   async deleteSession(id: number, user: ActiveUserData) {
@@ -712,6 +908,44 @@ export class FacultyWorkspaceService {
       .execute();
   }
 
+  private async ensureBbbMeeting(session: ClassSession) {
+    if (!session.bbbMeetingId) {
+      session.bbbMeetingId = `session-${session.id}-${randomUUID()}`;
+    }
+
+    if (!session.bbbModeratorPassword) {
+      session.bbbModeratorPassword = this.generateMeetingPassword();
+    }
+
+    if (!session.bbbAttendeePassword) {
+      session.bbbAttendeePassword = this.generateMeetingPassword();
+    }
+
+    const response = await this.bigBlueButtonProvider.createMeeting({
+      meetingID: session.bbbMeetingId,
+      name: session.title,
+      attendeePW: session.bbbAttendeePassword,
+      moderatorPW: session.bbbModeratorPassword,
+      welcome: session.description,
+    });
+
+    session.bbbCreateTime =
+      response.createTime ?? session.bbbCreateTime ?? null;
+    session.meetingUrl = null;
+
+    return this.classSessionRepository.save(session);
+  }
+
+  private generateMeetingPassword() {
+    return randomBytes(12).toString('hex');
+  }
+
+  private getUserDisplayName(user?: User | null) {
+    const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
+
+    return name || user?.email || 'Participant';
+  }
+
   private getDashboardBatches(facultyId: number) {
     return this.courseBatchRepository.find({
       where: { faculty: { id: facultyId } },
@@ -746,7 +980,13 @@ export class FacultyWorkspaceService {
 
     const batch = await this.courseBatchRepository.findOne({
       where: { id },
-      relations: ['course', 'faculty', 'students', 'students.student', 'sessions'],
+      relations: [
+        'course',
+        'faculty',
+        'students',
+        'students.student',
+        'sessions',
+      ],
     });
 
     if (!batch) {
@@ -760,12 +1000,16 @@ export class FacultyWorkspaceService {
     return batch;
   }
 
-  private async getSessionForFaculty(id: number, user: ActiveUserData) {
+  private async getSessionForFaculty(
+    id: number,
+    user: ActiveUserData,
+    relations = ['batch', 'course', 'faculty'],
+  ) {
     this.assertFaculty(user);
 
     const session = await this.classSessionRepository.findOne({
       where: { id },
-      relations: ['batch', 'course', 'faculty'],
+      relations,
     });
 
     if (!session) {
@@ -774,6 +1018,39 @@ export class FacultyWorkspaceService {
 
     if (!this.isAdmin(user) && session.faculty.id !== user.sub) {
       throw new ForbiddenException('You can only manage your own sessions');
+    }
+
+    return session;
+  }
+
+  private async getSessionForLearner(id: number, user: ActiveUserData) {
+    const session = await this.classSessionRepository.findOne({
+      where: { id },
+      relations: [
+        'batch',
+        'batch.students',
+        'batch.students.student',
+        'course',
+        'faculty',
+      ],
+    });
+
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    if (session.status !== ClassSessionStatus.Scheduled) {
+      throw new BadRequestException('Only scheduled classes can be joined');
+    }
+
+    const isAssignedStudent = session.batch.students?.some(
+      (student) =>
+        student.status === BatchStudentStatus.Active &&
+        student.student.id === user.sub,
+    );
+
+    if (!isAssignedStudent) {
+      throw new ForbiddenException('You can only join your assigned classes');
     }
 
     return session;
@@ -826,13 +1103,163 @@ export class FacultyWorkspaceService {
     };
   }
 
+  private mapClassSession(session: ClassSession) {
+    return {
+      id: session.id,
+      title: session.title,
+      description: session.description,
+      startsAt: session.startsAt,
+      endsAt: session.endsAt,
+      timezone: session.timezone,
+      meetingUrl: session.meetingUrl,
+      hasBbbMeeting: Boolean(session.bbbMeetingId),
+      allowRecordingAccess: session.allowRecordingAccess,
+      location: session.location,
+      status: session.status,
+      reminderBeforeMinutes: session.reminderBeforeMinutes,
+      reminderOffsetsMinutes: this.getReminderOffsets(session),
+      sentReminderOffsetsMinutes: session.sentReminderOffsetsMinutes ?? [],
+      recordings: (session.recordings ?? []).map((recording) =>
+        this.mapClassRecording(recording),
+      ),
+      batch: {
+        id: session.batch.id,
+        name: session.batch.name,
+      },
+      course: {
+        id: session.course.id,
+        title: session.course.title,
+        slug: session.course.slug,
+      },
+      faculty: {
+        id: session.faculty.id,
+        firstName: session.faculty.firstName,
+        lastName: session.faculty.lastName,
+      },
+    };
+  }
+
+  private mapClassRecording(recording: ClassRecording) {
+    return {
+      id: recording.id,
+      bbbRecordId: recording.bbbRecordId,
+      name: recording.name,
+      format: recording.format,
+      playbackUrl: recording.playbackUrl,
+      durationSeconds: recording.durationSeconds,
+      participants: recording.participants,
+      status: recording.status,
+      archiveError: recording.archiveError,
+      recordedAt: recording.recordedAt,
+      syncedAt: recording.syncedAt,
+      file: recording.upload
+        ? this.mediaFileMappingService.mapFile(recording.upload)
+        : null,
+      session: recording.session
+        ? {
+            id: recording.session.id,
+            title: recording.session.title,
+            startsAt: recording.session.startsAt,
+            endsAt: recording.session.endsAt,
+            status: recording.session.status,
+          }
+        : null,
+      course: recording.course
+        ? {
+            id: recording.course.id,
+            title: recording.course.title,
+            slug: recording.course.slug,
+          }
+        : null,
+      batch: recording.batch
+        ? {
+            id: recording.batch.id,
+            name: recording.batch.name,
+          }
+        : null,
+      faculty: recording.faculty
+        ? {
+            id: recording.faculty.id,
+            firstName: recording.faculty.firstName,
+            lastName: recording.faculty.lastName,
+            email: recording.faculty.email,
+          }
+        : null,
+    };
+  }
+
+  private async archiveRecordingToS3(
+    session: ClassSession,
+    recordID: string,
+    playbackUrl: string,
+    format: string,
+  ) {
+    const response = await fetch(playbackUrl);
+
+    if (!response.ok) {
+      throw new Error(`BBB playback URL returned ${response.status}`);
+    }
+
+    const contentType =
+      response.headers.get('content-type') || this.getRecordingMime(format);
+    const body = Buffer.from(await response.arrayBuffer());
+    const extension = this.getRecordingExtension(contentType, format);
+    const safeRecordId = recordID.replace(/[^a-zA-Z0-9_-]/g, '-');
+    const key = [
+      'recordings',
+      `course-${session.course.id}`,
+      `batch-${session.batch.id}`,
+      `session-${session.id}`,
+      `${safeRecordId}.${extension}`,
+    ].join('/');
+    const s3Client = await this.s3Provider.getClient();
+    const bucket = await this.s3Provider.getBucket();
+
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      }),
+    );
+
+    return this.uploadRepository.save(
+      this.uploadRepository.create({
+        name: `${session.title}-${safeRecordId}.${extension}`,
+        path: key,
+        type: contentType.startsWith('video/')
+          ? FileTypes.VIDEO
+          : FileTypes.DOC,
+        mime: contentType,
+        size: body.length,
+        status: UploadStatus.COMPLETED,
+      }),
+    );
+  }
+
+  private getRecordingMime(format: string) {
+    if (format === 'video' || format === 'podcast') return 'video/mp4';
+    return 'text/html; charset=utf-8';
+  }
+
+  private getRecordingExtension(contentType: string, format: string) {
+    if (contentType.includes('video/mp4')) return 'mp4';
+    if (contentType.includes('video/webm')) return 'webm';
+    if (contentType.includes('application/zip')) return 'zip';
+    if (format === 'podcast') return 'mp4';
+    return 'html';
+  }
+
   private assertValidSessionWindow(startsAt: Date, endsAt: Date) {
     if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
       throw new BadRequestException('Invalid session date');
     }
 
     if (endsAt <= startsAt) {
-      throw new BadRequestException('Session end time must be after start time');
+      throw new BadRequestException(
+        'Session end time must be after start time',
+      );
     }
   }
 
@@ -921,6 +1348,8 @@ export class FacultyWorkspaceService {
   private getPendingReminderOffsets(session: ClassSession) {
     const sent = new Set(session.sentReminderOffsetsMinutes ?? []);
 
-    return this.getReminderOffsets(session).filter((offset) => !sent.has(offset));
+    return this.getReminderOffsets(session).filter(
+      (offset) => !sent.has(offset),
+    );
   }
 }

@@ -6,8 +6,11 @@ import { toast } from "sonner";
 import {
   ChevronLeft,
   ChevronRight,
+  Download,
   ListFilter,
   Plus,
+  RefreshCw,
+  Video,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/lib/error-handler";
 import { facultyWorkspaceClient } from "@/services/faculty/faculty-workspace.client";
 import type {
+  FacultyClassRecording,
   FacultyClassSession,
   FacultyCourseBatch,
 } from "@/types/faculty-workspace";
@@ -480,6 +484,11 @@ function SessionSheet({
     [batches, session],
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isStartingBbb, setIsStartingBbb] = useState(false);
+  const [isSyncingRecordings, setIsSyncingRecordings] = useState(false);
+  const [recordings, setRecordings] = useState<FacultyClassRecording[]>(
+    session?.recordings ?? [],
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [form, setForm] = useState({
@@ -494,6 +503,7 @@ function SessionSheet({
     status: "scheduled",
     reminderOffsetsMinutes: ["60"],
     customReminderMinutes: "",
+    allowRecordingAccess: false,
   });
 
   useEffect(() => {
@@ -524,7 +534,9 @@ function SessionSheet({
       status: session?.status ?? "scheduled",
       reminderOffsetsMinutes: getSessionReminderOffsets(session).map(String),
       customReminderMinutes: "",
+      allowRecordingAccess: session?.allowRecordingAccess ?? false,
     });
+    setRecordings(session?.recordings ?? []);
   }, [initialBatchId, open, selectableBatches, selectedDate, session]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -544,6 +556,7 @@ function SessionSheet({
         status: form.status,
         reminderBeforeMinutes: getReminderOffsetPayload(form)[0] ?? 60,
         reminderOffsetsMinutes: getReminderOffsetPayload(form),
+        allowRecordingAccess: form.allowRecordingAccess,
       };
 
       if (session) {
@@ -597,6 +610,42 @@ function SessionSheet({
       setIsDeleting(false);
     }
   }
+
+  async function handleStartBbbClass() {
+    if (!session) return;
+
+    try {
+      setIsStartingBbb(true);
+      const response = await facultyWorkspaceClient.startBbbSession(session.id);
+      window.location.assign(response.data.joinUrl);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsStartingBbb(false);
+    }
+  }
+
+  async function handleSyncRecordings() {
+    if (!session) return;
+
+    try {
+      setIsSyncingRecordings(true);
+      const response = await facultyWorkspaceClient.syncSessionRecordings(
+        session.id,
+      );
+      setRecordings(response.data);
+      toast.success("Recordings synced");
+      router.refresh();
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsSyncingRecordings(false);
+    }
+  }
+
+  const displayStatus = session
+    ? getSessionDisplayStatus(session, nowIso)
+    : "scheduled";
 
   return (
     <>
@@ -659,11 +708,11 @@ function SessionSheet({
                   required
                 />
               </Field>
-              <Field label="Meeting URL">
+              <Field label="External meeting URL">
                 <Input
                   value={form.meetingUrl}
                   onChange={(event) => setForm({ ...form, meetingUrl: event.target.value })}
-                  placeholder="https://..."
+                  placeholder="Optional fallback link"
                 />
               </Field>
               <Field label="Location">
@@ -713,6 +762,23 @@ function SessionSheet({
               </div>
             </div>
           </Field>
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-4 text-sm">
+            <Checkbox
+              checked={form.allowRecordingAccess}
+              onCheckedChange={(checked) =>
+                setForm({ ...form, allowRecordingAccess: Boolean(checked) })
+              }
+            />
+            <span>
+              <span className="block font-medium">
+                Allow learner recording access
+              </span>
+              <span className="mt-1 block text-muted-foreground">
+                After this class is completed and recording is synced, assigned
+                learners can watch it from their dashboard.
+              </span>
+            </span>
+          </label>
           <Field label="Description">
             <Textarea
               value={form.description}
@@ -720,14 +786,35 @@ function SessionSheet({
               rows={3}
             />
           </Field>
+          {session ? (
+            <RecordingPanel
+              displayStatus={displayStatus}
+              isSyncing={isSyncingRecordings}
+              recordings={recordings}
+              session={session}
+              onSync={handleSyncRecordings}
+            />
+          ) : null}
+
           <SheetFooter className="px-0 pb-0">
             <Button type="submit" disabled={isSaving || !selectableBatches.length}>
               {isSaving ? "Saving..." : "Save Class"}
             </Button>
+            {session && displayStatus === "scheduled" ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isStartingBbb}
+                onClick={handleStartBbbClass}
+              >
+                <Video className="size-4" />
+                {isStartingBbb ? "Opening..." : "Start BBB Class"}
+              </Button>
+            ) : null}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            {session && getSessionDisplayStatus(session, nowIso) !== "cancelled" ? (
+            {session && displayStatus !== "cancelled" ? (
               <Button
                 type="button"
                 variant="outline"
@@ -759,6 +846,94 @@ function SessionSheet({
         loading={isDeleting}
       />
     </>
+  );
+}
+
+function RecordingPanel({
+  displayStatus,
+  isSyncing,
+  recordings,
+  session,
+  onSync,
+}: {
+  displayStatus: string;
+  isSyncing: boolean;
+  recordings: FacultyClassRecording[];
+  session: FacultyClassSession;
+  onSync: () => void;
+}) {
+  const canSync = displayStatus === "completed" && session.hasBbbMeeting;
+
+  return (
+    <section className="rounded-xl border bg-muted/20 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold">Class recordings</h3>
+          <p className="text-xs text-muted-foreground">
+            Sync completed BBB recordings and keep archived copies in storage.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!canSync || isSyncing}
+          onClick={onSync}
+        >
+          <RefreshCw className={["size-4", isSyncing ? "animate-spin" : ""].join(" ")} />
+          {isSyncing ? "Syncing..." : "Sync recordings"}
+        </Button>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {recordings.length ? (
+          recordings.map((recording) => (
+            <div
+              key={recording.id}
+              className="rounded-lg border bg-background p-3"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{recording.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {recording.format} · {formatDuration(recording.durationSeconds)}
+                    {recording.participants ? ` · ${recording.participants} participants` : ""}
+                  </p>
+                  {recording.archiveError ? (
+                    <p className="mt-1 text-xs text-destructive">
+                      {recording.archiveError}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {recording.file?.path ? (
+                    <Button asChild type="button" size="sm" variant="outline">
+                      <a href={recording.file.path} target="_blank" rel="noreferrer">
+                        <Download className="size-4" />
+                        Archive
+                      </a>
+                    </Button>
+                  ) : null}
+                  {recording.playbackUrl ? (
+                    <Button asChild type="button" size="sm">
+                      <a href={recording.playbackUrl} target="_blank" rel="noreferrer">
+                        Review
+                      </a>
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-lg border border-dashed bg-background p-4 text-sm text-muted-foreground">
+            {canSync
+              ? "No recording synced yet. Use sync after BBB finishes processing the class."
+              : "Recordings appear here after the BBB class is completed."}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -827,6 +1002,18 @@ function getSessionReminderOffsets(session: FacultyClassSession | null) {
   }
 
   return [session?.reminderBeforeMinutes ?? 60];
+}
+
+function formatDuration(seconds?: number | null) {
+  if (!seconds) return "Duration unavailable";
+
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (!hours) return `${minutes} min`;
+
+  return remainingMinutes ? `${hours} hr ${remainingMinutes} min` : `${hours} hr`;
 }
 
 function getReminderOffsetPayload(form: {

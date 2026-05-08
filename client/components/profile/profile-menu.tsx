@@ -15,6 +15,7 @@ export function ProfileMenu({ isOwner }: ProfileMenuProps) {
   const menu = [
     { label: "Dashboard", key: "dashboard" },
     { label: "My Courses", key: "my-courses" },
+    { label: "Live Classes", key: "classes" },
     { label: "Exams", key: "exams" },
     { label: "Orders", key: "orders" },
     { label: "Certificates", key: "certificates" },

@@ -2,6 +2,7 @@ import { apiServer } from "@/lib/api/server";
 import type { ApiResponse } from "@/types/api";
 import type {
   FacultyClassSession,
+  FacultyClassRecording,
   FacultyCourseBatch,
   FacultyExamAttempt,
   FacultyWorkspaceData,
@@ -38,6 +39,15 @@ export const facultyWorkspaceServer = {
     return response.data;
   },
 
+  async getRecordings() {
+    const response =
+      await apiServer.get<ApiResponse<FacultyClassRecording[]>>(
+        "/faculty/recordings",
+      );
+
+    return response.data;
+  },
+
   async getExamAttempts() {
     const response =
       await apiServer.get<ApiResponse<FacultyExamAttempt[]>>(
@@ -51,6 +61,15 @@ export const facultyWorkspaceServer = {
     const response =
       await apiServer.get<ApiResponse<FacultyClassSession[]>>(
         "/class-sessions/my",
+      );
+
+    return response.data;
+  },
+
+  async getMyRecordings() {
+    const response =
+      await apiServer.get<ApiResponse<FacultyClassRecording[]>>(
+        "/class-sessions/my/recordings",
       );
 
     return response.data;

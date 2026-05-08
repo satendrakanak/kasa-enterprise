@@ -8,6 +8,7 @@ import { UpsertSiteSettingsDto } from './dtos/upsert-site-settings.dto';
 import { UpsertEmailSettingsDto } from './dtos/upsert-email-settings.dto';
 import { UpsertSocialAuthSettingsDto } from './dtos/upsert-social-auth-settings.dto';
 import { UpsertAwsStorageSettingsDto } from './dtos/upsert-aws-storage-settings.dto';
+import { UpsertBbbSettingsDto } from './dtos/upsert-bbb-settings.dto';
 
 @Controller('settings')
 export class SettingsController {
@@ -92,5 +93,15 @@ export class SettingsController {
   @Post('aws-storage')
   upsertAwsStorageSettings(@Body() payload: UpsertAwsStorageSettingsDto) {
     return this.settingsService.upsertAwsStorageSettings(payload);
+  }
+
+  @Get('bbb')
+  getBbbSettings() {
+    return this.settingsService.getBbbSettings();
+  }
+
+  @Post('bbb')
+  upsertBbbSettings(@Body() payload: UpsertBbbSettingsDto) {
+    return this.settingsService.upsertBbbSettings(payload);
   }
 }

@@ -8,7 +8,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { ClassRecording } from './class-recording.entity';
 import { CourseBatch } from './course-batch.entity';
 import { ClassSessionStatus } from './enums/class-session-status.enum';
 
@@ -29,6 +31,9 @@ export class ClassSession {
   @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   faculty!: User;
 
+  @OneToMany(() => ClassRecording, (recording) => recording.session)
+  recordings?: ClassRecording[];
+
   @Column({ type: 'varchar', length: 180 })
   title!: string;
 
@@ -46,6 +51,24 @@ export class ClassSession {
 
   @Column({ type: 'varchar', length: 512, nullable: true })
   meetingUrl?: string | null;
+
+  @Column({ type: 'varchar', length: 180, nullable: true })
+  bbbMeetingId?: string | null;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  bbbModeratorPassword?: string | null;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  bbbAttendeePassword?: string | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  bbbCreateTime?: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  bbbRecord!: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  allowRecordingAccess!: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   location?: string | null;

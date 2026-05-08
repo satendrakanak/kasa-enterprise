@@ -12,23 +12,23 @@ import { UpsertPaymentGatewayDto } from '../dtos/upsert-payment-gateway.dto';
 import { AppSetting } from '../app-setting.entity';
 import { UpsertSiteSettingsDto } from '../dtos/upsert-site-settings.dto';
 import { UpsertEmailSettingsDto } from '../dtos/upsert-email-settings.dto';
-import {
-  SocialAuthProviderDto,
-  UpsertSocialAuthSettingsDto,
-} from '../dtos/upsert-social-auth-settings.dto';
+import { UpsertSocialAuthSettingsDto } from '../dtos/upsert-social-auth-settings.dto';
 import { SocialProvider } from '../enums/social-provider.enum';
 import { UpsertAwsStorageSettingsDto } from '../dtos/upsert-aws-storage-settings.dto';
+import { UpsertBbbSettingsDto } from '../dtos/upsert-bbb-settings.dto';
 
 const SITE_SETTINGS_KEY = 'site_settings';
 const EMAIL_SETTINGS_KEY = 'email_settings';
 const SOCIAL_AUTH_SETTINGS_KEY = 'social_auth_settings';
 const AWS_STORAGE_SETTINGS_KEY = 'aws_storage_settings';
+const BBB_SETTINGS_KEY = 'bbb_settings';
 
 type SiteSettings = ReturnType<SettingsService['getDefaultSiteSettings']>;
 type EmailSettings = ReturnType<SettingsService['getDefaultEmailSettings']>;
 type AwsStorageSettings = ReturnType<
   SettingsService['getDefaultAwsStorageSettings']
 >;
+type BbbSettings = ReturnType<SettingsService['getDefaultBbbSettings']>;
 type SocialProviderSettings = {
   provider: SocialProvider;
   label: string;
@@ -236,7 +236,9 @@ export class SettingsService {
   }
 
   async getSocialAuthSettings() {
-    const value = await this.getSetting<{ providers: SocialProviderSettings[] }>(
+    const value = await this.getSetting<{
+      providers: SocialProviderSettings[];
+    }>(
       SOCIAL_AUTH_SETTINGS_KEY,
       { providers: this.getDefaultSocialProviders() },
       true,
@@ -257,7 +259,9 @@ export class SettingsService {
   }
 
   async getActiveSocialProviders() {
-    const value = await this.getSetting<{ providers: SocialProviderSettings[] }>(
+    const value = await this.getSetting<{
+      providers: SocialProviderSettings[];
+    }>(
       SOCIAL_AUTH_SETTINGS_KEY,
       { providers: this.getDefaultSocialProviders() },
       true,
@@ -273,7 +277,9 @@ export class SettingsService {
   }
 
   async getSocialAuthProviderConfig(provider: SocialProvider) {
-    const value = await this.getSetting<{ providers: SocialProviderSettings[] }>(
+    const value = await this.getSetting<{
+      providers: SocialProviderSettings[];
+    }>(
       SOCIAL_AUTH_SETTINGS_KEY,
       { providers: this.getDefaultSocialProviders() },
       true,
@@ -291,7 +297,9 @@ export class SettingsService {
   }
 
   async upsertSocialAuthSettings(payload: UpsertSocialAuthSettingsDto) {
-    const current = await this.getSetting<{ providers: SocialProviderSettings[] }>(
+    const current = await this.getSetting<{
+      providers: SocialProviderSettings[];
+    }>(
       SOCIAL_AUTH_SETTINGS_KEY,
       { providers: this.getDefaultSocialProviders() },
       true,
@@ -395,6 +403,48 @@ export class SettingsService {
 
     await this.saveSetting(AWS_STORAGE_SETTINGS_KEY, nextValue, true);
     return this.getAwsStorageSettings();
+  }
+
+  async getBbbSettings() {
+    const value = await this.getSetting<BbbSettings>(
+      BBB_SETTINGS_KEY,
+      this.getDefaultBbbSettings(),
+      true,
+    );
+
+    return {
+      ...value,
+      sharedSecret: value.sharedSecret ? '********' : '',
+      hasSharedSecret: Boolean(value.sharedSecret),
+    };
+  }
+
+  async getBbbSettingsForRuntime() {
+    return this.getSetting<BbbSettings>(
+      BBB_SETTINGS_KEY,
+      this.getDefaultBbbSettings(),
+      true,
+    );
+  }
+
+  async upsertBbbSettings(payload: UpsertBbbSettingsDto) {
+    const current = await this.getSetting<BbbSettings>(
+      BBB_SETTINGS_KEY,
+      this.getDefaultBbbSettings(),
+      true,
+    );
+
+    const nextValue = {
+      ...current,
+      ...this.compactObject(payload),
+      sharedSecret:
+        payload.sharedSecret !== undefined && payload.sharedSecret !== ''
+          ? payload.sharedSecret
+          : current.sharedSecret,
+    };
+
+    await this.saveSetting(BBB_SETTINGS_KEY, nextValue, true);
+    return this.getBbbSettings();
   }
 
   private async getSetting<T>(
@@ -555,6 +605,18 @@ export class SettingsService {
       cloudfrontUrl: process.env.AWS_CLOUDFRONT_URL || '',
       accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
       accessKeySecret: process.env.AWS_ACCESS_KEY_SECRET || '',
+    };
+  }
+
+  private getDefaultBbbSettings() {
+    return {
+      isEnabled: false,
+      apiUrl: process.env.BBB_API_URL || '',
+      sharedSecret: process.env.BBB_SHARED_SECRET || '',
+      defaultRecord: false,
+      autoStartRecording: false,
+      allowStartStopRecording: true,
+      meetingExpireIfNoUserJoinedInMinutes: 60,
     };
   }
 

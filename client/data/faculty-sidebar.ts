@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   LayoutDashboard,
   Layers,
+  Video,
   Users,
 } from "lucide-react";
 import type { SidebarNavItem } from "./sidebar";
@@ -49,6 +50,11 @@ export const facultySidebarData: { navMain: SidebarNavItem[] } = {
       title: "Calendar",
       url: "/faculty/calendar",
       icon: CalendarDays,
+    },
+    {
+      title: "Recordings",
+      url: "/faculty/recordings",
+      icon: Video,
     },
     {
       title: "Students",

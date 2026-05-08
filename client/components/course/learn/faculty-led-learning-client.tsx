@@ -15,9 +15,12 @@ import { WebsiteNavUser } from "@/components/auth/website-nav-user";
 import Logo from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getErrorMessage } from "@/lib/error-handler";
+import { facultyWorkspaceClient } from "@/services/faculty/faculty-workspace.client";
 import type { Course } from "@/types/course";
 import type { FacultyClassSession } from "@/types/faculty-workspace";
 import { formatDateTime } from "@/utils/formate-date";
+import { toast } from "sonner";
 
 type FacultyLedLearningClientProps = {
   course: Course;
@@ -30,6 +33,20 @@ export function FacultyLedLearningClient({
 }: FacultyLedLearningClientProps) {
   const nextSession = sessions[0] ?? null;
   const publishedChapters = course.chapters.filter((chapter) => chapter.isPublished);
+
+  const joinClass = async (session: FacultyClassSession) => {
+    try {
+      if (session.meetingUrl) {
+        window.location.assign(session.meetingUrl);
+        return;
+      }
+
+      const response = await facultyWorkspaceClient.joinBbbSession(session.id);
+      window.location.assign(response.data.joinUrl);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -119,18 +136,10 @@ export function FacultyLedLearningClient({
                   </p>
                 ) : null}
               </div>
-              {nextSession.meetingUrl ? (
-                <Button asChild className="w-full">
-                  <a href={nextSession.meetingUrl} target="_blank">
-                    <Video className="mr-2 size-4" />
-                    Join class
-                  </a>
-                </Button>
-              ) : (
-                <Button className="w-full" disabled>
-                  Join link will appear here
-                </Button>
-              )}
+              <Button className="w-full" onClick={() => joinClass(nextSession)}>
+                <Video className="mr-2 size-4" />
+                Join class
+              </Button>
             </div>
           ) : (
             <div className="mt-4 rounded-2xl border border-dashed bg-muted/40 p-6 text-center">
@@ -221,17 +230,13 @@ export function FacultyLedLearningClient({
                       Batch: {session.batch.name}
                     </p>
                   </div>
-                  {session.meetingUrl ? (
-                    <Button asChild variant="outline">
-                      <a href={session.meetingUrl} target="_blank">
-                        Join
-                      </a>
-                    </Button>
-                  ) : (
-                    <Button variant="outline" disabled>
-                      Link pending
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => joinClass(session)}
+                  >
+                    Join
+                  </Button>
                 </div>
               ))}
             </div>

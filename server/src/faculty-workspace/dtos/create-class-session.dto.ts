@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsInt,
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -61,4 +62,8 @@ export class CreateClassSessionDto {
   @Min(1, { each: true })
   @Type(() => Number)
   reminderOffsetsMinutes?: number[];
+
+  @IsOptional()
+  @IsBoolean()
+  allowRecordingAccess?: boolean;
 }

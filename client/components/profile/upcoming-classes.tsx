@@ -1,18 +1,42 @@
+"use client";
+
+import { useState } from "react";
 import { CalendarDays, Clock, MapPin, Video } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getErrorMessage } from "@/lib/error-handler";
+import { facultyWorkspaceClient } from "@/services/faculty/faculty-workspace.client";
 import type { FacultyClassSession } from "@/types/faculty-workspace";
 import { formatDateTime } from "@/utils/formate-date";
 
 type UpcomingClassesProps = {
   sessions: FacultyClassSession[];
   limit?: number;
+  showViewAll?: boolean;
 };
 
-export function UpcomingClasses({ sessions, limit }: UpcomingClassesProps) {
+export function UpcomingClasses({
+  sessions,
+  limit,
+  showViewAll = true,
+}: UpcomingClassesProps) {
+  const [joiningSessionId, setJoiningSessionId] = useState<number | null>(null);
   const visibleSessions = sessions.slice(0, limit ?? sessions.length);
+
+  async function handleJoinClass(sessionId: number) {
+    try {
+      setJoiningSessionId(sessionId);
+      const response = await facultyWorkspaceClient.joinBbbSession(sessionId);
+      window.location.assign(response.data.joinUrl);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setJoiningSessionId(null);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -25,9 +49,16 @@ export function UpcomingClasses({ sessions, limit }: UpcomingClassesProps) {
             Upcoming classes
           </h3>
         </div>
-        {visibleSessions.length ? (
-          <Badge variant="secondary">{visibleSessions.length} scheduled</Badge>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {visibleSessions.length ? (
+            <Badge variant="secondary">{visibleSessions.length} scheduled</Badge>
+          ) : null}
+          {showViewAll ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href="/classes">View calendar</Link>
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {visibleSessions.length ? (
@@ -72,11 +103,14 @@ export function UpcomingClasses({ sessions, limit }: UpcomingClassesProps) {
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/course/${session.course.slug}`}>Course</Link>
                 </Button>
-                <Button asChild size="sm" disabled={!session.meetingUrl}>
-                  <a href={session.meetingUrl || "#"} target="_blank">
-                    <Video className="mr-2 size-4" />
-                    Join class
-                  </a>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={joiningSessionId === session.id}
+                  onClick={() => handleJoinClass(session.id)}
+                >
+                  <Video className="mr-2 size-4" />
+                  {joiningSessionId === session.id ? "Opening..." : "Join class"}
                 </Button>
               </div>
             </div>
