@@ -15,6 +15,7 @@ import {
   Eye,
   Image as ImageIcon,
   Megaphone,
+  MoreHorizontal,
   MousePointerClick,
   Pencil,
   Play,
@@ -42,6 +43,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -720,44 +727,42 @@ function BroadcastsPanel({
                     {broadcast.sentAt ? ` • Sent ${formatDateTime(broadcast.sentAt)}` : ""}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-xl"
-                    disabled={broadcast.status === "sent"}
-                    onClick={() => onSend(broadcast.id)}
-                  >
-                    <Send className="size-4" />
-                    Send
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-xl"
-                    onClick={() => onUseAsTemplate(broadcast)}
-                  >
-                    <Copy className="size-4" />
-                    Edit & resend
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-xl"
-                    onClick={() => onDuplicate(broadcast.id)}
-                  >
-                    <Copy className="size-4" />
-                    Duplicate
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="rounded-xl"
-                    onClick={() => onDelete(broadcast.id)}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 rounded-xl"
+                      aria-label="Open broadcast actions"
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    {broadcast.status !== "sent" ? (
+                      <DropdownMenuItem onClick={() => onSend(broadcast.id)}>
+                        <Send className="size-4" />
+                        Send now
+                      </DropdownMenuItem>
+                    ) : null}
+                    <DropdownMenuItem onClick={() => onUseAsTemplate(broadcast)}>
+                      <Copy className="size-4" />
+                      Edit and resend
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onDuplicate(broadcast.id)}>
+                      <Copy className="size-4" />
+                      Duplicate
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => onDelete(broadcast.id)}
+                    >
+                      <Trash2 className="size-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -1256,8 +1261,7 @@ function RuleForm({
           <span>
             <span className="block font-semibold">Rule enabled</span>
             <span className="text-sm text-muted-foreground">
-              Off karne par event trigger hone ke baad bhi notification nahi
-              jayega.
+              When disabled, this event will not send notifications.
             </span>
           </span>
           <Switch

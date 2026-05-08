@@ -22,11 +22,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("accessToken")?.value;
+  const accessToken = request.cookies.get("accessToken")?.value;
+  const refreshToken = request.cookies.get("refreshToken")?.value;
+  const hasSession = Boolean(accessToken || refreshToken);
   const response = NextResponse.next();
 
-  // 🔥 header set
-  response.headers.set("x-has-session", token ? "true" : "false");
+  response.headers.set("x-has-session", hasSession ? "true" : "false");
 
   // ✅ Route checks (improved)
   const isPublicRoute = matchRoute(publicRoutes, pathname);
@@ -42,7 +43,7 @@ export function proxy(request: NextRequest) {
   // 🔐 2. Auth routes (login/signup)
   // =========================
   if (isAuthRoute) {
-    if (token) {
+    if (hasSession) {
       const callbackUrl = nextUrl.searchParams.get("callbackUrl");
       const safeRedirect =
         callbackUrl &&
@@ -61,7 +62,10 @@ export function proxy(request: NextRequest) {
   // =========================
   // 🚫 3. Admin + known private routes → no token
   // =========================
-  if ((isAdminRoute || isFacultyRoute || isProtectedRoute || isLearningRoute) && !token) {
+  if (
+    (isAdminRoute || isFacultyRoute || isProtectedRoute || isLearningRoute) &&
+    !hasSession
+  ) {
     const loginUrl = new URL("/auth/sign-in", request.url);
     loginUrl.searchParams.set(
       "callbackUrl",
