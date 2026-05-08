@@ -3,10 +3,12 @@ export type AppNotification = {
   title: string;
   message: string;
   href?: string | null;
+  imageUrl?: string | null;
   type: string;
   channel: string;
   metadata?: Record<string, unknown> | null;
   readAt?: string | null;
+  clickedAt?: string | null;
   createdAt: string;
   actor?: {
     id: number;

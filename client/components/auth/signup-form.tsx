@@ -122,9 +122,9 @@ export function SignupForm() {
   };
 
   const inputClass =
-    "h-12 rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-none transition focus-visible:border-blue-600 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:placeholder:text-slate-500 dark:focus-visible:border-rose-200 dark:focus-visible:ring-rose-200";
+    "h-12 rounded-2xl border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground shadow-none transition focus-visible:border-primary focus-visible:ring-primary";
 
-  const labelClass = "text-sm font-semibold text-slate-700 dark:text-slate-200";
+  const labelClass = "text-sm font-semibold text-foreground";
 
   return (
     <>
@@ -210,18 +210,18 @@ export function SignupForm() {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel className={labelClass}>Phone number</FieldLabel>
 
-                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-slate-900 transition focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/20 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:focus-within:border-rose-200 dark:focus-within:ring-rose-200/20">
+                  <div className="overflow-hidden rounded-2xl border border-border bg-muted text-foreground transition focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/45">
                     <PhoneInput
                       defaultCountry="in"
                       value={field.value}
                       onChange={(phone) => field.onChange(phone)}
-                      inputClassName="!h-12 !w-full !border-0 !bg-transparent !px-3 !text-sm !text-slate-900 !outline-none !ring-0 placeholder:!text-slate-400 dark:!text-white dark:placeholder:!text-slate-500"
+                      inputClassName="!h-12 !w-full !border-0 !bg-transparent !px-3 !text-sm !text-foreground !outline-none !ring-0 placeholder:!text-muted-foreground"
                       countrySelectorStyleProps={{
                         buttonClassName:
-                          "!h-12 !border-0 !bg-transparent !px-3 hover:!bg-slate-100 dark:hover:!bg-white/10",
+                          "!h-12 !border-0 !bg-transparent !px-3 hover:!bg-accent",
                         dropdownStyleProps: {
                           className:
-                            "!z-50 !rounded-2xl !border !border-slate-200 !bg-white !shadow-xl dark:!border-white/10 dark:!bg-[#07111f]",
+                            "!z-50 !rounded-2xl !border !border-border !bg-popover !shadow-xl",
                         },
                       }}
                     />
@@ -292,7 +292,7 @@ export function SignupForm() {
               disabled={!isValid || isLoading}
               loading={isLoading}
               loadingText="Sending code..."
-              className="h-12 w-full rounded-full bg-blue-600 text-base font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+              className="academy-btn-primary h-12 w-full text-base disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
             >
               <UserPlus className="h-4 w-4" />
               Create Account

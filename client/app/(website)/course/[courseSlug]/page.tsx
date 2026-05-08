@@ -93,14 +93,14 @@ export default async function CourseSlugPage({ params }: CoursePageProps) {
         <CourseHero course={course} />
 
         <Container>
-          <div className="flex items-start gap-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-start lg:gap-10">
             {/* LEFT */}
-            <div className="mt-10 max-w-4xl flex-1">
+            <div className="order-2 min-w-0 lg:order-1 lg:mt-10">
               <CourseTabs course={course} testimonials={testimonials} />
             </div>
 
             {/* RIGHT */}
-            <div className="sticky top-30 z-40 -mt-120 w-100">
+            <div className="order-1 w-full min-w-0 lg:sticky lg:top-30 lg:z-40 lg:order-2 lg:-mt-120">
               <CourseSidebarCard course={course} />
             </div>
           </div>

@@ -110,7 +110,7 @@ export default async function ArticleSlugPage({ params }: ArticlePageProps) {
 
         <Container>
           <div className="flex flex-col items-start gap-10 py-10 lg:flex-row">
-            <div className="max-w-4xl flex-1">
+            <div className="min-w-0 max-w-4xl flex-1">
               <div className="space-y-8">
                 <ArticleContent article={article} />
                 <ArticleMeta article={article} />

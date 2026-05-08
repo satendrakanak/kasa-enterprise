@@ -22,9 +22,11 @@ type CreateNotificationInput = {
   title: string;
   message: string;
   href?: string | null;
+  imageUrl?: string | null;
   type?: NotificationType;
   channel?: NotificationChannel;
   metadata?: Record<string, unknown> | null;
+  skipPush?: boolean;
 };
 
 @Injectable()
@@ -64,13 +66,16 @@ export class NotificationsService {
         title: input.title,
         message: input.message,
         href: input.href ?? null,
+        imageUrl: input.imageUrl ?? null,
         type: input.type ?? NotificationType.Info,
         channel: input.channel ?? NotificationChannel.InApp,
         metadata: input.metadata ?? null,
       }),
     );
 
-    this.sendPushForNotificationSafely(notification);
+    if (!input.skipPush) {
+      this.sendPushForNotificationSafely(notification);
+    }
 
     return notification;
   }
@@ -110,6 +115,16 @@ export class NotificationsService {
   async markRead(id: number, user: ActiveUserData) {
     const notification = await this.getNotificationForUser(id, user);
     notification.readAt = notification.readAt ?? new Date();
+    const saved = await this.notificationRepository.save(notification);
+
+    return this.toResponse(saved);
+  }
+
+  async markClicked(id: number, user: ActiveUserData) {
+    const notification = await this.getNotificationForUser(id, user);
+    const now = new Date();
+    notification.readAt = notification.readAt ?? now;
+    notification.clickedAt = notification.clickedAt ?? now;
     const saved = await this.notificationRepository.save(notification);
 
     return this.toResponse(saved);
@@ -269,10 +284,12 @@ export class NotificationsService {
       title: notification.title,
       message: notification.message,
       href: notification.href,
+      imageUrl: notification.imageUrl,
       type: notification.type,
       channel: notification.channel,
       metadata: notification.metadata,
       readAt: notification.readAt,
+      clickedAt: notification.clickedAt,
       createdAt: notification.createdAt,
       actor: notification.actor
         ? {
@@ -331,6 +348,7 @@ export class NotificationsService {
       title: notification.title,
       body: notification.message,
       url: notification.href || '/notifications',
+      imageUrl: notification.imageUrl,
       notificationId: notification.id,
       type: notification.type,
     });

@@ -358,6 +358,20 @@ const templates = [
       `,
     }),
   },
+  {
+    templateName: 'notification_broadcast',
+    subject: '{{title}}',
+    body: brandShell({
+      eyebrow: 'Academy update',
+      title: '{{title}}',
+      content: `
+        <p style="font-size:16px;line-height:1.7;color:#475569">Hi {{name}},</p>
+        {{imageHtml}}
+        <p style="font-size:16px;line-height:1.7;color:#475569">{{message}}</p>
+        ${button('Open update', '{{actionUrl}}')}
+      `,
+    }),
+  },
 ];
 
 export async function seedEmailTemplates(dataSource: DataSource) {

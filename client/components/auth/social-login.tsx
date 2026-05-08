@@ -62,7 +62,7 @@ export default function SocialLogin() {
 
   return (
     <>
-      <FieldSeparator className="text-slate-400 before:bg-slate-200 after:bg-slate-200 dark:text-slate-500 dark:before:bg-white/10 dark:after:bg-white/10 [&_[data-slot=field-separator-content]]:bg-white [&_[data-slot=field-separator-content]]:px-3 dark:[&_[data-slot=field-separator-content]]:bg-[#07111f]">
+      <FieldSeparator className="text-muted-foreground before:bg-border after:bg-border [&_[data-slot=field-separator-content]]:bg-card [&_[data-slot=field-separator-content]]:px-3">
         Or continue with
       </FieldSeparator>
 
@@ -74,7 +74,7 @@ export default function SocialLogin() {
             type="button"
             onClick={() => handleClick(provider)}
             title={provider.label}
-            className="group h-12 rounded-2xl border-slate-200 bg-slate-50 text-slate-700 shadow-none transition hover:-translate-y-0.5 hover:border-blue-600 hover:bg-blue-600 hover:text-white dark:border-white/10 dark:bg-[#0b1628] dark:text-slate-200 dark:hover:border-rose-200 dark:hover:bg-rose-200 dark:hover:text-black"
+            className="group h-12 rounded-2xl border-border bg-muted text-foreground shadow-none transition hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-primary-foreground"
           >
             <span className="flex h-5 w-5 items-center justify-center [&>svg]:h-5 [&>svg]:w-5">
               {iconMap[provider.provider]}

@@ -60,15 +60,15 @@ export const VerificationForm = () => {
       <div className="flex min-h-56 flex-col items-center justify-center px-4 py-8 text-center">
         {!success && !error ? (
           <>
-            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary ring-1 ring-primary/15">
               <Loader2 className="h-10 w-10 animate-spin" />
             </div>
 
-            <h2 className="text-2xl font-semibold text-slate-950 dark:text-white">
+            <h2 className="text-2xl font-semibold text-foreground">
               Verifying your email
             </h2>
 
-            <p className="mt-3 max-w-sm text-sm leading-7 text-slate-500 dark:text-slate-400">
+            <p className="mt-3 max-w-sm text-sm leading-7 text-muted-foreground">
               Please wait while we confirm your email address and prepare your
               learning dashboard.
             </p>

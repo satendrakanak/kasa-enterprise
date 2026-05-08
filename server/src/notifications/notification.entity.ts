@@ -30,6 +30,9 @@ export class Notification {
   @Column({ type: 'varchar', length: 512, nullable: true })
   href?: string | null;
 
+  @Column({ type: 'varchar', length: 512, nullable: true })
+  imageUrl?: string | null;
+
   @Column({
     type: 'enum',
     enum: NotificationType,
@@ -49,6 +52,9 @@ export class Notification {
 
   @Column({ type: 'timestamptz', nullable: true })
   readAt?: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  clickedAt?: Date | null;
 
   @CreateDateColumn()
   createdAt!: Date;

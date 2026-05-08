@@ -18,6 +18,7 @@ import { GetFeaturedCoursesProvider } from './providers/get-featured-courses.pro
 import { GetRelatedCoursesProvider } from './providers/get-related-courses.provider';
 import { GetEnrolledCoursesProvider } from './providers/get-enrolled-courses.provider';
 import { UsersModule } from 'src/users/users.module';
+import { EngagementModule } from 'src/engagement/engagement.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { UsersModule } from 'src/users/users.module';
     EnrollmentsModule,
     UserProgressModule,
     UsersModule,
+    EngagementModule,
     forwardRef(() => OrdersModule),
   ],
   controllers: [CoursesController],

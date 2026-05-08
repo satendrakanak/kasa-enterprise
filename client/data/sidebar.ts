@@ -15,6 +15,7 @@ import {
   MessageCircleHeart,
   ClipboardCheck,
   Video,
+  BellRing,
   type LucideIcon,
 } from "lucide-react";
 
@@ -106,6 +107,18 @@ export const sidebarData = {
       url: "/admin/recordings",
       icon: Video,
       requiredPermissions: ["view_faculty_workspace"],
+    },
+
+    {
+      title: "Engagement",
+      url: "/admin/engagement",
+      icon: BellRing,
+      requiredPermissions: [
+        "manage_engagement",
+        "manage_schedulers",
+        "manage_notification_rules",
+        "send_broadcast_notification",
+      ],
     },
 
     {

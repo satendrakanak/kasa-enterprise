@@ -22,7 +22,7 @@ interface CardWrapperProps {
 export const CardWrapper = ({ children, ...props }: CardWrapperProps) => {
   return (
     <div className="flex flex-col gap-5">
-      <Card className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-0 shadow-[0_30px_100px_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_35px_120px_rgba(0,0,0,0.45)]">
+      <Card className="academy-card overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <div className="flex flex-col justify-center p-6 md:p-8">
             <AuthHeader label={props.headerLabel} />
@@ -50,18 +50,18 @@ export const CardWrapper = ({ children, ...props }: CardWrapperProps) => {
         </CardContent>
       </Card>
 
-      <FieldDescription className="px-6 text-center text-xs leading-5 text-slate-500 dark:text-slate-400">
+      <FieldDescription className="px-6 text-center text-xs leading-5 text-muted-foreground">
         By clicking continue, you agree to our{" "}
         <a
           href="#"
-          className="font-semibold text-blue-700 hover:underline dark:text-rose-200"
+          className="font-semibold text-primary hover:underline"
         >
           Terms of Service
         </a>{" "}
         and{" "}
         <a
           href="#"
-          className="font-semibold text-blue-700 hover:underline dark:text-rose-200"
+          className="font-semibold text-primary hover:underline"
         >
           Privacy Policy
         </a>

@@ -73,6 +73,10 @@ export async function seedPermissions(dataSource: DataSource) {
     'view_faculty_workspace',
     'manage_faculty_batches',
     'manage_faculty_calendar',
+    'manage_engagement',
+    'manage_schedulers',
+    'manage_notification_rules',
+    'send_broadcast_notification',
   ];
 
   for (const name of permissions) {

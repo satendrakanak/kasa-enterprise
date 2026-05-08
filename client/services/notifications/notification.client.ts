@@ -27,6 +27,13 @@ export const notificationClientService = {
       ),
     ),
 
+  markClicked: (id: number) =>
+    withAuthRetry(() =>
+      apiClient.patch<ApiResponse<AppNotification>>(
+        `/api/notifications/${id}/click`,
+      ),
+    ),
+
   markAllRead: () =>
     withAuthRetry(() =>
       apiClient.patch<ApiResponse<{ message: string }>>(

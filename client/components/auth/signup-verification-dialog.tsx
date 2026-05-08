@@ -57,20 +57,20 @@ export function SignupVerificationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-0 shadow-[0_35px_120px_rgba(15,23,42,0.22)] dark:border-white/10 dark:bg-[#07111f] dark:shadow-[0_35px_120px_rgba(0,0,0,0.55)] sm:max-w-md">
+      <DialogContent className="overflow-hidden rounded-3xl border border-border bg-card p-0 shadow-[var(--shadow-soft)] sm:max-w-md">
         <div className="p-5 md:p-6">
           <DialogHeader>
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-white/10 dark:text-rose-200 dark:ring-white/10">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
               <MailCheck className="h-7 w-7" />
             </div>
 
-            <DialogTitle className="text-xl font-semibold text-slate-950 dark:text-white">
+            <DialogTitle className="text-xl font-semibold text-foreground">
               Verify your email to activate your account
             </DialogTitle>
 
-            <DialogDescription className="pt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+            <DialogDescription className="pt-2 text-sm leading-6 text-muted-foreground">
               We sent a 6-digit code to{" "}
-              <span className="font-semibold text-slate-900 dark:text-white">
+              <span className="font-semibold text-foreground">
                 {maskedEmail}
               </span>
               . Enter it here to verify your email and complete sign up.
@@ -86,23 +86,23 @@ export function SignupVerificationDialog({
               placeholder="000000"
               inputMode="numeric"
               maxLength={6}
-              className="h-14 rounded-2xl border-slate-200 bg-slate-50 text-center text-xl font-bold tracking-[0.42em] text-slate-950 shadow-none placeholder:text-slate-300 focus-visible:border-blue-600 focus-visible:ring-blue-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-white dark:placeholder:text-slate-600 dark:focus-visible:border-rose-200 dark:focus-visible:ring-rose-200"
+              className="h-14 rounded-2xl border-border bg-muted text-center text-xl font-bold tracking-[0.42em] text-foreground shadow-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary"
             />
 
-            <p className="rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-xs leading-5 text-slate-600 dark:border-white/10 dark:bg-[#0b1628] dark:text-slate-300">
+            <p className="rounded-2xl border border-border bg-muted p-3 text-xs leading-5 text-muted-foreground">
               Once verified, your account will be activated and you will be
               signed in automatically.
             </p>
           </div>
         </div>
 
-        <DialogFooter className="gap-2 border-t border-slate-100 bg-slate-50/80 p-5 dark:border-white/10 dark:bg-[#0b1628] sm:justify-between">
+        <DialogFooter className="gap-2 border-t border-border bg-muted/60 p-5 sm:justify-between">
           <Button
             type="button"
             variant="outline"
             onClick={handleResend}
             disabled={isSubmitting || isResending}
-            className="h-11 rounded-full border-slate-200 bg-white px-5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+            className="h-11 rounded-full border-border bg-background px-5 font-semibold text-foreground hover:bg-accent"
           >
             {isResending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -114,7 +114,7 @@ export function SignupVerificationDialog({
             type="button"
             onClick={handleVerify}
             disabled={isSubmitting || code.trim().length !== 6}
-            className="h-11 rounded-full bg-blue-600 px-5 font-semibold text-white shadow-[0_14px_35px_rgba(37,99,235,0.24)] hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-rose-200 dark:text-black dark:hover:bg-rose-300"
+            className="academy-btn-primary h-11 px-5 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

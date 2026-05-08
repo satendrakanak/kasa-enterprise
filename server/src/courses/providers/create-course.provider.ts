@@ -15,6 +15,7 @@ import { CategoriesService } from 'src/categories/providers/categories.service';
 import { Category } from 'src/categories/category.entity';
 import { TagsService } from 'src/tags/providers/tags.service';
 import { Tag } from 'src/tags/tag.entity';
+import { EngagementService } from 'src/engagement/providers/engagement.service';
 
 @Injectable()
 export class CreateCourseProvider {
@@ -41,6 +42,8 @@ export class CreateCourseProvider {
      * Inject tagsService
      */
     private readonly tagsService: TagsService,
+
+    private readonly engagementService: EngagementService,
   ) {}
 
   public async create(
@@ -76,7 +79,19 @@ export class CreateCourseProvider {
         tags,
       });
 
-      return await this.courseRepository.save(newCourse);
+      const savedCourse = await this.courseRepository.save(newCourse);
+
+      if (savedCourse.isPublished) {
+        void this.engagementService
+          .dispatchEvent('course.created', {
+            courseId: savedCourse.id,
+            courseTitle: savedCourse.title,
+            courseSlug: savedCourse.slug,
+          })
+          .catch(() => undefined);
+      }
+
+      return savedCourse;
     } catch (error: unknown) {
       if (typeof error === 'object' && error && 'code' in error) {
         if ((error as { code?: string }).code === '23505') {

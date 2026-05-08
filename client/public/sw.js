@@ -26,6 +26,7 @@ self.addEventListener("push", (event) => {
       body: payload.body,
       icon: "/assets/pwa-icon-192.png",
       badge: "/assets/pwa-icon-192.png",
+      image: payload.imageUrl || undefined,
       data: {
         url: payload.url || "/notifications",
         notificationId: payload.notificationId,
@@ -37,20 +38,30 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url || "/notifications";
+  const notificationId = event.notification.data?.notificationId;
+
+  const markClicked = notificationId
+    ? fetch(`/api/notifications/${notificationId}/click`, {
+        method: "PATCH",
+        credentials: "same-origin",
+      }).catch(() => undefined)
+    : Promise.resolve();
 
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      const existingClient = clients.find((client) =>
-        client.url.includes(self.location.origin),
-      );
+    markClicked.then(() =>
+      self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+        const existingClient = clients.find((client) =>
+          client.url.includes(self.location.origin),
+        );
 
-      if (existingClient) {
-        existingClient.focus();
-        existingClient.navigate(targetUrl);
-        return;
-      }
+        if (existingClient) {
+          existingClient.focus();
+          existingClient.navigate(targetUrl);
+          return;
+        }
 
-      return self.clients.openWindow(targetUrl);
-    }),
+        return self.clients.openWindow(targetUrl);
+      }),
+    ),
   );
 });

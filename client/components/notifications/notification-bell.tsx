@@ -28,13 +28,69 @@ import { notificationClientService } from "@/services/notifications/notification
 import type { AppNotification } from "@/types/notification";
 import { formatDateTime } from "@/utils/formate-date";
 
+type AudioWindow = Window &
+  typeof globalThis & {
+    webkitAudioContext?: typeof AudioContext;
+  };
+
+let notificationAudioContext: AudioContext | null = null;
+
+async function playNotificationTone() {
+  if (typeof window === "undefined") return;
+
+  const audioWindow = window as AudioWindow;
+  const AudioContextCtor =
+    audioWindow.AudioContext || audioWindow.webkitAudioContext;
+  if (!AudioContextCtor) return;
+
+  try {
+    notificationAudioContext ??= new AudioContextCtor();
+    const context = notificationAudioContext;
+
+    if (context.state === "suspended") {
+      await context.resume();
+    }
+
+    const now = context.currentTime;
+    playToneNote(context, now, 587.33, 0.08, 0.045);
+    playToneNote(context, now + 0.105, 783.99, 0.14, 0.035);
+  } catch {
+    // Browsers can block audio until the user interacts with the page.
+  }
+}
+
+function playToneNote(
+  context: AudioContext,
+  startAt: number,
+  frequency: number,
+  duration: number,
+  volume: number,
+) {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(frequency, startAt);
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.018);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(startAt);
+  oscillator.stop(startAt + duration + 0.025);
+}
+
 export function NotificationBell() {
   const { user } = useSession();
+  const router = useRouter();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(false);
   const baseTitleRef = useRef<string | null>(null);
+  const previousUnreadRef = useRef<number | null>(null);
   const userId = user?.id;
 
   useEffect(() => {
@@ -48,6 +104,15 @@ export function NotificationBell() {
 
   useEffect(() => {
     if (!userId || typeof document === "undefined") return;
+
+    if (
+      previousUnreadRef.current !== null &&
+      unreadCount > previousUnreadRef.current
+    ) {
+      void playNotificationTone();
+    }
+
+    previousUnreadRef.current = unreadCount;
 
     if (!baseTitleRef.current) {
       baseTitleRef.current = document.title.replace(/^\(\d+\+?\)\s+/, "");
@@ -86,21 +151,30 @@ export function NotificationBell() {
   }
 
   async function handleOpenNotification(notification: AppNotification) {
-    if (!notification.readAt) {
-      try {
-        await notificationClientService.markRead(notification.id);
-        setNotifications((current) =>
-          current.map((item) =>
-            item.id === notification.id
-              ? { ...item, readAt: new Date().toISOString() }
-              : item,
-          ),
-        );
+    setDesktopOpen(false);
+
+    try {
+      await notificationClientService.markClicked(notification.id);
+      const now = new Date().toISOString();
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === notification.id
+            ? {
+                ...item,
+                readAt: item.readAt ?? now,
+                clickedAt: item.clickedAt ?? now,
+              }
+            : item,
+        ),
+      );
+      if (!notification.readAt) {
         setUnreadCount((current) => Math.max(0, current - 1));
-      } catch {
-        // Opening the link should not be blocked by read-state sync.
       }
+    } catch {
+      // Opening the link should not be blocked by click-state sync.
     }
+
+    router.push(notification.href || "/notifications");
   }
 
   async function handleMarkAllRead() {
@@ -120,20 +194,26 @@ export function NotificationBell() {
   }
 
   return (
-    <DropdownMenu onOpenChange={(open) => open && void loadNotifications()}>
+    <DropdownMenu
+      open={desktopOpen}
+      onOpenChange={(open) => {
+        setDesktopOpen(open);
+        if (open) void loadNotifications();
+      }}
+    >
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
+        <button
+          type="button"
           aria-label="Open notifications"
-          className="relative h-9 w-9 rounded-none bg-transparent p-0 text-webtertiary shadow-none hover:bg-transparent hover:text-primary md:h-10 md:w-10"
+          className="relative inline-flex h-10 w-10 appearance-none items-center justify-center border-0 bg-transparent p-0 text-webtertiary outline-none ring-0 transition hover:text-primary focus:border-0 focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 aria-expanded:bg-transparent data-[state=open]:bg-transparent data-[state=open]:text-primary cursor-pointer"
         >
-          <Bell className="h-6 w-6" />
+          <Bell className="h-6 w-6 stroke-[2.25]" />
           {unreadCount ? (
             <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-background">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           ) : null}
-        </Button>
+        </button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
@@ -176,7 +256,10 @@ export function NotificationBell() {
               <DropdownMenuItem key={notification.id} asChild>
                 <Link
                   href={notification.href || "/notifications"}
-                  onClick={() => handleOpenNotification(notification)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    void handleOpenNotification(notification);
+                  }}
                   className="flex cursor-pointer items-start gap-3 rounded-xl px-2.5 py-2.5 focus:bg-primary/10"
                 >
                   <span className="relative mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -189,6 +272,16 @@ export function NotificationBell() {
                     <span className="block truncate text-sm font-semibold leading-5">
                       {notification.title}
                     </span>
+                    {notification.imageUrl ? (
+                      <span className="mt-2 block overflow-hidden rounded-xl border border-border">
+                        <img
+                          src={notification.imageUrl}
+                          alt=""
+                          className="h-20 w-full object-cover"
+                          loading="lazy"
+                        />
+                      </span>
+                    ) : null}
                     <span className="mt-0.5 line-clamp-2 block text-xs leading-5 text-muted-foreground">
                       {notification.message}
                     </span>
@@ -215,6 +308,7 @@ export function NotificationBell() {
         <DropdownMenuSeparator />
         <Link
           href="/notifications"
+          onClick={() => setDesktopOpen(false)}
           className="block px-4 py-3 text-center text-xs font-semibold text-primary hover:bg-primary/5"
         >
           View all notifications
@@ -282,28 +376,30 @@ export function NotificationNavIcon({
   }
 
   async function handleMobileNotification(notification: AppNotification) {
-    if (!notification.readAt) {
-      try {
-        await notificationClientService.markRead(notification.id);
-        const now = new Date().toISOString();
-        setNotifications((current) =>
-          current.map((item) =>
-            item.id === notification.id
-              ? { ...item, readAt: item.readAt ?? now }
-              : item,
-          ),
-        );
+    try {
+      await notificationClientService.markClicked(notification.id);
+      const now = new Date().toISOString();
+      setNotifications((current) =>
+        current.map((item) =>
+          item.id === notification.id
+            ? {
+                ...item,
+                readAt: item.readAt ?? now,
+                clickedAt: item.clickedAt ?? now,
+              }
+            : item,
+        ),
+      );
+      if (!notification.readAt) {
         setUnreadCount((current) => Math.max(0, current - 1));
-      } catch {
-        // Navigation should still work if read-state sync fails.
       }
+    } catch {
+      // Navigation should still work if click-state sync fails.
     }
 
     setOpen(false);
 
-    if (notification.href) {
-      router.push(notification.href);
-    }
+    router.push(notification.href || "/notifications");
   }
 
   async function handleMobileMarkAllRead() {
@@ -353,7 +449,11 @@ export function NotificationNavIcon({
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <button type="button" aria-label="Open notifications" className={className}>
+        <button
+          type="button"
+          aria-label="Open notifications"
+          className={className}
+        >
           {triggerContent}
         </button>
       </DrawerTrigger>
@@ -366,7 +466,9 @@ export function NotificationNavIcon({
                 Notifications
               </DrawerTitle>
               <DrawerDescription className="mt-1">
-                {unreadCount ? `${unreadCount} unread updates` : "All caught up"}
+                {unreadCount
+                  ? `${unreadCount} unread updates`
+                  : "All caught up"}
               </DrawerDescription>
             </div>
             <Button
@@ -422,6 +524,16 @@ export function NotificationNavIcon({
                     <span className="mt-1 line-clamp-2 block text-xs leading-5 text-muted-foreground">
                       {notification.message}
                     </span>
+                    {notification.imageUrl ? (
+                      <span className="mt-3 block overflow-hidden rounded-2xl border border-border">
+                        <img
+                          src={notification.imageUrl}
+                          alt=""
+                          className="h-28 w-full object-cover"
+                          loading="lazy"
+                        />
+                      </span>
+                    ) : null}
                     <span className="mt-2 block text-[11px] font-medium text-muted-foreground">
                       {formatDateTime(notification.createdAt)}
                     </span>
@@ -443,7 +555,11 @@ export function NotificationNavIcon({
         </div>
 
         <div className="border-t border-border p-4">
-          <Button asChild variant="outline" className="h-10 w-full rounded-full">
+          <Button
+            asChild
+            variant="outline"
+            className="h-10 w-full rounded-full"
+          >
             <Link href="/notifications" onClick={() => setOpen(false)}>
               Notification settings
             </Link>

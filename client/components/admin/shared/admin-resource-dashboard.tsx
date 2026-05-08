@@ -134,7 +134,7 @@ function AdminResourceDashboardInner<TData extends { id: number | string }>({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:[&>*]:shrink-0">
             {actions}
             <Button
               variant="outline"

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell, CheckCheck, Circle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,6 +17,7 @@ export function NotificationsView({
 }: {
   notifications: AppNotification[];
 }) {
+  const router = useRouter();
   const [notifications, setNotifications] = useState(initialNotifications);
   const unreadCount = notifications.filter((item) => !item.readAt).length;
 
@@ -31,20 +33,21 @@ export function NotificationsView({
     }
   }
 
-  async function markRead(notification: AppNotification) {
-    if (notification.readAt) return;
-
+  async function openNotification(notification: AppNotification) {
     try {
-      await notificationClientService.markRead(notification.id);
+      await notificationClientService.markClicked(notification.id);
+      const now = new Date().toISOString();
       setNotifications((current) =>
         current.map((item) =>
           item.id === notification.id
-            ? { ...item, readAt: new Date().toISOString() }
+            ? { ...item, readAt: item.readAt ?? now, clickedAt: item.clickedAt ?? now }
             : item,
         ),
       );
     } catch {
-      // The destination link should remain usable if read-state sync fails.
+      // The destination link should remain usable if click-state sync fails.
+    } finally {
+      router.push(notification.href || "/notifications");
     }
   }
 
@@ -81,7 +84,10 @@ export function NotificationsView({
               <Link
                 key={notification.id}
                 href={notification.href || "#"}
-                onClick={() => markRead(notification)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  void openNotification(notification);
+                }}
                 className="flex gap-4 p-5 transition hover:bg-muted/40"
               >
                 <span className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">

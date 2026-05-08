@@ -41,6 +41,14 @@ export class NotificationsController {
     return this.notificationsService.markRead(id, user);
   }
 
+  @Patch(':id/click')
+  markClicked(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    return this.notificationsService.markClicked(id, user);
+  }
+
   @Patch('my/read-all')
   markAllRead(@ActiveUser() user: ActiveUserData) {
     return this.notificationsService.markAllRead(user);

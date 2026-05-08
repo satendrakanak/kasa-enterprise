@@ -52,6 +52,7 @@ import { RefundsModule } from './refunds/refunds.module';
 import { ExamsModule } from './exams/exams.module';
 import { FacultyWorkspaceModule } from './faculty-workspace/faculty-workspace.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { EngagementModule } from './engagement/engagement.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -125,6 +126,7 @@ const ENV = process.env.NODE_ENV;
     ExamsModule,
     FacultyWorkspaceModule,
     NotificationsModule,
+    EngagementModule,
     CourseExamsModule,
     RefundsModule,
   ],
