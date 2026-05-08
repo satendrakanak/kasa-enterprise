@@ -45,7 +45,7 @@ export const WebsiteNavUser = () => {
         asChild
         variant="ghost"
         aria-label="Sign in"
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card p-0 text-foreground shadow-sm backdrop-blur transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/90 p-0 text-foreground shadow-sm backdrop-blur transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
       >
         <Link href="/auth/sign-in">
           <User className="h-5 w-5" />

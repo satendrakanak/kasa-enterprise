@@ -12,7 +12,7 @@ export function formatDate(date: string) {
 }
 
 export function formatDateTime(date: string) {
-  const formatted = new Intl.DateTimeFormat("en-GB", {
+  const parts = new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -20,7 +20,19 @@ export function formatDateTime(date: string) {
     minute: "2-digit",
     hour12: true, // false karoge toh 24h format
     timeZone: APP_TIME_ZONE,
-  }).format(new Date(date));
+  }).formatToParts(new Date(date));
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  const day = get("day");
+  const month = get("month");
+  const year = get("year");
+  const hour = get("hour");
+  const minute = get("minute");
+  const dayPeriod = get("dayPeriod").toLowerCase();
+
+  const formatted = `${day} ${month} ${year}, ${hour}:${minute} ${dayPeriod}`;
 
   return formatted;
 }

@@ -5,24 +5,24 @@ import { PublicSettingsBundle } from "@/types/settings";
 
 const defaultBundle: PublicSettingsBundle = {
   site: {
-    siteName: "Code With KASA",
-    siteTagline: "Coading tutorial for you",
+    siteName: "Code With Kasa",
+    siteTagline: "Coding tutorials for you",
     siteDescription:
-      "Practical wellness education for learners who want clarity, mentorship, and real-world application.",
-    logoUrl: "/assets/unitus-logo.png",
-    footerLogoUrl: "/assets/unitus-logo.png",
-    faviconUrl: "",
-    adminPanelName: "U",
-    adminPanelIconUrl: "",
-    supportEmail: "info@academy.com",
+      "Practical coding education for learners who want clarity, mentorship, and real-world application.",
+    logoUrl: "/assets/cwk-logo.png",
+    footerLogoUrl: "/assets/cwk-logo.png",
+    faviconUrl: "/favicon.png",
+    adminPanelName: "CWK",
+    adminPanelIconUrl: "/assets/pwa-icon-192.png",
+    supportEmail: "info@codewithkasa.com",
     supportPhone: "+91-9809-XXXXXX",
     supportAddress: "India",
     footerAbout:
-      "Practical wellness education for learners who want clarity, mentorship, and real-world application.",
-    footerCopyright: `© ${new Date().getFullYear()} Unitus. All Rights Reserved`,
+      "Practical coding education for learners who want clarity, mentorship, and real-world application.",
+    footerCopyright: `© ${new Date().getFullYear()} Code With Kasa. All Rights Reserved`,
     footerCtaEyebrow: "Start Your Learning Journey",
     footerCtaHeading:
-      "Build practical wellness expertise with a learning system that actually supports you.",
+      "Build practical coding expertise with a learning system that actually supports you.",
     footerCtaDescription:
       "Explore guided programs, thoughtful faculty, and a curriculum designed to help you learn clearly and apply with confidence.",
     footerPrimaryCtaLabel: "Explore Courses",

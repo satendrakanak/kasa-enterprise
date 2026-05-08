@@ -21,7 +21,7 @@ export function SubmitButton({
   className,
 }: SubmitButtonProps) {
   return (
-    <Button type={type} disabled={disabled} size="sm">
+    <Button type={type} disabled={disabled} size="sm" className={className}>
       {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
       {loading ? loadingText || children : children}
     </Button>

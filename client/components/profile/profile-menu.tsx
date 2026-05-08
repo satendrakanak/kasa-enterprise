@@ -19,6 +19,7 @@ export function ProfileMenu({ isOwner }: ProfileMenuProps) {
     { label: "Exams", key: "exams" },
     { label: "Orders", key: "orders" },
     { label: "Certificates", key: "certificates" },
+    { label: "Notifications", key: "notifications" },
     { label: "Profile", key: "profile" },
     ...(isOwner ? [{ label: "Settings", key: "settings" }] : []),
   ];

@@ -5,6 +5,7 @@ import {
   BbbSettings,
   EmailSettings,
   PaymentGatewayAdmin,
+  PushNotificationSettings,
   SiteSettings,
   SocialAuthProvider,
 } from "@/types/settings";
@@ -15,6 +16,7 @@ const SiteSettingsPage = async () => {
   let emailSettings: EmailSettings | null = null;
   let awsStorageSettings: AwsStorageSettings | null = null;
   let bbbSettings: BbbSettings | null = null;
+  let pushNotificationSettings: PushNotificationSettings | null = null;
   let socialProviders: SocialAuthProvider[] = [];
 
   try {
@@ -24,6 +26,7 @@ const SiteSettingsPage = async () => {
       emailResponse,
       awsResponse,
       bbbResponse,
+      pushResponse,
       socialResponse,
     ] =
       await Promise.all([
@@ -32,6 +35,7 @@ const SiteSettingsPage = async () => {
         settingsServerService.getEmailSettings(),
         settingsServerService.getAwsStorageSettings(),
         settingsServerService.getBbbSettings(),
+        settingsServerService.getPushNotificationSettings(),
         settingsServerService.getSocialAuthSettings(),
       ]);
 
@@ -40,6 +44,7 @@ const SiteSettingsPage = async () => {
     emailSettings = emailResponse.data;
     awsStorageSettings = awsResponse.data;
     bbbSettings = bbbResponse.data;
+    pushNotificationSettings = pushResponse.data;
     socialProviders = socialResponse.data.providers || [];
   } catch {
     gateways = [];
@@ -52,6 +57,7 @@ const SiteSettingsPage = async () => {
       emailSettings={emailSettings}
       awsStorageSettings={awsStorageSettings}
       bbbSettings={bbbSettings}
+      pushNotificationSettings={pushNotificationSettings}
       socialProviders={socialProviders}
     />
   );

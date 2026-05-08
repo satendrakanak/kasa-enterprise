@@ -25,7 +25,7 @@ export const registerFormSchema = z
 
 export const loginFormSchema = z.object({
   email: z.string().email("Invalid email"),
-  password: z.string().min(8, "Minimum 8 characters"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const fogotPasswordFormSchema = z.object({

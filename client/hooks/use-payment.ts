@@ -17,8 +17,50 @@ import { useRouter } from "next/navigation";
 
 declare global {
   interface Window {
-    Razorpay: new (options: RazorpayOptions) => RazorpayInstance;
+    Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
   }
+}
+
+const RAZORPAY_SCRIPT_URL = "https://checkout.razorpay.com/v1/checkout.js";
+let razorpayScriptPromise: Promise<void> | null = null;
+
+function loadRazorpayScript() {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("Payment SDK can only load in browser"));
+  }
+
+  if (window.Razorpay) {
+    return Promise.resolve();
+  }
+
+  if (razorpayScriptPromise) {
+    return razorpayScriptPromise;
+  }
+
+  razorpayScriptPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      `script[src="${RAZORPAY_SCRIPT_URL}"]`,
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener(
+        "error",
+        () => reject(new Error("Payment SDK failed to load")),
+        { once: true },
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = RAZORPAY_SCRIPT_URL;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Payment SDK failed to load"));
+    document.body.appendChild(script);
+  });
+
+  return razorpayScriptPromise;
 }
 
 export const usePayment = () => {
@@ -41,6 +83,7 @@ export const usePayment = () => {
     data,
     courses,
   }: OpenRazorpayParams) => {
+    await loadRazorpayScript();
     const Razorpay = window.Razorpay;
 
     if (!Razorpay) {
@@ -53,7 +96,7 @@ export const usePayment = () => {
       amount,
       currency,
       order_id: razorpayOrderId,
-      name: "Unitus",
+      name: "Code With Kasa",
       description: "Course payment",
 
       handler: async (response: RazorpaySuccessResponse) => {

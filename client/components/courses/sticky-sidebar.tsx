@@ -100,7 +100,7 @@ const StickySidebar = ({ course }: StickySidebarProps) => {
           title="Certificate"
           value={
             course.certificate ||
-            "Yes, Unitus academy will reward a course completion certificate"
+            "Yes, Code With Kasa will reward a course completion certificate"
           }
         />
         <CourseFeatureItem

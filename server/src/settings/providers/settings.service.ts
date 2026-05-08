@@ -16,12 +16,15 @@ import { UpsertSocialAuthSettingsDto } from '../dtos/upsert-social-auth-settings
 import { SocialProvider } from '../enums/social-provider.enum';
 import { UpsertAwsStorageSettingsDto } from '../dtos/upsert-aws-storage-settings.dto';
 import { UpsertBbbSettingsDto } from '../dtos/upsert-bbb-settings.dto';
+import { UpsertPushNotificationSettingsDto } from '../dtos/upsert-push-notification-settings.dto';
+import webPush from 'web-push';
 
 const SITE_SETTINGS_KEY = 'site_settings';
 const EMAIL_SETTINGS_KEY = 'email_settings';
 const SOCIAL_AUTH_SETTINGS_KEY = 'social_auth_settings';
 const AWS_STORAGE_SETTINGS_KEY = 'aws_storage_settings';
 const BBB_SETTINGS_KEY = 'bbb_settings';
+const PUSH_NOTIFICATION_SETTINGS_KEY = 'push_notification_settings';
 
 type SiteSettings = ReturnType<SettingsService['getDefaultSiteSettings']>;
 type EmailSettings = ReturnType<SettingsService['getDefaultEmailSettings']>;
@@ -29,6 +32,9 @@ type AwsStorageSettings = ReturnType<
   SettingsService['getDefaultAwsStorageSettings']
 >;
 type BbbSettings = ReturnType<SettingsService['getDefaultBbbSettings']>;
+type PushNotificationSettings = ReturnType<
+  SettingsService['getDefaultPushNotificationSettings']
+>;
 type SocialProviderSettings = {
   provider: SocialProvider;
   label: string;
@@ -447,6 +453,83 @@ export class SettingsService {
     return this.getBbbSettings();
   }
 
+  async getPushNotificationSettings() {
+    const value = await this.getSetting<PushNotificationSettings>(
+      PUSH_NOTIFICATION_SETTINGS_KEY,
+      this.getDefaultPushNotificationSettings(),
+      true,
+    );
+
+    return {
+      ...value,
+      privateKey: value.privateKey ? '********' : '',
+      hasPrivateKey: Boolean(value.privateKey),
+    };
+  }
+
+  async getPushNotificationSettingsForRuntime() {
+    return this.getSetting<PushNotificationSettings>(
+      PUSH_NOTIFICATION_SETTINGS_KEY,
+      this.getDefaultPushNotificationSettings(),
+      true,
+    );
+  }
+
+  async upsertPushNotificationSettings(
+    payload: UpsertPushNotificationSettingsDto,
+  ) {
+    const current = await this.getSetting<PushNotificationSettings>(
+      PUSH_NOTIFICATION_SETTINGS_KEY,
+      this.getDefaultPushNotificationSettings(),
+      true,
+    );
+
+    const nextValue = {
+      ...current,
+      ...this.compactObject(payload),
+      subject:
+        payload.subject !== undefined
+          ? this.normalizePushSubject(payload.subject)
+          : current.subject,
+      publicKey:
+        payload.publicKey !== undefined
+          ? this.normalizeVapidKey(payload.publicKey, 'public key')
+          : current.publicKey,
+      privateKey:
+        payload.privateKey !== undefined && payload.privateKey !== ''
+          ? this.normalizeVapidKey(payload.privateKey, 'private key')
+          : current.privateKey,
+    };
+
+    this.validatePushSettings(nextValue);
+
+    await this.saveSetting(PUSH_NOTIFICATION_SETTINGS_KEY, nextValue, true);
+    return this.getPushNotificationSettings();
+  }
+
+  async generatePushNotificationKeys() {
+    const keys = webPush.generateVAPIDKeys();
+    const current = await this.getSetting<PushNotificationSettings>(
+      PUSH_NOTIFICATION_SETTINGS_KEY,
+      this.getDefaultPushNotificationSettings(),
+      true,
+    );
+
+    await this.saveSetting(
+      PUSH_NOTIFICATION_SETTINGS_KEY,
+      {
+        ...current,
+        isEnabled: true,
+        subject: this.normalizePushSubject(current.subject),
+        publicKey: keys.publicKey,
+        privateKey: keys.privateKey,
+      },
+      true,
+    );
+
+    return this.getPushNotificationSettings();
+  }
+
   private async getSetting<T>(
     key: string,
     fallback: T,
@@ -551,24 +634,24 @@ export class SettingsService {
 
   private getDefaultSiteSettings() {
     return {
-      siteName: 'Unitus Health Academy',
-      siteTagline: 'A Unit of Ranfort Wellness',
+      siteName: 'Code With Kasa',
+      siteTagline: 'Coding tutorials for you',
       siteDescription:
-        'Practical wellness education for learners who want clarity, mentorship, and real-world application.',
-      logoUrl: '/assets/unitus-logo.png',
-      footerLogoUrl: '/assets/unitus-logo.png',
-      faviconUrl: '',
-      adminPanelName: 'U',
-      adminPanelIconUrl: '',
-      supportEmail: 'info@academy.com',
+        'Practical coding education for learners who want clarity, mentorship, and real-world application.',
+      logoUrl: '/assets/cwk-logo.png',
+      footerLogoUrl: '/assets/cwk-logo.png',
+      faviconUrl: '/favicon.png',
+      adminPanelName: 'CWK',
+      adminPanelIconUrl: '/assets/pwa-icon-192.png',
+      supportEmail: 'info@codewithkasa.com',
       supportPhone: '+91-9809-XXXXXX',
       supportAddress: 'India',
       footerAbout:
-        'Practical wellness education for learners who want clarity, mentorship, and real-world application.',
-      footerCopyright: `© ${new Date().getFullYear()} Unitus. All Rights Reserved`,
+        'Practical coding education for learners who want clarity, mentorship, and real-world application.',
+      footerCopyright: `© ${new Date().getFullYear()} Code With Kasa. All Rights Reserved`,
       footerCtaEyebrow: 'Start Your Learning Journey',
       footerCtaHeading:
-        'Build practical wellness expertise with a learning system that actually supports you.',
+        'Build practical coding expertise with a learning system that actually supports you.',
       footerCtaDescription:
         'Explore guided programs, thoughtful faculty, and a curriculum designed to help you learn clearly and apply with confidence.',
       footerPrimaryCtaLabel: 'Explore Courses',
@@ -591,8 +674,8 @@ export class SettingsService {
       secure: false,
       smtpUser: '',
       smtpPassword: '',
-      fromName: 'Unitus Academy',
-      fromEmail: 'info@academy.com',
+      fromName: 'Code With Kasa',
+      fromEmail: 'info@codewithkasa.com',
       replyToEmail: '',
     };
   }
@@ -618,6 +701,70 @@ export class SettingsService {
       allowStartStopRecording: true,
       meetingExpireIfNoUserJoinedInMinutes: 60,
     };
+  }
+
+  private getDefaultPushNotificationSettings() {
+    return {
+      isEnabled: false,
+      subject:
+        process.env.WEB_PUSH_SUBJECT ||
+        this.getValidPushSubject(process.env.APP_URL) ||
+        'mailto:info@codewithkasa.com',
+      publicKey: process.env.WEB_PUSH_PUBLIC_KEY || '',
+      privateKey: process.env.WEB_PUSH_PRIVATE_KEY || '',
+    };
+  }
+
+  private normalizePushSubject(subject?: string | null) {
+    const value = subject?.trim();
+
+    if (!value) return 'mailto:info@codewithkasa.com';
+
+    if (value.startsWith('mailto:') || value.startsWith('https://')) {
+      return value;
+    }
+
+    if (value.startsWith('http://localhost')) {
+      return 'mailto:info@codewithkasa.com';
+    }
+
+    throw new BadRequestException(
+      'VAPID subject must start with https:// or mailto:',
+    );
+  }
+
+  private getValidPushSubject(value?: string | null) {
+    if (!value) return null;
+    return value.startsWith('https://') || value.startsWith('mailto:')
+      ? value
+      : null;
+  }
+
+  private normalizeVapidKey(value: string, label: string) {
+    const normalized = value.trim().replace(/=+$/g, '');
+
+    if (!/^[A-Za-z0-9_-]+$/.test(normalized)) {
+      throw new BadRequestException(
+        `VAPID ${label} must be URL-safe base64. Use Generate VAPID keys.`,
+      );
+    }
+
+    return normalized;
+  }
+
+  private validatePushSettings(settings: PushNotificationSettings) {
+    if (!settings.isEnabled) return;
+
+    this.normalizePushSubject(settings.subject);
+
+    if (!settings.publicKey || !settings.privateKey) {
+      throw new BadRequestException(
+        'Generate VAPID keys before enabling push notifications',
+      );
+    }
+
+    this.normalizeVapidKey(settings.publicKey, 'public key');
+    this.normalizeVapidKey(settings.privateKey, 'private key');
   }
 
   private getDefaultSocialProviders(): SocialProviderSettings[] {

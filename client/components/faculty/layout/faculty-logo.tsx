@@ -16,7 +16,7 @@ export function FacultyLogo() {
   const isCollapsed = state === "collapsed";
   const { site } = useSiteSettings();
   const iconSrc = site.adminPanelIconUrl || "";
-  const name = site.adminPanelName || "UHA";
+  const name = site.adminPanelName || "CWK";
 
   return (
     <SidebarMenu className="bg-transparent">

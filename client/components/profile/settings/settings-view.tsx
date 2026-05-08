@@ -19,6 +19,7 @@ import { profileClientService } from "@/services/users/profile.client";
 import { User } from "@/types/user";
 import { SwitchRow } from "../switch-row";
 import { ChangePasswordForm } from "./change-password-form";
+import { PushNotificationSettings } from "@/components/notifications/push-notification-settings";
 
 interface SettingsViewProps {
   user: User;
@@ -61,6 +62,8 @@ export default function SettingsView({ user }: SettingsViewProps) {
     <div className="space-y-8">
       <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
+          <PushNotificationSettings />
+
           <section className="academy-card p-5 md:p-6">
             <SectionHeader
               icon={ShieldCheck}

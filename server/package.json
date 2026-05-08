@@ -1,5 +1,5 @@
 {
-  "name": "unitus-backend",
+  "name": "codewithkasa-backend",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -33,6 +33,7 @@
     "@nestjs/schedule": "^6.1.3",
     "@nestjs/swagger": "^11.2.6",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/web-push": "^3.6.4",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.73.0",
     "class-transformer": "^0.5.1",
@@ -49,7 +50,8 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.28",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

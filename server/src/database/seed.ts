@@ -14,7 +14,7 @@ const AppDataSource = new DataSource({
   port: Number(process.env.DATABASE_PORT || 5432),
   username: process.env.DATABASE_USER || 'shivaan',
   password: process.env.DATABASE_PASSWORD || '1234',
-  database: process.env.DATABASE_NAME || 'unitus',
+  database: process.env.DATABASE_NAME || 'codewithkasa',
   entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
   synchronize: false,
 });

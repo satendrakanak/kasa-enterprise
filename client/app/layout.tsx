@@ -13,6 +13,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { FloatingThemeToggle } from "@/components/theme/floating-theme-toggle";
 import { ScrollProgressButton } from "@/components/ui/scroll-progress-button";
 import { RouteProgressBar } from "@/components/ui/route-progress-bar";
+import { PwaRegister } from "@/components/pwa/pwa-register";
+import { PwaInstallNudge } from "@/components/pwa/pwa-install-nudge";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,6 +29,7 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export default async function RootLayout({
@@ -42,24 +45,24 @@ export default async function RootLayout({
     .then((response) => response.data)
     .catch(() => null)) || {
     site: {
-      siteName: "Unitus Health Academy",
-      siteTagline: "A Unit of Ranfort Wellness",
+      siteName: "Code With Kasa",
+      siteTagline: "Coding tutorials for you",
       siteDescription:
-        "Practical wellness education for learners who want clarity, mentorship, and real-world application.",
-      logoUrl: "/assets/unitus-logo.png",
-      footerLogoUrl: "/assets/unitus-logo.png",
-      adminPanelName: "UHA",
-      adminPanelIconUrl: "/assets/unitus-logo.png",
-      faviconUrl: "",
-      supportEmail: "info@academy.com",
+        "Practical coding education for learners who want clarity, mentorship, and real-world application.",
+      logoUrl: "/assets/cwk-logo.png",
+      footerLogoUrl: "/assets/cwk-logo.png",
+      adminPanelName: "CWK",
+      adminPanelIconUrl: "/assets/pwa-icon-192.png",
+      faviconUrl: "/favicon.png",
+      supportEmail: "info@codewithkasa.com",
       supportPhone: "+91-9809-XXXXXX",
       supportAddress: "India",
       footerAbout:
-        "Practical wellness education for learners who want clarity, mentorship, and real-world application.",
-      footerCopyright: `© ${new Date().getFullYear()} Unitus. All Rights Reserved`,
+        "Practical coding education for learners who want clarity, mentorship, and real-world application.",
+      footerCopyright: `© ${new Date().getFullYear()} Code With Kasa. All Rights Reserved`,
       footerCtaEyebrow: "Start Your Learning Journey",
       footerCtaHeading:
-        "Build practical wellness expertise with a learning system that actually supports you.",
+        "Build practical coding expertise with a learning system that actually supports you.",
       footerCtaDescription:
         "Explore guided programs, thoughtful faculty, and a curriculum designed to help you learn clearly and apply with confidence.",
       footerPrimaryCtaLabel: "Explore Courses",
@@ -83,7 +86,14 @@ export default async function RootLayout({
       <head>
         {publicSettings.site.faviconUrl ? (
           <link rel="icon" href={publicSettings.site.faviconUrl} />
-        ) : null}
+        ) : (
+          <link rel="icon" href="/favicon.png" />
+        )}
+        <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-title" content="CWK" />
+        <meta name="application-name" content="Code With Kasa" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         <Script
           id="theme-init"
           strategy="beforeInteractive"
@@ -110,6 +120,8 @@ export default async function RootLayout({
             <SessionProvider session={session} hasSession={hasSession}>
               <RouteProgressBar />
               <Toaster richColors />
+              <PwaRegister />
+              <PwaInstallNudge />
               <FloatingThemeToggle />
               <ScrollProgressButton />
               {children}

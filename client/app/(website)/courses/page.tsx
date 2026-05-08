@@ -9,7 +9,7 @@ import { Course } from "@/types/course";
 export const metadata = buildMetadata({
   title: "Courses",
   description:
-    "Browse Unitus Health Academy courses across nutrition, Ayurveda, wellness, and professional learning.",
+    "Browse Code With Kasa courses across programming, projects, live classes, and professional learning.",
   path: "/courses",
 });
 

@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: PageProps) {
   } catch {
     return buildMetadata({
       title: "Faculty",
-      description: "Meet the faculty behind Unitus Health Academy.",
+      description: "Meet the faculty behind Code With Kasa.",
       path: `/our-faculty/${facultyId}`,
     });
   }

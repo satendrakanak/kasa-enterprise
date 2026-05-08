@@ -21,7 +21,7 @@ export class SendRegistrationOtpEmailProvider {
     const diffMs = expiresAt.getTime() - Date.now();
     const expiryTime = `${Math.max(1, Math.floor(diffMs / 1000 / 60))} minutes`;
 
-    let subject = 'Your Unitus account verification code';
+    let subject = 'Your Code With Kasa account verification code';
     let html = `
       <div style="margin:0;padding:32px;background:#f5f7fb;font-family:Arial,sans-serif;color:#111827">
         <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e5e7eb">
@@ -30,7 +30,7 @@ export class SendRegistrationOtpEmailProvider {
             <h1 style="font-size:30px;line-height:1.2;margin:0">Hi ${user.firstName}, confirm your email</h1>
           </div>
           <div style="padding:30px">
-            <p style="font-size:16px;line-height:1.7;color:#475569">Use this 6-digit code to verify your Unitus account and complete your registration.</p>
+            <p style="font-size:16px;line-height:1.7;color:#475569">Use this 6-digit code to verify your Code With Kasa account and complete your registration.</p>
             <div style="margin:28px 0;padding:20px;border-radius:20px;background:#fff7ed;border:1px solid #fed7aa;text-align:center">
               <p style="margin:0 0 10px;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#9a3412">Verification code</p>
               <p style="margin:0;font-size:36px;font-weight:800;letter-spacing:8px;color:#111827">${code}</p>

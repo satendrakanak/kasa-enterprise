@@ -257,7 +257,7 @@ export const CreateTestimonialForm = ({
                   <FieldLabel>Company / Institute</FieldLabel>
                   <Input
                     {...field}
-                    placeholder="e.g. Unitus Academy"
+                    placeholder="e.g. Code With Kasa"
                     className="h-11"
                   />
                   {fieldState.invalid && (

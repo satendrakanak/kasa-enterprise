@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
 export const siteConfig = {
-  name: "Unitus Health Academy",
-  title: "Unitus Health Academy | Wellness & Nutrition Courses",
+  name: "Code With Kasa",
+  title: "Code With Kasa | Practical Coding Courses",
   description:
-    "Career-focused wellness, Ayurveda, nutrition, and health academy courses with expert-led learning.",
+    "Practical coding courses, live classes, exams, certificates, and career-focused learning.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
 };
 

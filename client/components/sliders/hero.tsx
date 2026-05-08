@@ -52,7 +52,7 @@ export default function Hero({ courses }: HeroProps) {
       <div className="academy-hero-grid absolute inset-0 opacity-20" />
       <div className="absolute inset-0 bg-black/20" />
 
-      <div className="relative z-10 mx-auto flex min-h-190 max-w-360 flex-col px-6 pt-12 lg:min-h-162.5 lg:flex-row lg:items-center lg:px-12 lg:py-20 xl:px-16">
+      <div className="relative z-10 mx-auto flex min-h-190 max-w-360 flex-col px-6 pt-9 lg:min-h-162.5 lg:flex-row lg:items-center lg:px-12 lg:py-20 xl:px-16">
         <div className="z-20 max-w-130 text-center lg:text-left">
           <p className="mb-5 inline-flex rounded-full border border-white/20 bg-white/12 px-4 py-2 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.24),0_10px_30px_rgba(15,23,42,0.28)] backdrop-blur-md">
             🏆 The Leader in Online Learning
@@ -67,17 +67,17 @@ export default function Hero({ courses }: HeroProps) {
             grow, build confidence, and advance your career.
           </p>
 
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:items-start">
+          <div className="mt-8 flex w-full flex-col items-center gap-3 sm:flex-row lg:w-auto lg:items-start">
             <Link
               href="/courses"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-slate-950 shadow-[0_15px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-white/90"
+              className="inline-flex h-12 w-full max-w-64 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-slate-950 shadow-[0_15px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-white/90 sm:w-auto lg:max-w-none"
             >
               View Courses →
             </Link>
 
             <Link
               href="/contact"
-              className="inline-flex h-12 items-center justify-center rounded-full border border-white/25 bg-white/10 px-7 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_15px_45px_rgba(15,23,42,0.28)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950"
+              className="inline-flex h-12 w-full max-w-64 items-center justify-center rounded-full border border-white/25 bg-white/10 px-7 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_15px_45px_rgba(15,23,42,0.28)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 sm:w-auto lg:max-w-none"
             >
               Speak to our team
             </Link>

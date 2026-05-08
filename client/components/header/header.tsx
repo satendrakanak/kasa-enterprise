@@ -8,6 +8,7 @@ import { Navbar } from "@/components/header/navbar";
 import { cn } from "@/lib/utils";
 import { WebsiteNavUser } from "../auth/website-nav-user";
 import { CartIcon } from "./cart-icon";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface HeaderProps {
   isHomePage?: boolean;
@@ -43,25 +44,33 @@ export const Header = ({ isHomePage }: HeaderProps) => {
           <div className="pointer-events-none absolute inset-x-0 top-0 h-full bg-[linear-gradient(180deg,rgba(255,255,255,0.14),transparent)] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.05),transparent)]" />
         ) : null}
         <Container>
-          <div className="flex min-h-18 items-center justify-between gap-4">
-            {/* LEFT */}
-            <div className="flex items-center gap-3">
-              <div className="md:hidden">
+          <div className="min-h-16 md:min-h-18">
+            <div className="grid min-h-16 grid-cols-[3rem_1fr_3rem] items-center gap-2 md:hidden">
+              <div className="flex justify-start">
                 <MobileMenuIcon />
               </div>
-              <Logo />
+              <div className="flex justify-center">
+                <Logo />
+              </div>
+              <div className="flex justify-end">
+                <WebsiteNavUser />
+              </div>
             </div>
 
-            {/* CENTER (Desktop Navbar) */}
-            <div className="hidden lg:flex">
-              <Navbar />
-            </div>
+            <div className="hidden min-h-18 items-center justify-between gap-4 md:flex">
+              <div className="flex items-center gap-3">
+                <Logo />
+              </div>
 
-            {/* RIGHT */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <CartIcon />
+              <div className="hidden lg:flex">
+                <Navbar />
+              </div>
 
-              <WebsiteNavUser />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <CartIcon />
+                <NotificationBell />
+                <WebsiteNavUser />
+              </div>
             </div>
           </div>
 

@@ -37,7 +37,7 @@ export function ContactInfo() {
           <InfoRow
             icon={Mail}
             label="Email"
-            value={site.supportEmail || "info@academy.com"}
+            value={site.supportEmail || "info@codewithkasa.com"}
           />
 
           <InfoRow

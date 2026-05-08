@@ -3,7 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { EmailTemplatesService } from 'src/email-templates/providers/email-templates.service';
 import { MailService } from 'src/mail/providers/mail.service';
 import { parseTemplate } from 'src/mail/utils/template-parser';
+import { NotificationType } from 'src/notifications/enums/notification-type.enum';
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { ClassSession } from '../class-session.entity';
+import { BatchStudentStatus } from '../enums/batch-student-status.enum';
 
 @Injectable()
 export class FacultySessionEmailProvider {
@@ -13,12 +16,14 @@ export class FacultySessionEmailProvider {
     private readonly mailService: MailService,
     private readonly emailTemplatesService: EmailTemplatesService,
     private readonly configService: ConfigService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async sendSessionReminder(session: ClassSession, offsetMinutes: number) {
     const batchStudents = session.batch?.students ?? [];
     const activeStudents = batchStudents.filter(
-      (item) => item.status === 'active' && item.student?.email,
+      (item) =>
+        item.status === BatchStudentStatus.Active && item.student?.email,
     );
     const recipients = [
       ...activeStudents.map((item) => ({
@@ -61,25 +66,27 @@ export class FacultySessionEmailProvider {
       recipients.map((recipient) => {
         const template =
           recipient.type === 'teacher' ? teacherTemplate : studentTemplate;
-          const variables = {
-            name: recipient.name,
-            courseTitle: session.course.title,
-            batchName: session.batch.name,
-            sessionTitle: session.title,
-            startsAt,
-            reminderLabel: this.formatReminderOffset(offsetMinutes),
-            meetingUrl: session.meetingUrl || this.getFrontendUrl(),
-            location: session.location || 'Online',
-            year: new Date().getFullYear().toString(),
-          };
+        const variables = {
+          name: recipient.name,
+          courseTitle: session.course.title,
+          batchName: session.batch.name,
+          sessionTitle: session.title,
+          startsAt,
+          reminderLabel: this.formatReminderOffset(offsetMinutes),
+          meetingUrl: session.meetingUrl || this.getFrontendUrl(),
+          location: session.location || 'Online',
+          year: new Date().getFullYear().toString(),
+        };
 
-          return this.mailService.sendMail({
-            to: recipient.email,
-            subject: parseTemplate(template.subject, variables),
-            html: parseTemplate(template.body, variables),
-          });
+        return this.mailService.sendMail({
+          to: recipient.email,
+          subject: parseTemplate(template.subject, variables),
+          html: parseTemplate(template.body, variables),
+        });
       }),
     );
+
+    await this.sendInAppReminder(session, offsetMinutes, startsAt);
   }
 
   sendSessionReminderSafely(session: ClassSession, offsetMinutes: number) {
@@ -119,5 +126,50 @@ export class FacultySessionEmailProvider {
     }
 
     return `${minutes} minutes before`;
+  }
+
+  private async sendInAppReminder(
+    session: ClassSession,
+    offsetMinutes: number,
+    startsAt: string,
+  ) {
+    const activeStudents = (session.batch?.students ?? []).filter(
+      (item) => item.status === BatchStudentStatus.Active && item.student?.id,
+    );
+
+    await this.notificationsService.createMany([
+      ...activeStudents.map((item) => ({
+        recipientId: item.student.id,
+        actorId: session.faculty?.id ?? null,
+        title: 'Live class reminder',
+        message: `${session.title} starts ${this.formatReminderOffset(offsetMinutes)} at ${startsAt}.`,
+        href: '/classes',
+        type: NotificationType.Class,
+        metadata: {
+          sessionId: session.id,
+          courseId: session.course.id,
+          batchId: session.batch.id,
+          reminderOffsetMinutes: offsetMinutes,
+        },
+      })),
+      ...(session.faculty?.id
+        ? [
+            {
+              recipientId: session.faculty.id,
+              actorId: null,
+              title: 'Class reminder',
+              message: `${session.title} starts ${this.formatReminderOffset(offsetMinutes)} at ${startsAt}.`,
+              href: '/faculty/calendar',
+              type: NotificationType.Class,
+              metadata: {
+                sessionId: session.id,
+                courseId: session.course.id,
+                batchId: session.batch.id,
+                reminderOffsetMinutes: offsetMinutes,
+              },
+            },
+          ]
+        : []),
+    ]);
   }
 }

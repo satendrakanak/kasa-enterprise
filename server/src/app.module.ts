@@ -51,6 +51,7 @@ import { CourseExamsModule } from './course-exams/course-exams.module';
 import { RefundsModule } from './refunds/refunds.module';
 import { ExamsModule } from './exams/exams.module';
 import { FacultyWorkspaceModule } from './faculty-workspace/faculty-workspace.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -81,7 +82,7 @@ const ENV = process.env.NODE_ENV;
     }),
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         connection: {
           host: configService.get<string>('appConfig.redisHost'),
           port: configService.get<number>('appConfig.redisPort'),
@@ -123,6 +124,7 @@ const ENV = process.env.NODE_ENV;
     ContactLeadsModule,
     ExamsModule,
     FacultyWorkspaceModule,
+    NotificationsModule,
     CourseExamsModule,
     RefundsModule,
   ],

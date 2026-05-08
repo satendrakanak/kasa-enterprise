@@ -25,7 +25,7 @@ const buildPageHref = (
 export const metadata = buildMetadata({
   title: "Client Testimonials",
   description:
-    "Explore learner stories, written testimonials, and video reviews from Unitus Health Academy students.",
+    "Explore learner stories, written testimonials, and video reviews from Code With Kasa students.",
   path: "/client-testimonials",
 });
 
@@ -109,7 +109,7 @@ export default async function ClientTestimonialsPage({
               <p className="mt-4 max-w-2xl text-sm leading-7 text-white/75 md:text-base">
                 Explore featured written reviews and video testimonials, then
                 drill down by course to see exactly how learners experienced
-                Unitus.
+                Code With Kasa.
               </p>
             </div>
           </Container>

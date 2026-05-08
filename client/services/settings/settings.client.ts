@@ -5,6 +5,7 @@ import {
   BbbSettings,
   EmailSettings,
   PaymentGatewayAdmin,
+  PushNotificationSettings,
   PublicSettingsBundle,
   PublicSocialProvider,
   SiteSettings,
@@ -79,6 +80,28 @@ export const settingsClientService = {
   upsertBbbSettings: (data: Partial<BbbSettings>) =>
     withAuthRetry(() =>
       apiClient.post<ApiResponse<BbbSettings>>("/api/settings/bbb", data),
+    ),
+
+  getPushNotificationSettings: () =>
+    withAuthRetry(() =>
+      apiClient.get<ApiResponse<PushNotificationSettings>>(
+        "/api/settings/push-notifications",
+      ),
+    ),
+
+  upsertPushNotificationSettings: (data: Partial<PushNotificationSettings>) =>
+    withAuthRetry(() =>
+      apiClient.post<ApiResponse<PushNotificationSettings>>(
+        "/api/settings/push-notifications",
+        data,
+      ),
+    ),
+
+  generatePushNotificationKeys: () =>
+    withAuthRetry(() =>
+      apiClient.post<ApiResponse<PushNotificationSettings>>(
+        "/api/settings/push-notifications/generate-keys",
+      ),
     ),
 
   getSocialAuthSettings: () =>

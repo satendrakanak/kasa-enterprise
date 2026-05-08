@@ -62,7 +62,7 @@ export const LearnFooter = () => {
         </div>
 
         <div className="mt-8 border-t border-border pt-4 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Unitus. All rights reserved.
+          © {new Date().getFullYear()} Code With Kasa. All rights reserved.
         </div>
       </div>
     </footer>

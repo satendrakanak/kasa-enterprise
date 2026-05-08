@@ -214,10 +214,10 @@ export const CourseTabs = ({ course }: CourseTabsProps) => {
                         : course.exam?.isPublished
                           ? `Complete all ${
                               total || meta.totalLectures
-                            } lectures and clear the final exam to generate your official Unitus certificate. Current lecture progress: ${percent}%.`
+                            } lectures and clear the final exam to generate your official Code With Kasa certificate. Current lecture progress: ${percent}%.`
                           : `Complete all ${
                               total || meta.totalLectures
-                            } lectures to generate your official Unitus certificate. Current progress: ${percent}%.`}
+                            } lectures to generate your official Code With Kasa certificate. Current progress: ${percent}%.`}
                     </p>
                   </div>
                 </div>

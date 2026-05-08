@@ -8,25 +8,10 @@ import { orderServerService } from "@/services/orders/order.server";
 import { Order } from "@/types/order";
 import { courseExamsServerService } from "@/services/course-exams/course-exams.server";
 import { ExamHistoryRecord } from "@/types/exam";
-import {
-  getDateRangeFromSearchParams,
-  getServerDateRangeQuery,
-} from "@/lib/date-range";
 import { facultyWorkspaceServer } from "@/services/faculty/faculty-workspace.server";
 import type { FacultyClassSession } from "@/types/faculty-workspace";
 
-type DashboardPageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const resolvedSearchParams = await searchParams;
-  const dateRange = getDateRangeFromSearchParams(resolvedSearchParams);
-  const rangeParams = new URLSearchParams(getServerDateRangeQuery(dateRange));
-  const rangeQuery = {
-    startDate: rangeParams.get("startDate") || undefined,
-    endDate: rangeParams.get("endDate") || undefined,
-  };
+export default async function DashboardPage() {
   const session = await getSession();
   if (!session) return null;
   let stats = {
@@ -56,8 +41,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         userServerService.getDashboardStats(session.id),
         userServerService.getEnrolledCourses(session.id),
         userServerService.getWeeklyProgress(session.id),
-        orderServerService.getMine(rangeQuery),
-        courseExamsServerService.getMyHistory(rangeQuery),
+        orderServerService.getMine(),
+        courseExamsServerService.getMyHistory(),
         facultyWorkspaceServer.getMySessions(),
       ]);
 
@@ -91,7 +76,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         orders={orders}
         examHistory={examHistory}
         user={session}
-        dateRange={dateRange}
         upcomingClasses={upcomingClasses}
       />
     </div>

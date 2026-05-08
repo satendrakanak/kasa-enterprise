@@ -38,7 +38,7 @@ export const FeaturedTestimonialsSection = ({
 
               <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
                 Explore a mix of written stories and video experiences from
-                learners who trusted Unitus with their growth.
+                learners who trusted Code With Kasa with their growth.
               </p>
             </div>
 

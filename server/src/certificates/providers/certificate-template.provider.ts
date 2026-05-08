@@ -62,7 +62,7 @@ export class CertificateTemplateProvider {
   <circle cx="102" cy="682" r="126" fill="#304fdb" opacity="0.08"/>
   <circle cx="1036" cy="700" r="168" fill="#e34b44" opacity="0.08"/>
 
-  <text x="560" y="154" text-anchor="middle" font-size="21" font-family="Arial, sans-serif" font-weight="700" letter-spacing="8" fill="#f7f3ee">UNITUS HEALTH ACADEMY</text>
+  <text x="560" y="154" text-anchor="middle" font-size="21" font-family="Arial, sans-serif" font-weight="700" letter-spacing="8" fill="#f7f3ee">CODE WITH KASA</text>
   <text x="560" y="214" text-anchor="middle" font-size="64" font-family="Georgia, serif" font-weight="700" fill="#102048">Certificate of Completion</text>
   <text x="560" y="271" text-anchor="middle" font-size="20" font-family="Arial, sans-serif" fill="#64748b">This certificate is proudly presented to</text>
 
@@ -82,7 +82,7 @@ export class CertificateTemplateProvider {
     <circle cx="99" cy="74" r="74" fill="url(#gold)"/>
     <circle cx="99" cy="74" r="58" fill="#fff8dc"/>
     <text x="99" y="68" text-anchor="middle" font-size="13" font-family="Arial, sans-serif" font-weight="700" fill="#9f2d20" letter-spacing="3">CERTIFIED</text>
-    <text x="99" y="94" text-anchor="middle" font-size="12" font-family="Arial, sans-serif" fill="#9f2d20">Unitus Academy</text>
+    <text x="99" y="94" text-anchor="middle" font-size="12" font-family="Arial, sans-serif" fill="#9f2d20">Code With Kasa</text>
     <path d="M59 132 L38 192 L78 174 L102 212 L118 148 Z" fill="#d99b31"/>
     <path d="M139 132 L160 192 L120 174 L96 212 L80 148 Z" fill="#b77722"/>
   </g>

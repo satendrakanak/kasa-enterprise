@@ -8,7 +8,7 @@ import { User } from "@/types/user";
 export const metadata = buildMetadata({
   title: "Our Faculty",
   description:
-    "Meet experienced Unitus Health Academy faculty across nutrition, wellness, Ayurveda, and lifestyle sciences.",
+    "Meet experienced Code With Kasa faculty across programming, software development, projects, and career-focused learning.",
   path: "/our-faculty",
 });
 
@@ -32,7 +32,7 @@ export default async function FacultiesPage() {
         <PageHero
           pageTitle="Faculty Network"
           pageHeadline="Meet the minds behind the learning experience."
-          pageDescription="Learn from experienced faculty across nutrition, wellness, and lifestyle sciences who bring both depth and real practice into every session."
+          pageDescription="Learn from experienced faculty across programming, software development, and project-based learning who bring both depth and real practice into every session."
         />
 
         <section className="py-12 pb-20">

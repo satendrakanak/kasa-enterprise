@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Award,
   BarChart3,
@@ -20,8 +19,6 @@ import { Course } from "@/types/course";
 import { DashboardStats, User, WeeklyProgress } from "@/types/user";
 import { Order } from "@/types/order";
 import { ExamHistoryRecord } from "@/types/exam";
-import { DateRangeFilter } from "@/components/dashboard/date-range-filter";
-import { DateRangeValue, updateDateRangeSearchParams } from "@/lib/date-range";
 import type { FacultyClassSession } from "@/types/faculty-workspace";
 import { UpcomingClasses } from "./upcoming-classes";
 
@@ -37,7 +34,6 @@ interface DashboardClientProps {
   orders: Order[];
   examHistory: ExamHistoryRecord[];
   user: User;
-  dateRange: DateRangeValue;
   upcomingClasses: FacultyClassSession[];
 }
 
@@ -48,24 +44,10 @@ export default function DashboardClient({
   orders,
   examHistory,
   user,
-  dateRange,
   upcomingClasses,
 }: DashboardClientProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const handleDateRangeApply = (nextRange: DateRangeValue) => {
-    const params = updateDateRangeSearchParams(searchParams, nextRange);
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        <DateRangeFilter value={dateRange} onChange={handleDateRangeApply} />
-      </div>
-
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <StatCard
           icon={BookOpenCheck}

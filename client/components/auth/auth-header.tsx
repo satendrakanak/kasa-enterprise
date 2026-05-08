@@ -14,7 +14,7 @@ export default function AuthHeader({ label }: AuthHeaderProps) {
       </div>
 
       <p className="text-xs font-bold uppercase tracking-[0.24em] text-blue-700 dark:text-rose-200">
-        Unitus Academy
+        Code With Kasa
       </p>
 
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white md:text-3xl">

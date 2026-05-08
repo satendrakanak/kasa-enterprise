@@ -19,7 +19,7 @@ type ArticleCategorySummary = {
 export const metadata = buildMetadata({
   title: "Articles",
   description:
-    "Read practical wellness, health, learning, and nutrition articles from Unitus Health Academy.",
+    "Read practical coding, learning, projects, and career-oriented articles from Code With Kasa.",
   path: "/articles",
 });
 

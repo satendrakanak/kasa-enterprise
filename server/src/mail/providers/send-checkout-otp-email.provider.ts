@@ -21,7 +21,7 @@ export class SendCheckoutOtpEmailProvider {
     const diffMs = expiresAt.getTime() - Date.now();
     const expiryTime = `${Math.max(1, Math.floor(diffMs / 1000 / 60))} minutes`;
 
-    let subject = 'Verify your Unitus checkout';
+    let subject = 'Verify your Code With Kasa checkout';
     let html = `
       <div style="margin:0;padding:32px;background:#f5f7fb;font-family:Arial,sans-serif;color:#111827">
         <div style="max-width:640px;margin:auto;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e5e7eb">

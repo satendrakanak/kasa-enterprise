@@ -19,9 +19,9 @@ import { buildMetadata } from "@/lib/seo";
 
 export const metadata = buildMetadata({
   path: "/",
-  title: "Wellness & Nutrition Courses",
+  title: "Practical Coding Courses",
   description:
-    "Explore practical health, wellness, Ayurveda, and nutrition courses designed for modern learners.",
+    "Explore practical coding courses, live classes, exams, certificates, and career-focused learning.",
 });
 
 export default async function Home() {

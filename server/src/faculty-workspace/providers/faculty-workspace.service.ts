@@ -15,6 +15,8 @@ import { ExamAttempt } from 'src/exams/exam-attempt.entity';
 import { Exam } from 'src/exams/exam.entity';
 import { ExamAttemptStatus } from 'src/exams/enums/exam-attempt-status.enum';
 import { ExamStatus } from 'src/exams/enums/exam-status.enum';
+import { NotificationType } from 'src/notifications/enums/notification-type.enum';
+import { NotificationsService } from 'src/notifications/notifications.service';
 import { FileTypes } from 'src/uploads/enums/file-types.enum';
 import { UploadStatus } from 'src/uploads/enums/upload-status.enum';
 import { S3Provider } from 'src/uploads/providers/s3.provider';
@@ -73,6 +75,7 @@ export class FacultyWorkspaceService {
     private readonly bigBlueButtonProvider: BigBlueButtonProvider,
     private readonly s3Provider: S3Provider,
     private readonly mediaFileMappingService: MediaFileMappingService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getWorkspace(user: ActiveUserData) {
@@ -606,6 +609,8 @@ export class FacultyWorkspaceService {
       }),
     );
 
+    this.notifyStudentsAboutSessionSafely(session, 'scheduled');
+
     return session;
   }
 
@@ -672,6 +677,10 @@ export class FacultyWorkspaceService {
     }
 
     const savedSession = await this.classSessionRepository.save(session);
+
+    if (dto.startsAt !== undefined || dto.endsAt !== undefined) {
+      this.notifyStudentsAboutSessionSafely(savedSession, 'updated');
+    }
 
     return savedSession;
   }
@@ -1351,5 +1360,45 @@ export class FacultyWorkspaceService {
     return this.getReminderOffsets(session).filter(
       (offset) => !sent.has(offset),
     );
+  }
+
+  private notifyStudentsAboutSessionSafely(
+    session: ClassSession,
+    action: 'scheduled' | 'updated',
+  ) {
+    const students = session.batch?.students ?? [];
+    const startsAt = session.startsAt.toLocaleString('en-IN', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: session.timezone || 'Asia/Kolkata',
+    });
+
+    void this.notificationsService
+      .createMany(
+        students
+          .filter(
+            (student) =>
+              student.status === BatchStudentStatus.Active &&
+              Boolean(student.student?.id),
+          )
+          .map((student) => ({
+            recipientId: student.student.id,
+            actorId: session.faculty?.id ?? null,
+            title:
+              action === 'scheduled'
+                ? 'New live class scheduled'
+                : 'Live class schedule updated',
+            message: `${session.title} for ${session.course.title} is ${action === 'scheduled' ? 'scheduled' : 'updated'} for ${startsAt}.`,
+            href: '/classes',
+            type: NotificationType.Class,
+            metadata: {
+              sessionId: session.id,
+              courseId: session.course.id,
+              batchId: session.batch.id,
+              startsAt: session.startsAt,
+            },
+          })),
+      )
+      .catch(() => undefined);
   }
 }

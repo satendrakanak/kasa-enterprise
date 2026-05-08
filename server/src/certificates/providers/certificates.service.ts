@@ -116,13 +116,13 @@ export class CertificatesService {
       relations: ['user', 'course', 'file'],
     });
 
-    // if (existing) {
-    //   if (options.sendEmail && !existing.emailedAt) {
-    //     await this.sendCertificateEmail(existing);
-    //   }
+    if (existing) {
+      if (options.sendEmail && !existing.emailedAt) {
+        await this.sendCertificateEmail(existing);
+      }
 
-    //   return existing;
-    // }
+      return existing;
+    }
 
     const [user, course] = await Promise.all([
       this.userRepository.findOne({
@@ -152,7 +152,7 @@ export class CertificatesService {
     }
 
     const issuedAt = new Date();
-    const certificateNumber = await this.createCertificateNumber(courseId);
+    const certificateNumber = this.createCertificateNumber(courseId);
     const avatarUrl = user.avatar
       ? this.mediaFileMappingService.mapFile(user.avatar).path
       : null;
@@ -345,7 +345,7 @@ export class CertificatesService {
       );
     } catch {
       return {
-        subject: 'Your Unitus certificate for {{courseTitle}} is ready',
+        subject: 'Your Code With Kasa certificate for {{courseTitle}} is ready',
         body: this.defaultEmailTemplate(),
       };
     }
@@ -360,7 +360,7 @@ export class CertificatesService {
             <h1 style="font-size:32px;line-height:1.2;margin:0">Congratulations, {{name}}!</h1>
           </div>
           <div style="padding:32px">
-            <p style="font-size:16px;line-height:1.7;color:#475569">You have successfully completed <strong>{{courseTitle}}</strong>. Your certificate is attached with this email and can also be downloaded from your Unitus profile.</p>
+            <p style="font-size:16px;line-height:1.7;color:#475569">You have successfully completed <strong>{{courseTitle}}</strong>. Your certificate is attached with this email and can also be downloaded from your Code With Kasa profile.</p>
             <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:18px;margin:24px 0">
               <p style="margin:0;color:#9a3412;font-size:13px">Certificate ID</p>
               <p style="margin:6px 0 0;font-size:20px;font-weight:700;color:#111827">{{certificateNumber}}</p>
@@ -373,9 +373,9 @@ export class CertificatesService {
     `;
   }
 
-  private async createCertificateNumber(courseId: number) {
+  private createCertificateNumber(courseId: number) {
     const suffix = randomUUID().split('-')[0].toUpperCase();
-    return `UNITUS-${courseId}-${new Date().getFullYear()}-${suffix}`;
+    return `CWK-${courseId}-${new Date().getFullYear()}-${suffix}`;
   }
 
   private toResponse(certificate: Certificate): CertificateResponse {

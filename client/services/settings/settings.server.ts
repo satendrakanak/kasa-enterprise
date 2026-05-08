@@ -6,6 +6,7 @@ import {
   EmailSettings,
   Gateway,
   PaymentGatewayAdmin,
+  PushNotificationSettings,
   PublicSettingsBundle,
   SiteSettings,
   SocialAuthProvider,
@@ -28,6 +29,11 @@ export const settingsServerService = {
     apiServer.get<ApiResponse<AwsStorageSettings>>("/settings/aws-storage"),
   getBbbSettings: () =>
     apiServer.get<ApiResponse<BbbSettings>>("/settings/bbb"),
+
+  getPushNotificationSettings: () =>
+    apiServer.get<ApiResponse<PushNotificationSettings>>(
+      "/settings/push-notifications",
+    ),
 
   getSocialAuthSettings: () =>
     apiServer.get<ApiResponse<{ providers: SocialAuthProvider[] }>>(

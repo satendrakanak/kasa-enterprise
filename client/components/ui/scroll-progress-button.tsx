@@ -45,7 +45,7 @@ export function ScrollProgressButton() {
       aria-label="Back to top"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       className={cn(
-        "fixed bottom-5 right-4 z-[70] flex h-12 w-12 items-center justify-center rounded-full bg-background/92 text-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.45)] backdrop-blur-xl transition duration-300 md:bottom-6 md:right-6",
+        "fixed bottom-5 right-4 z-[70] hidden h-12 w-12 items-center justify-center rounded-full bg-background/92 text-foreground shadow-[0_18px_40px_-22px_rgba(15,23,42,0.45)] backdrop-blur-xl transition duration-300 md:bottom-6 md:right-6 md:flex",
         visible
           ? "pointer-events-auto translate-y-0 opacity-100"
           : "pointer-events-none translate-y-6 opacity-0",

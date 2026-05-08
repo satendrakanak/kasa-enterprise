@@ -478,8 +478,8 @@ const certificateTemplate = `
       <div class="soft-right"></div>
 
       <div class="logo">
-        <div class="logo-box">U</div>
-        <div class="logo-text">UNITUS HEALTH ACADEMY</div>
+        <div class="logo-box">C</div>
+        <div class="logo-text">CODE WITH KASA</div>
       </div>
 
       <svg class="watermark" viewBox="0 0 500 300">
@@ -782,11 +782,11 @@ const invoiceTemplate = `
   <div class="invoice">
     <div class="header">
       <div class="brand">
-        <h1>UNITUS HEALTH ACADEMY</h1>
+        <h1>CODE WITH KASA</h1>
         <p>
           Online Learning Platform<br/>
-          Email: support@unitusacademy.com<br/>
-          Website: www.unitusacademy.com
+          Email: support@codewithkasa.com<br/>
+          Website: www.codewithkasa.com
         </p>
       </div>
 
@@ -877,14 +877,14 @@ const invoiceTemplate = `
       <div>
         1. This is a computer-generated invoice and does not require a physical signature.<br/>
         2. Course access will be provided as per the academy policy after successful payment.<br/>
-        3. Fees once paid are subject to the refund and cancellation policy of Unitus Health Academy.<br/>
-        4. For billing support, contact support@unitusacademy.com.
+        3. Fees once paid are subject to the refund and cancellation policy of Code With Kasa.<br/>
+        4. For billing support, contact support@codewithkasa.com.
       </div>
     </div>
 
     <div class="footer">
       <div class="muted">
-        Thank you for choosing Unitus Health Academy.
+        Thank you for choosing Code With Kasa.
       </div>
 
       <div class="signature">

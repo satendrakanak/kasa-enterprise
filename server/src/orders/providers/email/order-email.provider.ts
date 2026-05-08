@@ -50,7 +50,7 @@ export class OrderEmailProvider {
         eyebrow: 'Payment failed',
         heading: 'Your payment could not be completed',
         description:
-          'Your Unitus payment for order #{{orderId}} did not go through. You can retry the payment using the button below.',
+          'Your Code With Kasa payment for order #{{orderId}} did not go through. You can retry the payment using the button below.',
         buttonLabel: 'Retry payment',
       }),
     });
@@ -102,7 +102,7 @@ export class OrderEmailProvider {
       retryUrl: this.getRetryUrl(order),
     };
     const template = await this.getTemplate(PURCHASE_TEMPLATE, {
-      subject: 'Your Unitus course purchase is confirmed',
+      subject: 'Your Code With Kasa course purchase is confirmed',
       body: this.defaultPurchaseTemplate(),
     });
 
@@ -233,7 +233,7 @@ export class OrderEmailProvider {
   private async buildInvoiceAttachment(order: Order) {
     const pdfBuffer = await renderInvoicePdf(order);
     return {
-      filename: `unitus-invoice-order-${order.id}.pdf`,
+      filename: `codewithkasa-invoice-order-${order.id}.pdf`,
       content: pdfBuffer.toString('base64'),
       encoding: 'base64',
       contentType: 'application/pdf',
@@ -293,7 +293,7 @@ export class OrderEmailProvider {
             <h1 style="font-size:30px;line-height:1.2;margin:0">Thank you, {{name}}.</h1>
           </div>
           <div style="padding:30px">
-            <p style="font-size:16px;line-height:1.7;color:#475569">Your Unitus order #{{orderId}} for {{courseCount}} course(s) has been successfully paid. Your invoice is attached with this email.</p>
+            <p style="font-size:16px;line-height:1.7;color:#475569">Your Code With Kasa order #{{orderId}} for {{courseCount}} course(s) has been successfully paid. Your invoice is attached with this email.</p>
             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:18px;margin:22px 0">{{coursesList}}</div>
             <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:18px;margin:22px 0">
               <p style="margin:0 0 8px;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#9a3412">Invoice reference</p>

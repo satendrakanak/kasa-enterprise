@@ -7,7 +7,7 @@ import { buildMetadata } from "@/lib/seo";
 export const metadata = buildMetadata({
   title: "Contact",
   description:
-    "Contact Unitus Health Academy for course guidance, support, and academy enquiries.",
+    "Contact Code With Kasa for course guidance, support, and academy enquiries.",
   path: "/contact",
 });
 
