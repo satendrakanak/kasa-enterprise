@@ -1,7 +1,13 @@
+"use client";
+
 import { Download, ExternalLink, PlayCircle } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getErrorMessage } from "@/lib/error-handler";
+import { downloadRemoteFile } from "@/lib/download-file";
 import type { FacultyClassRecording } from "@/types/faculty-workspace";
 import { formatDateTime } from "@/utils/formate-date";
 
@@ -11,7 +17,24 @@ type ClassRecordingsProps = {
 };
 
 export function ClassRecordings({ recordings, limit }: ClassRecordingsProps) {
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const visibleRecordings = recordings.slice(0, limit ?? recordings.length);
+
+  async function handleDownload(recording: FacultyClassRecording) {
+    if (!recording.file?.path) return;
+
+    try {
+      setDownloadingId(recording.id);
+      await downloadRemoteFile(
+        recording.file.path,
+        getRecordingFileName(recording),
+      );
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -65,11 +88,15 @@ export function ClassRecordings({ recordings, limit }: ClassRecordingsProps) {
                   </Button>
                 ) : null}
                 {recording.file?.path ? (
-                  <Button asChild variant="outline" size="sm">
-                    <a href={recording.file.path} target="_blank" rel="noreferrer">
-                      <Download className="size-4" />
-                      Download
-                    </a>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={downloadingId === recording.id}
+                    onClick={() => handleDownload(recording)}
+                  >
+                    <Download className="size-4" />
+                    {downloadingId === recording.id ? "Downloading" : "Download"}
                   </Button>
                 ) : null}
               </div>
@@ -90,4 +117,19 @@ export function ClassRecordings({ recordings, limit }: ClassRecordingsProps) {
       )}
     </div>
   );
+}
+
+function getRecordingFileName(recording: FacultyClassRecording) {
+  const extension = recording.file?.name?.split(".").pop() || "mp4";
+  const baseName = [
+    recording.session?.title || recording.name || "class-recording",
+    recording.course?.title,
+  ]
+    .filter(Boolean)
+    .join("-")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  return `${baseName || "class-recording"}.${extension}`;
 }

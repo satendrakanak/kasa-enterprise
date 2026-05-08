@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   Clock,
@@ -22,8 +22,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { getErrorMessage } from "@/lib/error-handler";
-import { facultyWorkspaceClient } from "@/services/faculty/faculty-workspace.client";
 import type {
   FacultyClassRecording,
   FacultyClassSession,
@@ -39,6 +37,7 @@ type ClassesViewProps = {
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function ClassesView({ recordings, sessions }: ClassesViewProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [joiningSessionId, setJoiningSessionId] = useState<number | null>(null);
   const [monthAnchor, setMonthAnchor] = useState(() =>
@@ -80,16 +79,9 @@ export function ClassesView({ recordings, sessions }: ClassesViewProps) {
 
   const nextClass = sessions[0] ?? null;
 
-  async function handleJoinClass(sessionId: number) {
-    try {
-      setJoiningSessionId(sessionId);
-      const response = await facultyWorkspaceClient.joinBbbSession(sessionId);
-      window.location.assign(response.data.joinUrl);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error));
-    } finally {
-      setJoiningSessionId(null);
-    }
+  function handleJoinClass(sessionId: number) {
+    setJoiningSessionId(sessionId);
+    router.push(`/classroom/${sessionId}`);
   }
 
   return (

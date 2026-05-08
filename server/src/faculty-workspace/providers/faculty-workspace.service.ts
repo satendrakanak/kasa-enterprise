@@ -39,6 +39,10 @@ import { ClassSessionStatus } from '../enums/class-session-status.enum';
 import { CourseBatchStatus } from '../enums/course-batch-status.enum';
 import { BigBlueButtonProvider } from './bigbluebutton.provider';
 
+const FACULTY_CLASS_START_EARLY_MINUTES = 30;
+const LEARNER_CLASS_JOIN_EARLY_MINUTES = 10;
+const CLASS_JOIN_GRACE_MINUTES = 15;
+
 @Injectable()
 export class FacultyWorkspaceService {
   constructor(
@@ -265,7 +269,9 @@ export class FacultyWorkspaceService {
       .orderBy('session.startsAt', 'ASC')
       .getMany();
 
-    return sessions.map((session) => this.mapClassSession(session));
+    return Promise.all(
+      sessions.map((session) => this.mapClassSessionWithBbbState(session)),
+    );
   }
 
   async getLearnerRecordings(user: ActiveUserData) {
@@ -476,6 +482,13 @@ export class FacultyWorkspaceService {
       .leftJoinAndSelect('recording.session', 'session')
       .leftJoinAndSelect('recording.course', 'course')
       .leftJoinAndSelect('recording.batch', 'batch')
+      .leftJoinAndSelect(
+        'batch.students',
+        'recordingBatchStudent',
+        'recordingBatchStudent.status = :activeStudent',
+        { activeStudent: BatchStudentStatus.Active },
+      )
+      .leftJoinAndSelect('recordingBatchStudent.student', 'recordingLearner')
       .leftJoinAndSelect('recording.faculty', 'faculty')
       .leftJoinAndSelect('recording.upload', 'upload')
       .orderBy('recording.recordedAt', 'DESC', 'NULLS LAST')
@@ -605,6 +618,7 @@ export class FacultyWorkspaceService {
         status: dto.status ?? ClassSessionStatus.Scheduled,
         reminderBeforeMinutes: dto.reminderBeforeMinutes ?? 60,
         reminderOffsetsMinutes: this.normalizeReminderOffsets(dto),
+        bbbRecord: dto.bbbRecord ?? true,
         allowRecordingAccess: dto.allowRecordingAccess ?? false,
       }),
     );
@@ -675,6 +689,9 @@ export class FacultyWorkspaceService {
     if (dto.allowRecordingAccess !== undefined) {
       session.allowRecordingAccess = dto.allowRecordingAccess;
     }
+    if (dto.bbbRecord !== undefined) {
+      session.bbbRecord = dto.bbbRecord;
+    }
 
     const savedSession = await this.classSessionRepository.save(session);
 
@@ -687,6 +704,11 @@ export class FacultyWorkspaceService {
 
   async startBbbSession(id: number, user: ActiveUserData) {
     const session = await this.getSessionForFaculty(id, user);
+    this.assertSessionCanStart(session);
+    if (session.status === ClassSessionStatus.Completed) {
+      session.status = ClassSessionStatus.Scheduled;
+    }
+
     const prepared = await this.ensureBbbMeeting(session);
     const joinUrl = await this.bigBlueButtonProvider.getJoinUrl({
       meetingID: prepared.bbbMeetingId!,
@@ -701,25 +723,40 @@ export class FacultyWorkspaceService {
 
   async joinBbbSession(id: number, user: ActiveUserData) {
     const session = await this.getSessionForLearner(id, user);
-    const prepared = await this.ensureBbbMeeting(session);
+    await this.assertSessionCanJoin(session);
+
     const learner = await this.userRepository.findOne({
       where: { id: user.sub },
     });
 
     const joinUrl = await this.bigBlueButtonProvider.getJoinUrl({
-      meetingID: prepared.bbbMeetingId!,
+      meetingID: session.bbbMeetingId!,
       fullName: this.getUserDisplayName(learner),
       role: 'VIEWER',
-      password: prepared.bbbAttendeePassword!,
+      password: session.bbbAttendeePassword!,
       userID: `learner-${user.sub}`,
     });
 
     return { joinUrl };
   }
 
+  async getFacultyBbbSessionStatus(id: number, user: ActiveUserData) {
+    const session = await this.getSessionForFaculty(id, user);
+    return this.getBbbSessionStatus(session);
+  }
+
+  async getLearnerBbbSessionStatus(id: number, user: ActiveUserData) {
+    const session = await this.getSessionForLearner(id, user, {
+      requireScheduled: false,
+    });
+    return this.getBbbSessionStatus(session);
+  }
+
   async getSessionRecordings(id: number, user: ActiveUserData) {
     const session = await this.getSessionForFaculty(id, user, [
       'batch',
+      'batch.students',
+      'batch.students.student',
       'course',
       'faculty',
       'recordings',
@@ -727,13 +764,15 @@ export class FacultyWorkspaceService {
     ]);
 
     return (session.recordings ?? []).map((recording) =>
-      this.mapClassRecording(recording),
+      this.mapClassRecording({ ...recording, session }),
     );
   }
 
   async syncSessionRecordings(id: number, user: ActiveUserData) {
     const session = await this.getSessionForFaculty(id, user, [
       'batch',
+      'batch.students',
+      'batch.students.student',
       'course',
       'faculty',
       'recordings',
@@ -798,7 +837,15 @@ export class FacultyWorkspaceService {
 
     const recordings = await this.classRecordingRepository.find({
       where: { session: { id: session.id } },
-      relations: ['upload'],
+      relations: [
+        'session',
+        'course',
+        'batch',
+        'batch.students',
+        'batch.students.student',
+        'faculty',
+        'upload',
+      ],
       order: { recordedAt: 'DESC', createdAt: 'DESC' },
     });
 
@@ -918,23 +965,37 @@ export class FacultyWorkspaceService {
   }
 
   private async ensureBbbMeeting(session: ClassSession) {
-    if (!session.bbbMeetingId) {
-      session.bbbMeetingId = `session-${session.id}-${randomUUID()}`;
+    if (session.bbbMeetingId && session.bbbModeratorPassword) {
+      try {
+        const meetingInfo = await this.bigBlueButtonProvider.getMeetingInfo(
+          session.bbbMeetingId,
+          session.bbbModeratorPassword,
+        );
+
+        if (!meetingInfo.isRunning || meetingInfo.moderatorCount < 1) {
+          this.resetBbbMeetingCredentials(session);
+        }
+      } catch {
+        this.resetBbbMeetingCredentials(session);
+      }
+    } else {
+      this.resetBbbMeetingCredentials(session);
     }
 
-    if (!session.bbbModeratorPassword) {
-      session.bbbModeratorPassword = this.generateMeetingPassword();
-    }
-
-    if (!session.bbbAttendeePassword) {
-      session.bbbAttendeePassword = this.generateMeetingPassword();
+    if (
+      !session.bbbMeetingId ||
+      !session.bbbAttendeePassword ||
+      !session.bbbModeratorPassword
+    ) {
+      this.resetBbbMeetingCredentials(session);
     }
 
     const response = await this.bigBlueButtonProvider.createMeeting({
-      meetingID: session.bbbMeetingId,
+      meetingID: session.bbbMeetingId!,
       name: session.title,
-      attendeePW: session.bbbAttendeePassword,
-      moderatorPW: session.bbbModeratorPassword,
+      attendeePW: session.bbbAttendeePassword!,
+      moderatorPW: session.bbbModeratorPassword!,
+      record: session.bbbRecord,
       welcome: session.description,
     });
 
@@ -945,8 +1006,85 @@ export class FacultyWorkspaceService {
     return this.classSessionRepository.save(session);
   }
 
+  private resetBbbMeetingCredentials(session: ClassSession) {
+    session.bbbMeetingId = `session-${session.id}-${randomUUID()}`;
+    session.bbbModeratorPassword = this.generateMeetingPassword();
+    session.bbbAttendeePassword = this.generateMeetingPassword();
+    session.bbbCreateTime = null;
+  }
+
   private generateMeetingPassword() {
     return randomBytes(12).toString('hex');
+  }
+
+  private assertSessionCanStart(session: ClassSession) {
+    if (session.status === ClassSessionStatus.Cancelled) {
+      throw new BadRequestException('Cancelled classes cannot be started');
+    }
+
+    if (
+      session.status === ClassSessionStatus.Completed &&
+      Date.now() > session.endsAt.getTime() + CLASS_JOIN_GRACE_MINUTES * 60 * 1000
+    ) {
+      throw new BadRequestException('Only scheduled classes can be started');
+    }
+
+    const now = Date.now();
+    const startsAt = session.startsAt.getTime();
+    const endsAt = session.endsAt.getTime();
+    const earliestStart =
+      startsAt - FACULTY_CLASS_START_EARLY_MINUTES * 60 * 1000;
+    const latestStart = endsAt + CLASS_JOIN_GRACE_MINUTES * 60 * 1000;
+
+    if (now < earliestStart) {
+      throw new BadRequestException(
+        `This class can be started ${FACULTY_CLASS_START_EARLY_MINUTES} minutes before its scheduled time`,
+      );
+    }
+
+    if (now > latestStart) {
+      throw new BadRequestException('This class time window has ended');
+    }
+  }
+
+  private async assertSessionCanJoin(session: ClassSession) {
+    if (
+      !session.bbbMeetingId ||
+      !session.bbbAttendeePassword ||
+      !session.bbbModeratorPassword
+    ) {
+      throw new BadRequestException(
+        'Faculty has not started this class yet. Please wait for the class to begin.',
+      );
+    }
+
+    const now = Date.now();
+    const startsAt = session.startsAt.getTime();
+    const endsAt = session.endsAt.getTime();
+    const earliestJoin =
+      startsAt - LEARNER_CLASS_JOIN_EARLY_MINUTES * 60 * 1000;
+    const latestJoin = endsAt + CLASS_JOIN_GRACE_MINUTES * 60 * 1000;
+
+    if (now < earliestJoin) {
+      throw new BadRequestException(
+        `You can join this class ${LEARNER_CLASS_JOIN_EARLY_MINUTES} minutes before it starts`,
+      );
+    }
+
+    if (now > latestJoin) {
+      throw new BadRequestException('This class is no longer available to join');
+    }
+
+    const meetingInfo = await this.bigBlueButtonProvider.getMeetingInfo(
+      session.bbbMeetingId,
+      session.bbbModeratorPassword,
+    );
+
+    if (!meetingInfo.isRunning || meetingInfo.moderatorCount < 1) {
+      throw new BadRequestException(
+        'Faculty has not started this class yet. Please wait for the class to begin.',
+      );
+    }
   }
 
   private getUserDisplayName(user?: User | null) {
@@ -1032,7 +1170,11 @@ export class FacultyWorkspaceService {
     return session;
   }
 
-  private async getSessionForLearner(id: number, user: ActiveUserData) {
+  private async getSessionForLearner(
+    id: number,
+    user: ActiveUserData,
+    options: { requireScheduled?: boolean } = { requireScheduled: true },
+  ) {
     const session = await this.classSessionRepository.findOne({
       where: { id },
       relations: [
@@ -1048,7 +1190,10 @@ export class FacultyWorkspaceService {
       throw new NotFoundException('Session not found');
     }
 
-    if (session.status !== ClassSessionStatus.Scheduled) {
+    if (
+      options.requireScheduled !== false &&
+      session.status !== ClassSessionStatus.Scheduled
+    ) {
       throw new BadRequestException('Only scheduled classes can be joined');
     }
 
@@ -1063,6 +1208,42 @@ export class FacultyWorkspaceService {
     }
 
     return session;
+  }
+
+  private async getBbbSessionStatus(session: ClassSession) {
+    if (!session.bbbMeetingId || !session.bbbModeratorPassword) {
+      return {
+        isRunning: false,
+        isEnded: session.status === ClassSessionStatus.Completed,
+        participantCount: 0,
+        moderatorCount: 0,
+        status: session.status,
+      };
+    }
+
+    const meetingInfo = await this.bigBlueButtonProvider.getMeetingInfo(
+      session.bbbMeetingId,
+      session.bbbModeratorPassword,
+    );
+
+    if (
+      !meetingInfo.isRunning &&
+      session.status === ClassSessionStatus.Scheduled &&
+      Date.now() >= session.endsAt.getTime()
+    ) {
+      session.status = ClassSessionStatus.Completed;
+      await this.classSessionRepository.save(session);
+    }
+
+    return {
+      isRunning: meetingInfo.isRunning,
+      isEnded:
+        !meetingInfo.isRunning ||
+        session.status === ClassSessionStatus.Completed,
+      participantCount: meetingInfo.participantCount,
+      moderatorCount: meetingInfo.moderatorCount,
+      status: session.status,
+    };
   }
 
   private async getExamAttemptForFaculty(id: number, user: ActiveUserData) {
@@ -1122,6 +1303,10 @@ export class FacultyWorkspaceService {
       timezone: session.timezone,
       meetingUrl: session.meetingUrl,
       hasBbbMeeting: Boolean(session.bbbMeetingId),
+      bbbIsRunning: false,
+      bbbParticipantCount: 0,
+      bbbModeratorCount: 0,
+      bbbRecord: session.bbbRecord,
       allowRecordingAccess: session.allowRecordingAccess,
       location: session.location,
       status: session.status,
@@ -1148,7 +1333,64 @@ export class FacultyWorkspaceService {
     };
   }
 
+  private async mapClassSessionWithBbbState(session: ClassSession) {
+    const mapped = this.mapClassSession(session);
+
+    if (!session.bbbMeetingId || !session.bbbModeratorPassword) {
+      return mapped;
+    }
+
+    const now = Date.now();
+    const shouldCheckBbb =
+      session.status !== ClassSessionStatus.Cancelled &&
+      now <= session.endsAt.getTime() + CLASS_JOIN_GRACE_MINUTES * 60 * 1000;
+
+    if (!shouldCheckBbb) {
+      return mapped;
+    }
+
+    try {
+      const meetingInfo = await this.bigBlueButtonProvider.getMeetingInfo(
+        session.bbbMeetingId,
+        session.bbbModeratorPassword,
+      );
+
+      return {
+        ...mapped,
+        bbbIsRunning: meetingInfo.isRunning,
+        bbbParticipantCount: meetingInfo.participantCount,
+        bbbModeratorCount: meetingInfo.moderatorCount,
+      };
+    } catch {
+      return mapped;
+    }
+  }
+
   private mapClassRecording(recording: ClassRecording) {
+    const sessionEnded = recording.session
+      ? recording.session.endsAt.getTime() <= Date.now()
+      : false;
+    const learnerAccessAllowed = Boolean(
+      recording.session?.allowRecordingAccess,
+    );
+    const isReadyForLearners = [
+      ClassRecordingStatus.Available,
+      ClassRecordingStatus.Archived,
+    ].includes(recording.status);
+    const activeLearners =
+      recording.batch?.students
+        ?.filter((item) => item.status === BatchStudentStatus.Active)
+        .map((item) => item.student)
+        .filter((student): student is User => Boolean(student)) ?? [];
+    const learnerVisibilityReasons = [
+      learnerAccessAllowed
+        ? null
+        : 'Learner recording access is turned off for this class.',
+      sessionEnded ? null : 'Class end time has not passed yet.',
+      isReadyForLearners ? null : 'Recording is not available for learners yet.',
+      activeLearners.length ? null : 'No active learners are assigned to this batch.',
+    ].filter((reason): reason is string => Boolean(reason));
+
     return {
       id: recording.id,
       bbbRecordId: recording.bbbRecordId,
@@ -1171,6 +1413,7 @@ export class FacultyWorkspaceService {
             startsAt: recording.session.startsAt,
             endsAt: recording.session.endsAt,
             status: recording.session.status,
+            allowRecordingAccess: recording.session.allowRecordingAccess,
           }
         : null,
       course: recording.course
@@ -1194,6 +1437,24 @@ export class FacultyWorkspaceService {
             email: recording.faculty.email,
           }
         : null,
+      access: {
+        learnerAccessAllowed,
+        learnerVisible:
+          learnerAccessAllowed &&
+          sessionEnded &&
+          isReadyForLearners &&
+          activeLearners.length > 0,
+        sessionEnded,
+        readyForLearners: isReadyForLearners,
+        activeLearnerCount: activeLearners.length,
+        reasons: learnerVisibilityReasons,
+      },
+      learners: activeLearners.map((student) => ({
+        id: student.id,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        email: student.email,
+      })),
     };
   }
 

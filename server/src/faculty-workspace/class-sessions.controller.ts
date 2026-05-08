@@ -26,4 +26,12 @@ export class ClassSessionsController {
   ) {
     return this.facultyWorkspaceService.joinBbbSession(id, user);
   }
+
+  @Get(':id/bbb/status')
+  getBbbSessionStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    return this.facultyWorkspaceService.getLearnerBbbSessionStatus(id, user);
+  }
 }

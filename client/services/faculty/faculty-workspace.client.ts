@@ -83,6 +83,19 @@ export const facultyWorkspaceClient = {
       ),
     ),
 
+  getFacultyBbbSessionStatus: (id: number) =>
+    withAuthRetry(() =>
+      apiClient.get<
+        ApiResponse<{
+          isRunning: boolean;
+          isEnded: boolean;
+          participantCount: number;
+          moderatorCount: number;
+          status: string;
+        }>
+      >(`/api/faculty/sessions/${id}/bbb/status`),
+    ),
+
   getSessionRecordings: (id: number) =>
     withAuthRetry(() =>
       apiClient.get<ApiResponse<FacultyClassRecording[]>>(
@@ -109,6 +122,19 @@ export const facultyWorkspaceClient = {
       apiClient.post<ApiResponse<{ joinUrl: string }>>(
         `/api/class-sessions/${id}/bbb/join`,
       ),
+    ),
+
+  getLearnerBbbSessionStatus: (id: number) =>
+    withAuthRetry(() =>
+      apiClient.get<
+        ApiResponse<{
+          isRunning: boolean;
+          isEnded: boolean;
+          participantCount: number;
+          moderatorCount: number;
+          status: string;
+        }>
+      >(`/api/class-sessions/${id}/bbb/status`),
     ),
 
   getExamAttempt: (id: number) =>

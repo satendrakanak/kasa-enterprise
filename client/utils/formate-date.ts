@@ -1,4 +1,5 @@
 const APP_TIME_ZONE = "Asia/Kolkata";
+const APP_TIME_ZONE_OFFSET_MINUTES = 330;
 
 export type DatedLifecycle = "active" | "upcoming" | "recent" | "draft" | "cancelled";
 
@@ -28,7 +29,7 @@ export function formatDateTime(date: string) {
   const day = get("day");
   const month = get("month");
   const year = get("year");
-  const hour = get("hour");
+  const hour = normalizeTwelveHour(get("hour"));
   const minute = get("minute");
   const dayPeriod = get("dayPeriod").toLowerCase();
 
@@ -37,13 +38,68 @@ export function formatDateTime(date: string) {
   return formatted;
 }
 
+export function formatDateTimeInput(value?: string | Date | null) {
+  if (!value) return "";
+
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: APP_TIME_ZONE,
+  }).formatToParts(date);
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
+export function parseDateTimeInputToIso(value: string) {
+  const [datePart, timePart] = value.split("T");
+
+  if (!datePart || !timePart) {
+    return new Date(value).toISOString();
+  }
+
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+
+  if (
+    [year, month, day, hour, minute].some(
+      (part) => !Number.isFinite(part),
+    )
+  ) {
+    return new Date(value).toISOString();
+  }
+
+  const utcMs =
+    Date.UTC(year, month - 1, day, hour, minute) -
+    APP_TIME_ZONE_OFFSET_MINUTES * 60 * 1000;
+
+  return new Date(utcMs).toISOString();
+}
+
 export function formatTime(date: string) {
-  return new Intl.DateTimeFormat("en-GB", {
+  const parts = new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
     timeZone: APP_TIME_ZONE,
-  }).format(new Date(date));
+  }).formatToParts(new Date(date));
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return `${normalizeTwelveHour(get("hour"))}:${get("minute")} ${get("dayPeriod").toLowerCase()}`;
 }
 
 export function formatMonthTitle(date: Date) {
@@ -118,4 +174,8 @@ export function getDatedLifecycle(
   if (start && start > todayKey) return "upcoming";
 
   return "active";
+}
+
+function normalizeTwelveHour(hour: string) {
+  return hour === "00" ? "12" : hour;
 }

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarDays, Video } from "lucide-react";
 
 import { LearnFooter } from "@/components/layout/learn-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getErrorMessage } from "@/lib/error-handler";
 import {
   getNextLecture,
   getResumeLecture,
@@ -22,8 +22,6 @@ import {
   isFacultyLedCourse,
 } from "@/lib/course-delivery";
 import { formatDateTime } from "@/utils/formate-date";
-import { facultyWorkspaceClient } from "@/services/faculty/faculty-workspace.client";
-import { toast } from "sonner";
 import { FacultyLedLearningClient } from "./faculty-led-learning-client";
 import { CourseTabs } from "./course-tabs";
 import { LearnCourseSidebar } from "./learn-course-sidebar";
@@ -36,22 +34,18 @@ interface LearnClientProps {
 }
 
 export const LearnClient = ({ course, liveSessions = [] }: LearnClientProps) => {
+  const router = useRouter();
   const [courseData, setCourseData] = useState(course);
   const [currentLecture, setCurrentLecture] = useState<Lecture | null>(null);
   const showLiveSessions = hasLiveClasses(course) && liveSessions.length > 0;
 
-  const joinClass = async (session: FacultyClassSession) => {
-    try {
-      if (session.meetingUrl) {
-        window.location.assign(session.meetingUrl);
-        return;
-      }
-
-      const response = await facultyWorkspaceClient.joinBbbSession(session.id);
-      window.location.assign(response.data.joinUrl);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error));
+  const joinClass = (session: FacultyClassSession) => {
+    if (session.meetingUrl) {
+      window.location.assign(session.meetingUrl);
+      return;
     }
+
+    router.push(`/classroom/${session.id}`);
   };
 
   useEffect(() => {

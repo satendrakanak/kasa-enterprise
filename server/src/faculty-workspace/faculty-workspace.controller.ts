@@ -182,6 +182,15 @@ export class FacultyWorkspaceController {
     return this.facultyWorkspaceService.startBbbSession(id, user);
   }
 
+  @Get('sessions/:id/bbb/status')
+  getBbbSessionStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @ActiveUser() user: ActiveUserData,
+  ) {
+    this.assertPermission(user, 'view_faculty_workspace');
+    return this.facultyWorkspaceService.getFacultyBbbSessionStatus(id, user);
+  }
+
   @Get('sessions/:id/recordings')
   getSessionRecordings(
     @Param('id', ParseIntPipe) id: number,

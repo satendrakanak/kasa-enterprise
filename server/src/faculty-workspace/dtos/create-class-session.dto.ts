@@ -66,4 +66,8 @@ export class CreateClassSessionDto {
   @IsOptional()
   @IsBoolean()
   allowRecordingAccess?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  bbbRecord?: boolean;
 }

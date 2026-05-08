@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
@@ -15,12 +16,9 @@ import { WebsiteNavUser } from "@/components/auth/website-nav-user";
 import Logo from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getErrorMessage } from "@/lib/error-handler";
-import { facultyWorkspaceClient } from "@/services/faculty/faculty-workspace.client";
 import type { Course } from "@/types/course";
 import type { FacultyClassSession } from "@/types/faculty-workspace";
 import { formatDateTime } from "@/utils/formate-date";
-import { toast } from "sonner";
 
 type FacultyLedLearningClientProps = {
   course: Course;
@@ -31,21 +29,17 @@ export function FacultyLedLearningClient({
   course,
   sessions,
 }: FacultyLedLearningClientProps) {
+  const router = useRouter();
   const nextSession = sessions[0] ?? null;
   const publishedChapters = course.chapters.filter((chapter) => chapter.isPublished);
 
-  const joinClass = async (session: FacultyClassSession) => {
-    try {
-      if (session.meetingUrl) {
-        window.location.assign(session.meetingUrl);
-        return;
-      }
-
-      const response = await facultyWorkspaceClient.joinBbbSession(session.id);
-      window.location.assign(response.data.joinUrl);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error));
+  const joinClass = (session: FacultyClassSession) => {
+    if (session.meetingUrl) {
+      window.location.assign(session.meetingUrl);
+      return;
     }
+
+    router.push(`/classroom/${session.id}`);
   };
 
   return (

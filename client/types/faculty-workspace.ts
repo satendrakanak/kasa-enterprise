@@ -63,6 +63,10 @@ export type FacultyWorkspaceSession = {
   status: string;
   meetingUrl?: string | null;
   hasBbbMeeting?: boolean;
+  bbbIsRunning?: boolean;
+  bbbParticipantCount?: number;
+  bbbModeratorCount?: number;
+  bbbRecord?: boolean;
   allowRecordingAccess?: boolean;
   reminderOffsetsMinutes?: number[];
   sentReminderOffsetsMinutes?: number[];
@@ -117,6 +121,7 @@ export type FacultyClassRecording = {
     startsAt: string;
     endsAt: string;
     status: string;
+    allowRecordingAccess?: boolean;
   } | null;
   course?: {
     id: number;
@@ -133,6 +138,20 @@ export type FacultyClassRecording = {
     lastName?: string;
     email: string;
   } | null;
+  access?: {
+    learnerAccessAllowed: boolean;
+    learnerVisible: boolean;
+    sessionEnded: boolean;
+    readyForLearners: boolean;
+    activeLearnerCount: number;
+    reasons: string[];
+  };
+  learners?: Array<{
+    id: number;
+    firstName: string;
+    lastName?: string;
+    email: string;
+  }>;
 };
 
 export type FacultyClassSession = {
@@ -144,6 +163,10 @@ export type FacultyClassSession = {
   timezone: string;
   meetingUrl?: string | null;
   hasBbbMeeting?: boolean;
+  bbbIsRunning?: boolean;
+  bbbParticipantCount?: number;
+  bbbModeratorCount?: number;
+  bbbRecord?: boolean;
   allowRecordingAccess?: boolean;
   location?: string | null;
   status: string;
@@ -229,6 +252,7 @@ export type CreateFacultySessionPayload = {
   reminderBeforeMinutes?: number;
   reminderOffsetsMinutes?: number[];
   allowRecordingAccess?: boolean;
+  bbbRecord?: boolean;
 };
 
 export type FacultyWorkspaceData = {

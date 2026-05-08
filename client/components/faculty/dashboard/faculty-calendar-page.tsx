@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/sheet";
 import { ConfirmDeleteDialog } from "@/components/modals/confirm-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { downloadRemoteFile } from "@/lib/download-file";
 import { getErrorMessage } from "@/lib/error-handler";
 import { facultyWorkspaceClient } from "@/services/faculty/faculty-workspace.client";
 import type {
@@ -38,10 +39,12 @@ import type {
   FacultyCourseBatch,
 } from "@/types/faculty-workspace";
 import {
+  formatDateTimeInput,
   formatMonthTitle,
   formatTime,
   getDateKey,
   getDatedLifecycle,
+  parseDateTimeInputToIso,
   parseDateKey,
 } from "@/utils/formate-date";
 
@@ -52,6 +55,7 @@ type FacultyCalendarPageProps = {
   nowIso: string;
   initialBatchId?: number;
   initialDate?: string;
+  initialSessionId?: number;
   openCreateOnLoad?: boolean;
 };
 
@@ -70,6 +74,7 @@ export function FacultyCalendarPage({
   nowIso,
   initialBatchId,
   initialDate,
+  initialSessionId,
   openCreateOnLoad = false,
 }: FacultyCalendarPageProps) {
   const [currentNowIso, setCurrentNowIso] = useState(nowIso);
@@ -100,6 +105,18 @@ export function FacultyCalendarPage({
 
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!initialSessionId) return;
+
+    const session = sessions.find((item) => item.id === initialSessionId);
+    if (!session) return;
+
+    setSelectedDate(getDateKey(session.startsAt));
+    setSelectedSession(session);
+    setMonthAnchor(startOfMonth(new Date(session.startsAt)));
+    setSheetOpen(true);
+  }, [initialSessionId, sessions]);
 
   const filteredSessions = sessions.filter((session) =>
     visibleStatuses.includes(getSessionDisplayStatus(session, currentNowIso)),
@@ -442,7 +459,7 @@ function SideStat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function SessionSheet({
+export function SessionSheet({
   open,
   onOpenChange,
   batches,
@@ -503,6 +520,7 @@ function SessionSheet({
     status: "scheduled",
     reminderOffsetsMinutes: ["60"],
     customReminderMinutes: "",
+    bbbRecord: true,
     allowRecordingAccess: false,
   });
 
@@ -526,14 +544,15 @@ function SessionSheet({
       batchId: session?.batch.id ? String(session.batch.id) : fallbackBatchId,
       title: session?.title ?? "",
       description: session?.description ?? "",
-      startsAt: toInputDateTime(session?.startsAt) || defaultStart,
-      endsAt: toInputDateTime(session?.endsAt) || defaultEnd,
+      startsAt: formatDateTimeInput(session?.startsAt) || defaultStart,
+      endsAt: formatDateTimeInput(session?.endsAt) || defaultEnd,
       timezone: session?.timezone ?? "Asia/Kolkata",
       meetingUrl: session?.meetingUrl ?? "",
       location: session?.location ?? "",
       status: session?.status ?? "scheduled",
       reminderOffsetsMinutes: getSessionReminderOffsets(session).map(String),
       customReminderMinutes: "",
+      bbbRecord: session?.bbbRecord ?? true,
       allowRecordingAccess: session?.allowRecordingAccess ?? false,
     });
     setRecordings(session?.recordings ?? []);
@@ -548,14 +567,15 @@ function SessionSheet({
         batchId: Number(form.batchId),
         title: form.title,
         description: form.description || undefined,
-        startsAt: new Date(form.startsAt).toISOString(),
-        endsAt: new Date(form.endsAt).toISOString(),
+        startsAt: parseDateTimeInputToIso(form.startsAt),
+        endsAt: parseDateTimeInputToIso(form.endsAt),
         timezone: form.timezone || "Asia/Kolkata",
         meetingUrl: form.meetingUrl || undefined,
         location: form.location || undefined,
         status: form.status,
         reminderBeforeMinutes: getReminderOffsetPayload(form)[0] ?? 60,
         reminderOffsetsMinutes: getReminderOffsetPayload(form),
+        bbbRecord: form.bbbRecord,
         allowRecordingAccess: form.allowRecordingAccess,
       };
 
@@ -614,15 +634,8 @@ function SessionSheet({
   async function handleStartBbbClass() {
     if (!session) return;
 
-    try {
-      setIsStartingBbb(true);
-      const response = await facultyWorkspaceClient.startBbbSession(session.id);
-      window.location.assign(response.data.joinUrl);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error));
-    } finally {
-      setIsStartingBbb(false);
-    }
+    setIsStartingBbb(true);
+    router.push(`/classroom/${session.id}?role=faculty`);
   }
 
   async function handleSyncRecordings() {
@@ -764,6 +777,20 @@ function SessionSheet({
           </Field>
           <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-4 text-sm">
             <Checkbox
+              checked={form.bbbRecord}
+              onCheckedChange={(checked) =>
+                setForm({ ...form, bbbRecord: Boolean(checked) })
+              }
+            />
+            <span>
+              <span className="block font-medium">Record this class</span>
+              <span className="mt-1 block text-muted-foreground">
+                BBB will process this class recording after the meeting ends.
+              </span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-4 text-sm">
+            <Checkbox
               checked={form.allowRecordingAccess}
               onCheckedChange={(checked) =>
                 setForm({ ...form, allowRecordingAccess: Boolean(checked) })
@@ -863,6 +890,23 @@ function RecordingPanel({
   onSync: () => void;
 }) {
   const canSync = displayStatus === "completed" && session.hasBbbMeeting;
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+  async function handleDownload(recording: FacultyClassRecording) {
+    if (!recording.file?.path) return;
+
+    try {
+      setDownloadingId(recording.id);
+      await downloadRemoteFile(
+        recording.file.path,
+        getRecordingFileName(recording),
+      );
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   return (
     <section className="rounded-xl border bg-muted/20 p-4">
@@ -907,11 +951,15 @@ function RecordingPanel({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {recording.file?.path ? (
-                    <Button asChild type="button" size="sm" variant="outline">
-                      <a href={recording.file.path} target="_blank" rel="noreferrer">
-                        <Download className="size-4" />
-                        Archive
-                      </a>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={downloadingId === recording.id}
+                      onClick={() => handleDownload(recording)}
+                    >
+                      <Download className="size-4" />
+                      {downloadingId === recording.id ? "Downloading" : "Download"}
                     </Button>
                   ) : null}
                   {recording.playbackUrl ? (
@@ -950,13 +998,6 @@ function Field({
       {children}
     </div>
   );
-}
-
-function toInputDateTime(value?: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 16);
 }
 
 function isSchedulableBatch(batch: FacultyCourseBatch, todayKey: string) {
@@ -1002,6 +1043,15 @@ function getSessionReminderOffsets(session: FacultyClassSession | null) {
   }
 
   return [session?.reminderBeforeMinutes ?? 60];
+}
+
+function getRecordingFileName(recording: FacultyClassRecording) {
+  const extension =
+    recording.file?.mime?.split("/").at(1) ||
+    recording.format?.toLowerCase() ||
+    "mp4";
+
+  return `${recording.name || "class-recording"}.${extension}`;
 }
 
 function formatDuration(seconds?: number | null) {

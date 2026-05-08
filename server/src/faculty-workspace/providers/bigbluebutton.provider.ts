@@ -9,6 +9,7 @@ type CreateMeetingInput = {
   name: string;
   attendeePW: string;
   moderatorPW: string;
+  record?: boolean;
   welcome?: string | null;
 };
 
@@ -47,9 +48,10 @@ export class BigBlueButtonProvider {
       meetingID: input.meetingID,
       attendeePW: input.attendeePW,
       moderatorPW: input.moderatorPW,
-      record: settings.defaultRecord,
+      record: input.record ?? settings.defaultRecord,
       autoStartRecording: settings.autoStartRecording,
       allowStartStopRecording: settings.allowStartStopRecording,
+      allowRequestsWithoutSession: true,
       meetingExpireIfNoUserJoinedInMinutes:
         settings.meetingExpireIfNoUserJoinedInMinutes,
     };
@@ -92,6 +94,42 @@ export class BigBlueButtonProvider {
       },
       settings.sharedSecret,
     );
+  }
+
+  async getMeetingInfo(meetingID: string, moderatorPW: string) {
+    const settings = await this.getRuntimeSettings();
+    const url = this.buildApiUrl(
+      settings.apiUrl,
+      'getMeetingInfo',
+      {
+        meetingID,
+        password: moderatorPW,
+      },
+      settings.sharedSecret,
+    );
+    const response = await fetch(url);
+    const xml = await response.text();
+    const parsed = this.parseBbbResponse(xml);
+
+    if (parsed.messageKey === 'notFound') {
+      return {
+        isRunning: false,
+        participantCount: 0,
+        moderatorCount: 0,
+      };
+    }
+
+    if (!response.ok || parsed.returncode !== 'SUCCESS') {
+      throw new BadRequestException(
+        parsed.message || 'BigBlueButton meeting status could not be checked',
+      );
+    }
+
+    return {
+      isRunning: this.getXmlValue(xml, 'running') !== 'false',
+      participantCount: this.toNumber(this.getXmlValue(xml, 'participantCount')) ?? 0,
+      moderatorCount: this.toNumber(this.getXmlValue(xml, 'moderatorCount')) ?? 0,
+    };
   }
 
   async getRecordings(meetingID: string) {
@@ -158,6 +196,10 @@ export class BigBlueButtonProvider {
       return trimmed;
     }
 
+    if (trimmed.endsWith('/bigbluebutton')) {
+      return `${trimmed}/api`;
+    }
+
     return `${trimmed}/bigbluebutton/api`;
   }
 
@@ -173,6 +215,7 @@ export class BigBlueButtonProvider {
       messageKey: getValue('messageKey'),
       meetingID: getValue('meetingID'),
       createTime: getValue('createTime'),
+      url: this.decodeXml(getValue('url')),
     };
   }
 

@@ -7,6 +7,7 @@ type FacultyCalendarRoutePageProps = {
     batchId?: string;
     date?: string;
     action?: string;
+    sessionId?: string;
   }>;
 };
 
@@ -27,6 +28,7 @@ export default async function FacultyCalendarRoutePage({
       nowIso={new Date().toISOString()}
       initialBatchId={params.batchId ? Number(params.batchId) : undefined}
       initialDate={params.date}
+      initialSessionId={params.sessionId ? Number(params.sessionId) : undefined}
       openCreateOnLoad={params.action === "create"}
     />
   );

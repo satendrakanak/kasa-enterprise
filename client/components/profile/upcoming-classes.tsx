@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, MapPin, Video } from "lucide-react";
 import Link from "next/link";
-import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getErrorMessage } from "@/lib/error-handler";
-import { facultyWorkspaceClient } from "@/services/faculty/faculty-workspace.client";
 import type { FacultyClassSession } from "@/types/faculty-workspace";
 import { formatDateTime } from "@/utils/formate-date";
 
@@ -23,19 +21,13 @@ export function UpcomingClasses({
   limit,
   showViewAll = true,
 }: UpcomingClassesProps) {
+  const router = useRouter();
   const [joiningSessionId, setJoiningSessionId] = useState<number | null>(null);
   const visibleSessions = sessions.slice(0, limit ?? sessions.length);
 
-  async function handleJoinClass(sessionId: number) {
-    try {
-      setJoiningSessionId(sessionId);
-      const response = await facultyWorkspaceClient.joinBbbSession(sessionId);
-      window.location.assign(response.data.joinUrl);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error));
-    } finally {
-      setJoiningSessionId(null);
-    }
+  function handleJoinClass(sessionId: number) {
+    setJoiningSessionId(sessionId);
+    router.push(`/classroom/${sessionId}`);
   }
 
   return (
