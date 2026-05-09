@@ -247,6 +247,9 @@ export function InstallationWizard() {
       const payload = databasePayload();
       await installerClientService.testDatabase(payload);
       const result = await installerClientService.saveDatabase(payload);
+      if (result.host && result.host !== form.database?.host) {
+        updateDatabaseForm("host", result.host);
+      }
       setDatabaseSaved(true);
       setDatabaseRestartRequired(result.restartRequired);
       toast.success(result.message);
@@ -478,10 +481,9 @@ export function InstallationWizard() {
                 </div>
               ) : null}
               <div className="mt-6 rounded-2xl border bg-muted/40 p-4 text-sm text-muted-foreground">
-                If you want to use RDS or another external database, update the
-                Docker/env database values before starting the stack. The browser
-                wizard installs into the active database connection shown in the
-                next step.
+                If you want to use RDS or another external database, add the
+                connection details in the next step. Kasa will save the database
+                runtime config and ask you to restart once.
               </div>
               <WizardActions
                 onNext={goNext}
@@ -570,8 +572,8 @@ export function InstallationWizard() {
                     Use my own PostgreSQL database
                   </span>
                   <span className="mt-2 block text-sm text-muted-foreground">
-                    Use localhost, a private server, or RDS. Create the empty
-                    database first, then verify the connection here.
+                    Use local Postgres, a private server, or RDS. If Kasa runs
+                    in Docker, localhost is translated to host.docker.internal.
                   </span>
                 </button>
               </div>
@@ -626,22 +628,30 @@ export function InstallationWizard() {
                 </Field>
               </div>
               {form.database?.mode === "external" ? (
-                <label className="mt-4 flex items-start gap-3 rounded-2xl border p-4">
-                  <Checkbox
-                    checked={Boolean(form.database.ssl)}
-                    onCheckedChange={(checked) =>
-                      updateDatabaseForm("ssl", checked === true)
-                    }
-                  />
-                  <span>
-                    <span className="block text-sm font-semibold">
-                      Require SSL connection
+                <div className="mt-4 space-y-3">
+                  <label className="flex items-start gap-3 rounded-2xl border p-4">
+                    <Checkbox
+                      checked={Boolean(form.database.ssl)}
+                      onCheckedChange={(checked) =>
+                        updateDatabaseForm("ssl", checked === true)
+                      }
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold">
+                        Require SSL connection
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        Enable this for most managed databases such as Amazon RDS.
+                      </span>
                     </span>
-                    <span className="text-sm text-muted-foreground">
-                      Enable this for most managed databases such as Amazon RDS.
-                    </span>
-                  </span>
-                </label>
+                  </label>
+                  <div className="rounded-2xl border bg-muted/40 p-4 text-sm text-muted-foreground">
+                    Running through Docker? Your local PostgreSQL is not
+                    available as localhost inside the API container. Enter
+                    localhost if you prefer, and Kasa will save it as
+                    host.docker.internal for the container runtime.
+                  </div>
+                </div>
               ) : null}
               <div
                 className={`mt-6 rounded-2xl border p-4 text-sm ${

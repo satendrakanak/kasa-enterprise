@@ -94,15 +94,18 @@ export class InstallerService {
   }
 
   async testDatabaseConnection(payload: DatabaseSetupDto) {
+    const connectionPayload = this.normalizeDatabasePayload(payload);
     const probe = new DataSource({
       type: 'postgres',
-      host: payload.host,
-      port: Number(payload.port || 5432),
-      username: payload.user,
-      password: payload.password || this.getActiveDatabasePassword(payload),
-      database: payload.name,
-      ssl: payload.ssl
-        ? { rejectUnauthorized: payload.rejectUnauthorized !== false }
+      host: connectionPayload.host,
+      port: Number(connectionPayload.port || 5432),
+      username: connectionPayload.user,
+      password:
+        connectionPayload.password ||
+        this.getActiveDatabasePassword(connectionPayload),
+      database: connectionPayload.name,
+      ssl: connectionPayload.ssl
+        ? { rejectUnauthorized: connectionPayload.rejectUnauthorized !== false }
         : false,
     });
 
@@ -111,7 +114,11 @@ export class InstallerService {
       await probe.query('select 1');
       return {
         connected: true,
-        message: 'Database connection verified',
+        host: connectionPayload.host,
+        message:
+          connectionPayload.host !== payload.host
+            ? `Database connection verified through ${connectionPayload.host}`
+            : 'Database connection verified',
       };
     } catch (error) {
       throw new BadRequestException(
@@ -141,24 +148,26 @@ export class InstallerService {
       };
     }
 
-    if (!payload.password) {
+    const connectionPayload = this.normalizeDatabasePayload(payload);
+
+    if (!connectionPayload.password) {
       throw new BadRequestException('Database password is required');
     }
 
-    await this.testDatabaseConnection(payload);
+    await this.testDatabaseConnection(connectionPayload);
     this.ensureRuntimeConfigDirectory();
     fs.writeFileSync(
       runtimeDatabaseConfigPath,
       `${JSON.stringify(
         {
           mode: 'external',
-          host: payload.host,
-          port: Number(payload.port || 5432),
-          name: payload.name,
-          user: payload.user,
-          password: payload.password,
-          ssl: Boolean(payload.ssl),
-          rejectUnauthorized: payload.rejectUnauthorized !== false,
+          host: connectionPayload.host,
+          port: Number(connectionPayload.port || 5432),
+          name: connectionPayload.name,
+          user: connectionPayload.user,
+          password: connectionPayload.password,
+          ssl: Boolean(connectionPayload.ssl),
+          rejectUnauthorized: connectionPayload.rejectUnauthorized !== false,
         },
         null,
         2,
@@ -168,6 +177,7 @@ export class InstallerService {
     return {
       saved: true,
       restartRequired: true,
+      host: connectionPayload.host,
       message:
         'External database verified and saved. Restart the stack, then continue installation.',
     };
@@ -362,6 +372,32 @@ export class InstallerService {
     }
 
     return '';
+  }
+
+  private normalizeDatabasePayload(payload: DatabaseSetupDto): DatabaseSetupDto {
+    if (payload.mode !== 'external') {
+      return payload;
+    }
+
+    const host = payload.host?.trim();
+    const isLocalHost =
+      host === 'localhost' || host === '127.0.0.1' || host === '::1';
+
+    if (!isLocalHost || !this.isRunningInsideDocker()) {
+      return {
+        ...payload,
+        host,
+      };
+    }
+
+    return {
+      ...payload,
+      host: 'host.docker.internal',
+    };
+  }
+
+  private isRunningInsideDocker() {
+    return fs.existsSync('/.dockerenv') || process.env.KASA_DOCKER === 'true';
   }
 
   private ensureRuntimeConfigDirectory() {

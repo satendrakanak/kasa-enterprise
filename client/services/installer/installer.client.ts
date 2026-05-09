@@ -85,7 +85,12 @@ export const installerClientService = {
 
   saveDatabase: async (payload: DatabaseSetupPayload) => {
     const response = await apiClient.post<
-      ApiResponse<{ saved: boolean; restartRequired: boolean; message: string }>
+      ApiResponse<{
+        saved: boolean;
+        restartRequired: boolean;
+        host?: string;
+        message: string;
+      }>
     >("/api/installer/database/save", payload);
     return response.data;
   },
