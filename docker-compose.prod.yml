@@ -1,9 +1,27 @@
 name: codewithkasa-prod
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-codewithkasa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codewithkasa}
+      POSTGRES_DB: ${POSTGRES_DB:-codewithkasa}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
   redis:
     image: redis:7-alpine
-    container_name: codewithkasa-redis
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
@@ -17,8 +35,10 @@ services:
       - app-network
 
   server:
-    image: ${SERVER_IMAGE}
-    container_name: codewithkasa-server
+    image: ${SERVER_IMAGE:-codewithkasa-server:local-prod}
+    build:
+      context: ./server
+      target: production
     restart: unless-stopped
     env_file:
       - ${PROD_ENV_FILE:-.env.production}
@@ -31,14 +51,21 @@ services:
     ports:
       - "${SERVER_PORT:-8000}:8000"
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
       - app-network
 
   client:
-    image: ${CLIENT_IMAGE}
-    container_name: codewithkasa-client
+    image: ${CLIENT_IMAGE:-codewithkasa-client:local-prod}
+    build:
+      context: ./client
+      target: production
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://server:8000}
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -52,29 +79,13 @@ services:
     networks:
       - app-network
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: codewithkasa-postgres
-    restart: unless-stopped
-    profiles:
-      - local-db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
-
 volumes:
-  redis_data:
   postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:-codewithkasa-prod_postgres_data}
+    external: ${POSTGRES_VOLUME_EXTERNAL:-false}
+  redis_data:
+    name: ${REDIS_VOLUME_NAME:-codewithkasa-prod_redis_data}
+    external: ${REDIS_VOLUME_EXTERNAL:-false}
 
 networks:
   app-network:

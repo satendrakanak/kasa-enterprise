@@ -11,6 +11,7 @@ import {
   Query,
   Req,
   Res,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { SignInDto } from './dtos/sign-in.dto';
 import { AuthService } from './providers/auth.service';
@@ -119,9 +120,7 @@ export class AuthController {
   @Post('sign-out')
   @HttpCode(200)
   logout(@Res({ passthrough: true }) res: ExpressResponse) {
-    // 🍪 clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    this.clearAuthCookies(res);
 
     return {
       message: 'Logged out successfully',
@@ -135,12 +134,23 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: ExpressResponse,
   ) {
-    const oldRefreshToken = req.cookies.refreshToken;
-    const { accessToken, refreshToken } =
-      await this.authService.refreshTokens(oldRefreshToken);
-    res.cookie('accessToken', accessToken, httpOnlyCookieOptions);
-    res.cookie('refreshToken', refreshToken, httpOnlyCookieOptions);
-    return { success: true };
+    const oldRefreshToken = req.cookies?.refreshToken;
+
+    if (!oldRefreshToken) {
+      this.clearAuthCookies(res);
+      throw new UnauthorizedException('Session expired');
+    }
+
+    try {
+      const { accessToken, refreshToken } =
+        await this.authService.refreshTokens(oldRefreshToken);
+      res.cookie('accessToken', accessToken, httpOnlyCookieOptions);
+      res.cookie('refreshToken', refreshToken, httpOnlyCookieOptions);
+      return { success: true };
+    } catch (error) {
+      this.clearAuthCookies(res);
+      throw error;
+    }
   }
 
   @Auth(AuthType.None)
@@ -332,5 +342,10 @@ export class AuthController {
     }
 
     return 'Unable to continue social sign in. Please try again.';
+  }
+
+  private clearAuthCookies(res: ExpressResponse) {
+    res.clearCookie('accessToken', httpOnlyCookieOptions);
+    res.clearCookie('refreshToken', httpOnlyCookieOptions);
   }
 }

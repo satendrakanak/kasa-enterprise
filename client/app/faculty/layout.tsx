@@ -4,14 +4,8 @@ import { FacultySidebar } from "@/components/faculty/layout/faculty-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { canAccessFaculty } from "@/lib/access-control";
 import { getSession } from "@/lib/auth";
-import { Inter } from "next/font/google";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-faculty",
-});
 
 export default async function FacultyLayout({
   children,
@@ -25,7 +19,7 @@ export default async function FacultyLayout({
   }
 
   return (
-    <div className={inter.className}>
+    <div className="font-sans">
       <FacultyAccessGate>
         <SidebarProvider>
           <FacultySidebar variant="inset" />

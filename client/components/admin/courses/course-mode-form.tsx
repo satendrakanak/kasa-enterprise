@@ -49,15 +49,18 @@ type CourseModeFormProps = {
   course: Course;
 };
 
+type CourseModeFormInput = z.input<typeof courseModeSchema>;
+type CourseModeFormValues = z.output<typeof courseModeSchema>;
+
 export function CourseModeForm({ course }: CourseModeFormProps) {
   const router = useRouter();
   const currentMode = COURSE_DELIVERY_MODES.some(
     (option) => option.value === course.mode,
   )
-    ? (course.mode as z.input<typeof courseModeSchema>["mode"])
+    ? (course.mode as CourseModeFormValues["mode"])
     : "self_learning";
 
-  const form = useForm<z.input<typeof courseModeSchema>>({
+  const form = useForm<CourseModeFormInput, unknown, CourseModeFormValues>({
     resolver: zodResolver(courseModeSchema),
     mode: "onChange",
     defaultValues: {
@@ -85,7 +88,7 @@ export function CourseModeForm({ course }: CourseModeFormProps) {
     name: "liveClassAttendanceRequirementType",
   });
 
-  const onSubmit = async (data: z.input<typeof courseModeSchema>) => {
+  const onSubmit = async (data: CourseModeFormValues) => {
     const hasLiveClassMode = data.mode !== "self_learning";
     try {
       await courseClientService.update(course.id, {

@@ -1,6 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { S3Client } from '@aws-sdk/client-s3';
-import { ConfigService } from '@nestjs/config';
 import { SettingsService } from 'src/settings/providers/settings.service';
 
 type AwsRuntimeSettings = {
@@ -14,15 +13,13 @@ type AwsRuntimeSettings = {
 
 @Injectable()
 export class S3Provider implements OnModuleInit {
-  private client: S3Client;
+  private client: S3Client | null = null;
   private config: AwsRuntimeSettings;
 
   constructor(
-    private readonly configService: ConfigService,
     private readonly settingsService: SettingsService,
   ) {
     this.config = this.getEnvFallback();
-    this.client = this.buildClient(this.config);
   }
 
   async onModuleInit() {
@@ -38,16 +35,28 @@ export class S3Provider implements OnModuleInit {
       ...this.getEnvFallback(),
       ...nextConfig,
     };
-    this.client = this.buildClient(this.config);
+    this.client = this.hasClientConfig(this.config)
+      ? this.buildClient(this.config)
+      : null;
   }
 
   async getClient(): Promise<S3Client> {
     await this.refreshRuntimeConfig();
+    if (!this.client) {
+      throw new Error(
+        'AWS storage is not configured. Please save AWS storage settings before using media uploads.',
+      );
+    }
     return this.client;
   }
 
   async getBucket(): Promise<string> {
     await this.refreshRuntimeConfig();
+    if (!this.config.bucketName) {
+      throw new Error(
+        'AWS storage bucket is not configured. Please save AWS storage settings before using media uploads.',
+      );
+    }
     return this.config.bucketName;
   }
 
@@ -69,18 +78,20 @@ export class S3Provider implements OnModuleInit {
     });
   }
 
+  private hasClientConfig(config: AwsRuntimeSettings) {
+    return Boolean(
+      config.region && config.accessKeyId && config.accessKeySecret,
+    );
+  }
+
   private getEnvFallback(): AwsRuntimeSettings {
     return {
       isEnabled: false,
-      region: this.configService.get<string>('appConfig.awsRegion') || '',
-      bucketName:
-        this.configService.get<string>('appConfig.awsBucketName') || '',
-      cloudfrontUrl:
-        this.configService.get<string>('appConfig.awsCloudfrontUrl') || '',
-      accessKeyId:
-        this.configService.get<string>('appConfig.awsAccessKeyId') || '',
-      accessKeySecret:
-        this.configService.get<string>('appConfig.awsAccessKeySecret') || '',
+      region: '',
+      bucketName: '',
+      cloudfrontUrl: '',
+      accessKeyId: '',
+      accessKeySecret: '',
     };
   }
 }

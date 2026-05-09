@@ -8,6 +8,23 @@ It is designed as a production-style LMS platform with separate role-based dashb
 
 ## Docker Quick Start
 
+Short commands:
+
+```bash
+make dev
+make dev-down
+
+make prod
+make prod-down
+```
+
+What they do:
+
+- `make dev`: starts the development Docker stack with hot reload.
+- `make prod`: builds and starts the local production Docker stack for final testing.
+
+Raw Docker command, if ever needed:
+
 ```bash
 cp .env.docker.example .env.docker
 docker compose --env-file .env.docker up --build

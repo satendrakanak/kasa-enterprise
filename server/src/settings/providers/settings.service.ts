@@ -393,17 +393,21 @@ export class SettingsService {
       this.getDefaultAwsStorageSettings(),
       true,
     );
+    const { hasAccessKeySecret: _hasAccessKeySecret, ...storagePayload } =
+      payload;
 
     const nextValue = {
       ...current,
-      ...this.compactObject(payload),
+      ...this.compactObject(storagePayload),
       accessKeyId:
-        payload.accessKeyId !== undefined && payload.accessKeyId !== ''
-          ? payload.accessKeyId
+        storagePayload.accessKeyId !== undefined &&
+        storagePayload.accessKeyId !== ''
+          ? storagePayload.accessKeyId
           : current.accessKeyId,
       accessKeySecret:
-        payload.accessKeySecret !== undefined && payload.accessKeySecret !== ''
-          ? payload.accessKeySecret
+        storagePayload.accessKeySecret !== undefined &&
+        storagePayload.accessKeySecret !== ''
+          ? storagePayload.accessKeySecret
           : current.accessKeySecret,
     };
 
@@ -683,11 +687,11 @@ export class SettingsService {
   private getDefaultAwsStorageSettings() {
     return {
       isEnabled: false,
-      region: process.env.AWS_REGION || '',
-      bucketName: process.env.AWS_PUBLIC_BUCKET_NAME || '',
-      cloudfrontUrl: process.env.AWS_CLOUDFRONT_URL || '',
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-      accessKeySecret: process.env.AWS_ACCESS_KEY_SECRET || '',
+      region: '',
+      bucketName: '',
+      cloudfrontUrl: '',
+      accessKeyId: '',
+      accessKeySecret: '',
     };
   }
 

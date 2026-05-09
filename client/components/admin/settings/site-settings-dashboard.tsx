@@ -197,6 +197,8 @@ export function SiteSettingsDashboard({
   const [awsForm, setAwsForm] = useState<AwsStorageSettings>({
     ...defaultAwsStorageSettings,
     ...(awsStorageSettings || {}),
+    accessKeyId: "",
+    accessKeySecret: "",
   });
   const [bbbForm, setBbbForm] = useState<BbbSettings>({
     ...defaultBbbSettings,
@@ -366,8 +368,20 @@ export function SiteSettingsDashboard({
     event.preventDefault();
     startTransition(async () => {
       try {
+        const awsPayload = { ...awsForm };
+        Reflect.deleteProperty(awsPayload, "hasAccessKeySecret");
+        const { accessKeyId, accessKeySecret, ...rest } = awsPayload;
+
+        const payload = {
+          ...rest,
+          ...(accessKeyId?.trim() ? { accessKeyId: accessKeyId.trim() } : {}),
+          ...(accessKeySecret?.trim()
+            ? { accessKeySecret: accessKeySecret.trim() }
+            : {}),
+        };
+
         const response =
-          await settingsClientService.upsertAwsStorageSettings(awsForm);
+          await settingsClientService.upsertAwsStorageSettings(payload);
         setAwsForm({
           ...response.data,
           accessKeyId: "",

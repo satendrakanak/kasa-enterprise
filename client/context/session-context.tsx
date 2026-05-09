@@ -75,6 +75,8 @@ export const SessionProvider = ({
           router.refresh();
         } catch {
           console.log("❌ Refresh failed");
+          setUser(null);
+          router.refresh();
         } finally {
           setIsLoading(false);
         }

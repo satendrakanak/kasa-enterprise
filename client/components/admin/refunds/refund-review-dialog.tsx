@@ -33,7 +33,8 @@ const reviewSchema = z.object({
   adminNote: z.string().max(2000).optional(),
 });
 
-type ReviewFormValues = z.infer<typeof reviewSchema>;
+type ReviewFormInput = z.input<typeof reviewSchema>;
+type ReviewFormValues = z.output<typeof reviewSchema>;
 
 export function RefundReviewDialog({
   refundRequest,
@@ -48,7 +49,7 @@ export function RefundReviewDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const form = useForm<ReviewFormValues>({
+  const form = useForm<ReviewFormInput, unknown, ReviewFormValues>({
     resolver: zodResolver(reviewSchema),
     defaultValues: {
       approvedAmount: refundRequest
@@ -72,7 +73,7 @@ export function RefundReviewDialog({
 
     const values = await form
       .trigger()
-      .then((valid) => (valid ? form.getValues() : null));
+      .then((valid) => (valid ? reviewSchema.parse(form.getValues()) : null));
 
     if (!values) return;
 

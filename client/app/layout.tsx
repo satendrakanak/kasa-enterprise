@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { SessionProvider } from "@/context/session-context";
 import { getSession } from "@/lib/auth";
@@ -15,9 +15,11 @@ import { RouteProgressBar } from "@/components/ui/route-progress-bar";
 import { PwaRegister } from "@/components/pwa/pwa-register";
 import { PwaInstallNudge } from "@/components/pwa/pwa-install-nudge";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-admin",
+const inter = localFont({
+  src: "./fonts/InterVariable.woff2",
+  display: "swap",
+  variable: "--font-sans",
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
@@ -80,7 +82,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.className} h-full antialiased`}
+      className={`${inter.variable} h-full font-sans antialiased`}
     >
       <head>
         {publicSettings.site.faviconUrl ? (

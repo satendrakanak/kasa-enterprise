@@ -5,13 +5,8 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getSession } from "@/lib/auth";
 import { canAccessAdmin } from "@/lib/access-control";
 import { redirect } from "next/navigation";
-import { Inter } from "next/font/google";
 import { ReactNode } from "react";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-admin",
-});
 export default async function AdminLayout({
   children,
 }: {
@@ -24,7 +19,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className={inter.className}>
+    <div className="font-sans">
       <AdminAccessGate>
         <SidebarProvider>
           <AppSidebar variant="inset" />

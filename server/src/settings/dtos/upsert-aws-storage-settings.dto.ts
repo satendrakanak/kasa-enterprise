@@ -24,4 +24,8 @@ export class UpsertAwsStorageSettingsDto {
   @IsOptional()
   @IsString()
   accessKeySecret?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasAccessKeySecret?: boolean;
 }

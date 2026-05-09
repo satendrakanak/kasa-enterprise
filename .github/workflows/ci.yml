@@ -2,10 +2,6 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
-      - master
 
 jobs:
   client:
@@ -27,7 +23,7 @@ jobs:
         run: npm install
 
       - name: Lint
-        run: npx eslint "{src,apps,libs,test}/**/*.ts"
+        run: npm run lint
 
       - name: Build
         run: npm run build
@@ -56,7 +52,7 @@ jobs:
         run: npm install
 
       - name: Lint
-        run: npm run lint
+        run: npx eslint "{src,apps,libs,test}/**/*.ts"
 
       - name: Test
         run: npm test -- --runInBand
