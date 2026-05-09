@@ -72,7 +72,7 @@ kasa install dev
 2. Start all services:
 
 ```bash
-make dev
+kasa start dev
 ```
 
 3. Stop services:
@@ -140,7 +140,7 @@ The runtime database selection is stored in `.kasa/database.json`. Keep this fil
 3. Build and start production containers locally:
 
 ```bash
-make prod
+kasa start app
 ```
 
 4. Stop local production containers:

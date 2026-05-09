@@ -45,6 +45,8 @@ Short commands:
 kasa install dev
 kasa install dev -r
 kasa install app
+kasa start dev
+kasa start app
 kasa stop
 kasa restart dev
 
@@ -62,8 +64,11 @@ What they do:
 - `kasa install dev`: creates `.env.docker` if needed, starts the development stack, and prints setup URLs.
 - `kasa install dev -r`: resets the bundled Docker development database, then starts a fresh installer.
 - `kasa install app`: creates `.env.production.local` if needed, starts the local production-test stack, and prints setup URLs.
+- `kasa start dev`: starts an already-installed development stack without resetting setup.
+- `kasa start app`: starts an already-installed local production-test stack without resetting setup.
 - `kasa stop`: stops both development and local production-test stacks so ports are free.
-- `kasa restart dev`: restarts the app containers after changing installer database settings.
+- `kasa restart dev`: stops and starts the development stack without reinstalling.
+- `kasa restart app`: stops and starts the local production-test stack without reinstalling.
 - `make install-dev`: creates `.env.docker` if needed, starts the development stack, and prints setup URLs.
 - `make install-app`: creates `.env.production.local` if needed, starts the local production-test stack, and prints setup URLs.
 - `make dev`: starts the development Docker stack with hot reload.
@@ -87,6 +92,13 @@ Database setup during installation:
 - After saving an external database, restart the stack with `kasa restart dev` or `kasa restart app`, then reopen `/install` and continue.
 
 The selected external database is stored locally in `.kasa/database.json`. This file is ignored by Git and should not be committed.
+
+Install vs start:
+
+- Use `kasa install dev` or `kasa install app` only for first setup or when creating env files.
+- Use `kasa start dev` or `kasa start app` after setup is already complete.
+- Use `kasa restart dev` or `kasa restart app` after changing database mode in the installer.
+- Use `kasa stop` before switching between dev and local production-test stacks.
 
 ---
 

@@ -1,7 +1,16 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+SCRIPT_PATH="$0"
+while [ -L "$SCRIPT_PATH" ]; do
+  LINK_TARGET="$(readlink "$SCRIPT_PATH")"
+  case "$LINK_TARGET" in
+    /*) SCRIPT_PATH="$LINK_TARGET" ;;
+    *) SCRIPT_PATH="$(dirname -- "$SCRIPT_PATH")/$LINK_TARGET" ;;
+  esac
+done
+
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd)"
 cd "$ROOT_DIR"
 
 usage() {
@@ -11,6 +20,8 @@ Kasa Enterprise CLI
 Usage:
   kasa install dev [-r|--reset]
   kasa install app
+  kasa start dev
+  kasa start app
   kasa reset dev
   kasa stop
   kasa restart dev
@@ -20,6 +31,8 @@ Examples:
   kasa install dev
   kasa install dev -r
   kasa install app
+  kasa start dev
+  kasa start app
   kasa stop
 USAGE
 }
@@ -38,6 +51,12 @@ case "$command:$target" in
   install:app)
     ./scripts/install-app.sh
     ;;
+  start:dev)
+    ./scripts/start-dev.sh
+    ;;
+  start:app)
+    ./scripts/start-app.sh
+    ;;
   reset:dev)
     ./scripts/reset-dev.sh
     ;;
@@ -45,12 +64,12 @@ case "$command:$target" in
     ./scripts/stop.sh
     ;;
   restart:dev)
-    docker compose --env-file .env.docker restart server client
-    echo "Development stack restarted. Open http://localhost:3000/install"
+    ./scripts/stop-dev.sh
+    ./scripts/start-dev.sh
     ;;
   restart:app)
-    docker compose --env-file .env.production.local -f docker-compose.prod.yml restart server client
-    echo "Production test stack restarted. Open http://localhost:3000/install"
+    ./scripts/stop-app.sh
+    ./scripts/start-app.sh
     ;;
   *)
     usage
