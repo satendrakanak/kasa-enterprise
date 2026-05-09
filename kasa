@@ -9,16 +9,16 @@ usage() {
 Kasa Enterprise CLI
 
 Usage:
-  ./kasa install dev [-r|--reset]
-  ./kasa install app
-  ./kasa reset dev
-  ./kasa restart dev
-  ./kasa restart app
+  kasa install dev [-r|--reset]
+  kasa install app
+  kasa reset dev
+  kasa restart dev
+  kasa restart app
 
 Examples:
-  ./kasa install dev
-  ./kasa install dev -r
-  ./kasa install app
+  kasa install dev
+  kasa install dev -r
+  kasa install app
 USAGE
 }
 

@@ -17,4 +17,4 @@ rm -f .kasa/database.json
 echo ""
 echo "Development data has been reset."
 echo "Start a fresh install with:"
-echo "  ./kasa install dev"
+echo "  kasa install dev"
