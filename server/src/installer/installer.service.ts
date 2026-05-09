@@ -140,11 +140,14 @@ export class InstallerService {
         runtimeDatabaseConfigPath,
         `${JSON.stringify({ mode: 'bundled' }, null, 2)}\n`,
       );
+      const restartRequired =
+        this.configService.get<string>('database.source') !== 'bundled';
       return {
         saved: true,
-        restartRequired:
-          this.configService.get<string>('database.source') !== 'bundled',
-        message: 'Bundled database selected',
+        restartRequired,
+        message: restartRequired
+          ? 'Bundled database selected. Restart Docker with kasa restart dev, then continue from this step.'
+          : 'Bundled database selected and ready.',
       };
     }
 
@@ -179,7 +182,7 @@ export class InstallerService {
       restartRequired: true,
       host: connectionPayload.host,
       message:
-        'External database verified and saved. Restart the stack, then continue installation.',
+        'External database verified and saved. Restart Docker with kasa restart dev, then continue from this step.',
     };
   }
 
@@ -333,11 +336,22 @@ export class InstallerService {
       user: String(this.configService.get<string>('database.user') || ''),
     };
 
-    const requestedDatabase = {
+    const requestedPayload = this.normalizeDatabasePayload({
+      mode: payload.database.mode || 'bundled',
       host: String(payload.database.host || ''),
       port: Number(payload.database.port || 5432),
       name: String(payload.database.name || ''),
       user: String(payload.database.user || ''),
+      password: payload.database.password,
+      ssl: payload.database.ssl,
+      rejectUnauthorized: payload.database.rejectUnauthorized,
+    });
+
+    const requestedDatabase = {
+      host: requestedPayload.host,
+      port: Number(requestedPayload.port || 5432),
+      name: requestedPayload.name,
+      user: requestedPayload.user,
     };
 
     const matchesActiveConnection =

@@ -62,6 +62,31 @@ const initialForm: CompleteInstallationPayload = {
   importDemoData: true,
 };
 
+function displayDatabaseHost(host: string, mode: "bundled" | "external") {
+  if (mode === "external" && host === "host.docker.internal") {
+    return "localhost";
+  }
+
+  return host;
+}
+
+function databaseHostsMatch(
+  formHost: string,
+  runtimeHost: string,
+  mode: "bundled" | "external",
+) {
+  if (formHost === runtimeHost) {
+    return true;
+  }
+
+  if (mode !== "external") {
+    return false;
+  }
+
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+  return localHosts.has(formHost) && runtimeHost === "host.docker.internal";
+}
+
 export function InstallationWizard() {
   const router = useRouter();
   const [status, setStatus] = useState<InstallerStatus | null>(null);
@@ -75,6 +100,7 @@ export function InstallationWizard() {
   const [databaseTesting, setDatabaseTesting] = useState(false);
   const [databaseSaved, setDatabaseSaved] = useState(false);
   const [databaseRestartRequired, setDatabaseRestartRequired] = useState(false);
+  const [databaseFeedback, setDatabaseFeedback] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [installationJobId, setInstallationJobId] = useState<string | null>(null);
@@ -90,7 +116,10 @@ export function InstallationWizard() {
           ...current,
           database: {
             mode: result.database.mode || "bundled",
-            host: result.database.host || "",
+            host: displayDatabaseHost(
+              result.database.host || "",
+              result.database.mode || "bundled",
+            ),
             port: result.database.port || 5432,
             name: result.database.name || "",
             user: result.database.user || "",
@@ -138,11 +167,17 @@ export function InstallationWizard() {
     }));
     setDatabaseSaved(false);
     setDatabaseRestartRequired(false);
+    setDatabaseFeedback(null);
   };
 
   const goNext = () => {
     const nextStep = steps[activeIndex + 1];
     if (nextStep) setActiveStep(nextStep.key);
+  };
+
+  const goBack = () => {
+    const previousStep = steps[activeIndex - 1];
+    if (previousStep) setActiveStep(previousStep.key);
   };
 
   const validateLicense = async () => {
@@ -224,7 +259,11 @@ export function InstallationWizard() {
 
   const databaseMatchesActiveConnection =
     Boolean(status?.database.connected) &&
-    form.database?.host === status?.database.host &&
+    databaseHostsMatch(
+      form.database?.host || "",
+      status?.database.host || "",
+      form.database?.mode || status?.database.mode || "bundled",
+    ) &&
     Number(form.database?.port) === Number(status?.database.port) &&
     form.database?.name === status?.database.name &&
     form.database?.user === status?.database.user &&
@@ -245,17 +284,18 @@ export function InstallationWizard() {
     setDatabaseTesting(true);
     try {
       const payload = databasePayload();
-      await installerClientService.testDatabase(payload);
-      const result = await installerClientService.saveDatabase(payload);
-      if (result.host && result.host !== form.database?.host) {
-        updateDatabaseForm("host", result.host);
+      if (payload.mode === "external") {
+        await installerClientService.testDatabase(payload);
       }
+      const result = await installerClientService.saveDatabase(payload);
       setDatabaseSaved(true);
       setDatabaseRestartRequired(result.restartRequired);
+      setDatabaseFeedback(result.message);
       toast.success(result.message);
     } catch (error) {
       setDatabaseSaved(false);
       setDatabaseRestartRequired(false);
+      setDatabaseFeedback(null);
       toast.error(
         error instanceof Error ? error.message : "Database could not be verified",
       );
@@ -465,7 +505,7 @@ export function InstallationWizard() {
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   <InfoTile label="API" value="Reachable" tone="success" />
                   <InfoTile
-                    label="Database"
+                    label="Runtime database"
                     value={status?.database.connected ? "Connected" : "Not ready"}
                     tone={status?.database.connected ? "success" : "danger"}
                   />
@@ -481,12 +521,14 @@ export function InstallationWizard() {
                 </div>
               ) : null}
               <div className="mt-6 rounded-2xl border bg-muted/40 p-4 text-sm text-muted-foreground">
-                If you want to use RDS or another external database, add the
-                connection details in the next step. Kasa will save the database
-                runtime config and ask you to restart once.
+                This checks the database Kasa is currently running on. You will
+                choose bundled Docker database or your own PostgreSQL database in
+                the next step.
               </div>
               <WizardActions
                 onNext={goNext}
+                onBack={goBack}
+                showBack={activeIndex > 0}
                 nextDisabled={!systemChecked || !status?.database.connected}
               />
             </section>
@@ -518,6 +560,7 @@ export function InstallationWizard() {
                     }));
                     setDatabaseSaved(false);
                     setDatabaseRestartRequired(false);
+                    setDatabaseFeedback(null);
                   }}
                   className={`rounded-2xl border p-4 text-left transition ${
                     (form.database?.mode || "bundled") === "bundled"
@@ -542,7 +585,10 @@ export function InstallationWizard() {
                         mode: "external",
                         host:
                           current.database?.mode === "external"
-                            ? current.database.host
+                            ? displayDatabaseHost(
+                                current.database.host,
+                                "external",
+                              )
                             : "",
                         port: current.database?.port || 5432,
                         name:
@@ -561,6 +607,7 @@ export function InstallationWizard() {
                     }));
                     setDatabaseSaved(false);
                     setDatabaseRestartRequired(false);
+                    setDatabaseFeedback(null);
                   }}
                   className={`rounded-2xl border p-4 text-left transition ${
                     form.database?.mode === "external"
@@ -663,10 +710,12 @@ export function InstallationWizard() {
                 }`}
               >
                 {databaseRestartRequired
-                  ? "External database saved. Restart Docker with ./kasa restart dev, reopen the installer, and continue from this step."
+                  ? databaseFeedback ||
+                    "Database selection saved. Restart Docker with kasa restart dev, reopen the installer, and continue from this step."
                   : databaseMatchesActiveConnection
                   ? "Database connection verified. The installer will create admin, settings, and demo content in this database."
-                  : "Verify and save this database before continuing. External databases must already exist before Kasa can install tables and data."}
+                  : databaseFeedback ||
+                    "Verify and save this database before continuing. External databases must already exist before Kasa can install tables and data."}
               </div>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-between">
                 <Button
@@ -687,7 +736,9 @@ export function InstallationWizard() {
                   ) : (
                     <Database className="size-4" />
                   )}
-                  Test and save database
+                  {form.database?.mode === "bundled"
+                    ? "Use bundled database"
+                    : "Test and save database"}
                 </Button>
                 <Button
                   type="button"
@@ -700,6 +751,8 @@ export function InstallationWizard() {
               </div>
               <WizardActions
                 onNext={goNext}
+                onBack={goBack}
+                showBack
                 nextDisabled={
                   !databaseMatchesActiveConnection ||
                   databaseRestartRequired ||
@@ -752,7 +805,7 @@ export function InstallationWizard() {
                   </Field>
                 </div>
               </div>
-              <WizardActions onNext={goNext} />
+              <WizardActions onNext={goNext} onBack={goBack} showBack />
             </section>
           ) : null}
 
@@ -793,7 +846,10 @@ export function InstallationWizard() {
                   </div>
                 ) : null}
               </div>
-              <div className="mt-8 flex justify-end">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
+                <Button type="button" variant="outline" onClick={goBack}>
+                  Back
+                </Button>
                 <Button
                   onClick={validateLicense}
                   disabled={validating || form.licenseKey.trim().length < 8}
@@ -871,7 +927,10 @@ export function InstallationWizard() {
                   </span>
                 </label>
               </div>
-              <div className="mt-8 flex justify-end">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
+                <Button type="button" variant="outline" onClick={goBack}>
+                  Back
+                </Button>
                 <Button
                   onClick={completeInstallation}
                   disabled={
@@ -998,14 +1057,25 @@ function ProgressTile({ label, value }: { label: string; value: string }) {
 }
 
 function WizardActions({
+  onBack,
   onNext,
+  showBack = false,
   nextDisabled,
 }: {
+  onBack?: () => void;
   onNext: () => void;
+  showBack?: boolean;
   nextDisabled?: boolean;
 }) {
   return (
-    <div className="mt-8 flex justify-end">
+    <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
+      {showBack ? (
+        <Button type="button" variant="outline" onClick={onBack}>
+          Back
+        </Button>
+      ) : (
+        <span />
+      )}
       <Button onClick={onNext} disabled={nextDisabled}>
         Continue
         <ArrowRight className="size-4" />
