@@ -2,11 +2,14 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { join } from 'path';
 
-import { seedPermissions } from './seeds/permission.seed';
-import { seedRoles } from './seeds/role.seed';
 import { assignDefaultRole } from './seeds/assign-default-role.seed';
 import { seedEmailTemplates } from './seeds/email-template.seed';
 import { seedLocation } from './seeds/location.seed';
+import { seedPermissions } from './seeds/permission.seed';
+import { seedProductionDemoContent } from './seeds/production-demo-content.seed';
+import { seedRoles } from './seeds/role.seed';
+
+const RESET_CONFIRMATION = 'RESET_DEMO_DATABASE';
 
 const AppDataSource = new DataSource({
   type: 'postgres',
@@ -20,21 +23,31 @@ const AppDataSource = new DataSource({
 });
 
 async function run() {
+  if (process.env.MARKETPLACE_DEMO_RESET_CONFIRM !== RESET_CONFIRMATION) {
+    throw new Error(
+      `Refusing to reset database. Set MARKETPLACE_DEMO_RESET_CONFIRM=${RESET_CONFIRMATION} to continue.`,
+    );
+  }
+
   await AppDataSource.initialize();
+
+  await AppDataSource.synchronize(true);
+  console.log('✅ Database schema reset');
 
   await seedPermissions(AppDataSource);
   await seedRoles(AppDataSource);
-  await assignDefaultRole(AppDataSource);
   await seedLocation(AppDataSource);
   await seedEmailTemplates(AppDataSource);
+  await seedProductionDemoContent(AppDataSource);
+  await assignDefaultRole(AppDataSource);
 
   await AppDataSource.destroy();
 
-  console.log('✅ Production seed completed');
+  console.log('✅ Fresh marketplace demo database is ready');
 }
 
 run().catch(async (error) => {
-  console.error('❌ Production seed failed', error);
+  console.error('❌ Marketplace demo reset failed', error);
 
   if (AppDataSource.isInitialized) {
     await AppDataSource.destroy();

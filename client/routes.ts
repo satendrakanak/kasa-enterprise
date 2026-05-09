@@ -14,6 +14,7 @@ export const publicRoutes = [
   "/contact",
   "/cart",
   "/checkout",
+  "/install",
   "/auth/verify-email",
 ];
 

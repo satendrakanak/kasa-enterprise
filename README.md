@@ -1,12 +1,39 @@
-# Code With Kasa
+# Kasa Enterprise
 
-**Code With Kasa** is a complete full-stack Learning Management System built with **Next.js**, **NestJS**, and **PostgreSQL**.
+**Kasa Enterprise** is a complete full-stack Learning Management System built with **Next.js**, **NestJS**, and **PostgreSQL**.
 
 It is designed as a production-style LMS platform with separate role-based dashboards for **Admin**, **Faculty**, and **Students**. The system includes course management, course purchases, coupons, orders, learning progress, exams, reviews, articles, permissions, role management, contact leads, testimonials, email templates, logs, and complete platform settings.
 
 ---
 
 ## Docker Quick Start
+
+Fresh clone flow:
+
+```bash
+cp .env.docker.example .env.docker
+docker compose --env-file .env.docker up --build
+```
+
+Then open:
+
+- Installer: http://localhost:3000/install
+- Client: http://localhost:3000
+- API: http://localhost:8000
+- Swagger: http://localhost:8000/api
+
+The first run opens the installation wizard. It checks the database, asks for
+academy details, validates the license key, creates the first admin user, and
+can import the demo data with a live progress bar.
+
+Default local development license:
+
+```text
+KASA-DEMO-LICENSE-2026
+```
+
+Database name is configurable in `.env.docker` through `POSTGRES_DB`. On a new
+Docker volume, PostgreSQL creates that database automatically.
 
 Short commands:
 
@@ -23,16 +50,12 @@ What they do:
 - `make dev`: starts the development Docker stack with hot reload.
 - `make prod`: builds and starts the local production Docker stack for final testing.
 
-Raw Docker command, if ever needed:
+Raw Docker command:
 
 ```bash
 cp .env.docker.example .env.docker
 docker compose --env-file .env.docker up --build
 ```
-
-- Client: http://localhost:3000
-- API: http://localhost:8000
-- Swagger: http://localhost:8000/api
 
 Full infrastructure and CI/CD notes are in [docs/INFRA_AND_DEPLOYMENT.md](./docs/INFRA_AND_DEPLOYMENT.md).
 
@@ -80,7 +103,7 @@ Full infrastructure and CI/CD notes are in [docs/INFRA_AND_DEPLOYMENT.md](./docs
 
 ## Project Overview
 
-**Code With Kasa** is a modern LMS platform where students can explore courses, purchase courses, apply coupons, watch lessons, track learning progress, attempt exams, read articles, view reviews, and manage their learning journey.
+**Kasa Enterprise** is a modern LMS platform where students can explore courses, purchase courses, apply coupons, watch lessons, track learning progress, attempt exams, read articles, view reviews, and manage their learning journey.
 
 The platform also provides a powerful admin system to manage courses, categories, users, roles, permissions, orders, refunds, coupons, contact leads, testimonials, email templates, articles, settings, and system-level activity.
 
@@ -227,7 +250,7 @@ This project is structured as a monorepo with separate frontend and backend appl
 ## Project Structure
 
 ```txt
-CodeWithKasa/
+KasaEnterprise/
   client/                 # Next.js frontend application
   server/                 # NestJS backend application
   screenshots/            # Project screenshots

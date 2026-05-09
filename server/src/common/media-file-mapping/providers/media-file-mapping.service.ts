@@ -20,11 +20,37 @@ export class MediaFileMappingService {
   mapFile<T extends { path: string } | null>(file: T): T {
     if (!file) return file;
 
-    const baseUrl = `https://${this.s3Provider.getCloudFrontUrl()}`;
+    const path = file.path?.trim();
+
+    if (
+      !path ||
+      path.startsWith('/') ||
+      path.startsWith('http://') ||
+      path.startsWith('https://') ||
+      path.startsWith('data:')
+    ) {
+      return {
+        ...file,
+        path,
+      };
+    }
+
+    const cloudFrontUrl = this.s3Provider.getCloudFrontUrl()?.trim();
+
+    if (!cloudFrontUrl) {
+      return {
+        ...file,
+        path,
+      };
+    }
+
+    const baseUrl = cloudFrontUrl.startsWith('http')
+      ? cloudFrontUrl.replace(/\/+$/, '')
+      : `https://${cloudFrontUrl.replace(/^\/+|\/+$/g, '')}`;
 
     return {
       ...file,
-      path: `${baseUrl}/${file.path}`,
+      path: `${baseUrl}/${path.replace(/^\/+/, '')}`,
     };
   }
   mapCourse(course: Course) {

@@ -14,6 +14,7 @@ import { ScrollProgressButton } from "@/components/ui/scroll-progress-button";
 import { RouteProgressBar } from "@/components/ui/route-progress-bar";
 import { PwaRegister } from "@/components/pwa/pwa-register";
 import { PwaInstallNudge } from "@/components/pwa/pwa-install-nudge";
+import { InstallationRedirect } from "@/components/install/installation-redirect";
 
 const inter = localFont({
   src: "./fonts/InterVariable.woff2",
@@ -101,6 +102,7 @@ export default async function RootLayout({
           <SiteSettingsProvider value={publicSettings}>
             <SessionProvider session={session} hasSession={hasSession}>
               <RouteProgressBar />
+              <InstallationRedirect />
               <Toaster richColors />
               <PwaRegister />
               <PwaInstallNudge />

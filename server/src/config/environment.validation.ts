@@ -23,4 +23,5 @@ export default Joi.object({
   REDIS_HOST: Joi.string().required(),
   REDIS_PORT: Joi.number().port().default(6379),
   APP_ENCRYPTION_KEY: Joi.string().required(),
+  INSTALLER_LICENSE_HASH: Joi.string().allow('').optional(),
 });

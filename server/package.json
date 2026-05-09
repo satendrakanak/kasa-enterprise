@@ -20,7 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
     "seed:production": "node dist/database/seed-production.js",
-    "seed:production-demo": "node dist/database/seed-production-demo-content.js"
+    "seed:production-demo": "node dist/database/seed-production-demo-content.js",
+    "seed:marketplace-demo:reset": "MARKETPLACE_DEMO_RESET_CONFIRM=RESET_DEMO_DATABASE ts-node -r tsconfig-paths/register src/database/seed-marketplace-demo-reset.ts",
+    "seed:production-marketplace-demo:reset": "MARKETPLACE_DEMO_RESET_CONFIRM=RESET_DEMO_DATABASE node dist/database/seed-marketplace-demo-reset.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1024.0",
