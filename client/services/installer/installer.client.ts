@@ -11,20 +11,27 @@ export type InstallerStatus = {
   licenseRequired: boolean;
   canUseDevLicense: boolean;
   database: {
+    mode: "bundled" | "external";
     host: string;
     port: number;
     name: string;
     user: string;
+    ssl: boolean;
+    runtimeConfigPath: string;
     connected: boolean;
   };
 };
 
 export type CompleteInstallationPayload = {
   database?: {
+    mode?: "bundled" | "external";
     host: string;
     port: number;
     name: string;
     user: string;
+    password?: string;
+    ssl?: boolean;
+    rejectUnauthorized?: boolean;
   };
   siteName: string;
   siteTagline?: string;
@@ -49,6 +56,12 @@ export type InstallationProgress = {
   updatedAt: string;
 };
 
+export type DatabaseSetupPayload = NonNullable<
+  CompleteInstallationPayload["database"]
+> & {
+  mode: "bundled" | "external";
+};
+
 export const installerClientService = {
   getStatus: async () => {
     const response =
@@ -60,6 +73,20 @@ export const installerClientService = {
     const response = await apiClient.post<
       ApiResponse<{ valid: boolean; fingerprint: string }>
     >("/api/installer/validate-license", { licenseKey });
+    return response.data;
+  },
+
+  testDatabase: async (payload: DatabaseSetupPayload) => {
+    const response = await apiClient.post<
+      ApiResponse<{ connected: boolean; message: string }>
+    >("/api/installer/database/test", payload);
+    return response.data;
+  },
+
+  saveDatabase: async (payload: DatabaseSetupPayload) => {
+    const response = await apiClient.post<
+      ApiResponse<{ saved: boolean; restartRequired: boolean; message: string }>
+    >("/api/installer/database/save", payload);
     return response.data;
   },
 

@@ -80,6 +80,13 @@ const ENV = process.env.NODE_ENV;
         username: configService.get('database.user'),
         password: configService.get('database.password'),
         database: configService.get('database.name'),
+        ssl: configService.get('database.ssl')
+          ? {
+              rejectUnauthorized: configService.get(
+                'database.rejectUnauthorized',
+              ),
+            }
+          : false,
       }),
     }),
     BullModule.forRootAsync({

@@ -2,6 +2,7 @@ import {
   IsBoolean,
   IsEmail,
   IsInt,
+  IsIn,
   IsObject,
   IsOptional,
   IsString,
@@ -12,6 +13,10 @@ import {
 import { Type } from 'class-transformer';
 
 class InstallationDatabaseDto {
+  @IsOptional()
+  @IsIn(['bundled', 'external'])
+  mode?: 'bundled' | 'external';
+
   @IsString()
   @MinLength(2)
   host!: string;
@@ -27,6 +32,18 @@ class InstallationDatabaseDto {
   @IsString()
   @MinLength(1)
   user!: string;
+
+  @IsOptional()
+  @IsString()
+  password?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  ssl?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  rejectUnauthorized?: boolean;
 }
 
 export class CompleteInstallationDto {

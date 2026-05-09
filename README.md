@@ -11,7 +11,7 @@ It is designed as a production-style LMS platform with separate role-based dashb
 Fresh clone flow:
 
 ```bash
-make install-dev
+./kasa install dev
 ```
 
 Then open:
@@ -41,9 +41,13 @@ to Postgres on container port `5432`.
 Short commands:
 
 ```bash
+./kasa install dev
+./kasa install dev -r
+./kasa install app
+./kasa restart dev
+
 make install-dev
 make install-app
-
 make dev
 make dev-down
 
@@ -53,6 +57,10 @@ make prod-down
 
 What they do:
 
+- `./kasa install dev`: creates `.env.docker` if needed, starts the development stack, and prints setup URLs.
+- `./kasa install dev -r`: resets the bundled Docker development database, then starts a fresh installer.
+- `./kasa install app`: creates `.env.production.local` if needed, starts the local production-test stack, and prints setup URLs.
+- `./kasa restart dev`: restarts the app containers after changing installer database settings.
 - `make install-dev`: creates `.env.docker` if needed, starts the development stack, and prints setup URLs.
 - `make install-app`: creates `.env.production.local` if needed, starts the local production-test stack, and prints setup URLs.
 - `make dev`: starts the development Docker stack with hot reload.
@@ -67,6 +75,15 @@ docker compose --env-file .env.docker up --build
 
 Full infrastructure and CI/CD notes are in [docs/INFRA_AND_DEPLOYMENT.md](./docs/INFRA_AND_DEPLOYMENT.md).
 AWS S3 and CloudFront setup notes are in [docs/AWS_STORAGE_SETUP.md](./docs/AWS_STORAGE_SETUP.md).
+
+Database setup during installation:
+
+- Choose **bundled database** for the default Docker Postgres setup.
+- Choose **external PostgreSQL** for localhost Postgres, a private database server, or Amazon RDS.
+- For external databases, create the empty database first, then enter host, port, database name, username, password, and SSL preference in the installer.
+- After saving an external database, restart the stack with `./kasa restart dev` or `./kasa restart app`, then reopen `/install` and continue.
+
+The selected external database is stored locally in `.kasa/database.json`. This file is ignored by Git and should not be committed.
 
 ---
 

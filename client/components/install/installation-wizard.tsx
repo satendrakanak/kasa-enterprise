@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CompleteInstallationPayload,
+  DatabaseSetupPayload,
   InstallationProgress,
   InstallerStatus,
   installerClientService,
@@ -40,10 +41,14 @@ type StepKey = (typeof steps)[number]["key"];
 
 const initialForm: CompleteInstallationPayload = {
   database: {
+    mode: "bundled",
     host: "",
     port: 5432,
     name: "",
     user: "",
+    password: "",
+    ssl: false,
+    rejectUnauthorized: true,
   },
   siteName: "Kasa Enterprise",
   siteTagline: "Practical courses, live classes, and certificates in one platform.",
@@ -67,6 +72,9 @@ export function InstallationWizard() {
   );
   const [loading, setLoading] = useState(true);
   const [systemChecked, setSystemChecked] = useState(false);
+  const [databaseTesting, setDatabaseTesting] = useState(false);
+  const [databaseSaved, setDatabaseSaved] = useState(false);
+  const [databaseRestartRequired, setDatabaseRestartRequired] = useState(false);
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [installationJobId, setInstallationJobId] = useState<string | null>(null);
@@ -81,10 +89,14 @@ export function InstallationWizard() {
         setForm((current) => ({
           ...current,
           database: {
+            mode: result.database.mode || "bundled",
             host: result.database.host || "",
             port: result.database.port || 5432,
             name: result.database.name || "",
             user: result.database.user || "",
+            password: "",
+            ssl: result.database.ssl || false,
+            rejectUnauthorized: true,
           },
         }));
       })
@@ -117,9 +129,15 @@ export function InstallationWizard() {
         port: current.database?.port || 5432,
         name: current.database?.name || "",
         user: current.database?.user || "",
+        mode: current.database?.mode || "bundled",
+        password: current.database?.password || "",
+        ssl: current.database?.ssl || false,
+        rejectUnauthorized: current.database?.rejectUnauthorized !== false,
         [key]: value,
       },
     }));
+    setDatabaseSaved(false);
+    setDatabaseRestartRequired(false);
   };
 
   const goNext = () => {
@@ -209,7 +227,39 @@ export function InstallationWizard() {
     form.database?.host === status?.database.host &&
     Number(form.database?.port) === Number(status?.database.port) &&
     form.database?.name === status?.database.name &&
-    form.database?.user === status?.database.user;
+    form.database?.user === status?.database.user &&
+    (form.database?.mode || "bundled") === (status?.database.mode || "bundled");
+
+  const databasePayload = (): DatabaseSetupPayload => ({
+    mode: form.database?.mode || "bundled",
+    host: form.database?.host || "",
+    port: Number(form.database?.port || 5432),
+    name: form.database?.name || "",
+    user: form.database?.user || "",
+    password: form.database?.password || undefined,
+    ssl: Boolean(form.database?.ssl),
+    rejectUnauthorized: form.database?.rejectUnauthorized !== false,
+  });
+
+  const testAndSaveDatabase = async () => {
+    setDatabaseTesting(true);
+    try {
+      const payload = databasePayload();
+      await installerClientService.testDatabase(payload);
+      const result = await installerClientService.saveDatabase(payload);
+      setDatabaseSaved(true);
+      setDatabaseRestartRequired(result.restartRequired);
+      toast.success(result.message);
+    } catch (error) {
+      setDatabaseSaved(false);
+      setDatabaseRestartRequired(false);
+      toast.error(
+        error instanceof Error ? error.message : "Database could not be verified",
+      );
+    } finally {
+      setDatabaseTesting(false);
+    }
+  };
 
   if (installationProgress) {
     return (
@@ -445,8 +495,86 @@ export function InstallationWizard() {
               <SectionTitle
                 icon={Database}
                 title="Database details"
-                description="Review the active database connection. These values must match the running Docker/env configuration."
+                description="Use the bundled Docker database for quick setup, or connect your own PostgreSQL database such as local Postgres or Amazon RDS."
               />
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm((current) => ({
+                      ...current,
+                      database: {
+                        mode: "bundled",
+                        host: status?.database.host || "postgres",
+                        port: status?.database.port || 5432,
+                        name: status?.database.name || "kasa_enterprise",
+                        user: status?.database.user || "codewithkasa",
+                        password: "",
+                        ssl: false,
+                        rejectUnauthorized: true,
+                      },
+                    }));
+                    setDatabaseSaved(false);
+                    setDatabaseRestartRequired(false);
+                  }}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    (form.database?.mode || "bundled") === "bundled"
+                      ? "border-primary bg-primary/10"
+                      : "bg-muted/30"
+                  }`}
+                >
+                  <span className="text-sm font-semibold">
+                    Use bundled Docker database
+                  </span>
+                  <span className="mt-2 block text-sm text-muted-foreground">
+                    Best for local testing and quick installs. Kasa manages the
+                    Docker Postgres volume.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm((current) => ({
+                      ...current,
+                      database: {
+                        mode: "external",
+                        host:
+                          current.database?.mode === "external"
+                            ? current.database.host
+                            : "",
+                        port: current.database?.port || 5432,
+                        name:
+                          current.database?.mode === "external"
+                            ? current.database.name
+                            : "",
+                        user:
+                          current.database?.mode === "external"
+                            ? current.database.user
+                            : "",
+                        password: "",
+                        ssl: current.database?.ssl || false,
+                        rejectUnauthorized:
+                          current.database?.rejectUnauthorized !== false,
+                      },
+                    }));
+                    setDatabaseSaved(false);
+                    setDatabaseRestartRequired(false);
+                  }}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    form.database?.mode === "external"
+                      ? "border-primary bg-primary/10"
+                      : "bg-muted/30"
+                  }`}
+                >
+                  <span className="text-sm font-semibold">
+                    Use my own PostgreSQL database
+                  </span>
+                  <span className="mt-2 block text-sm text-muted-foreground">
+                    Use localhost, a private server, or RDS. Create the empty
+                    database first, then verify the connection here.
+                  </span>
+                </button>
+              </div>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <Field label="Host">
                   <Input
@@ -483,27 +611,92 @@ export function InstallationWizard() {
                 </Field>
                 <Field label="Database password">
                   <Input
-                    value="Stored in Docker/env"
+                    value={
+                      form.database?.mode === "external"
+                        ? form.database?.password || ""
+                        : "Stored in Docker/env"
+                    }
                     type="password"
-                    disabled
+                    disabled={form.database?.mode !== "external"}
                     className="disabled:opacity-80"
+                    onChange={(event) =>
+                      updateDatabaseForm("password", event.target.value)
+                    }
                   />
                 </Field>
               </div>
+              {form.database?.mode === "external" ? (
+                <label className="mt-4 flex items-start gap-3 rounded-2xl border p-4">
+                  <Checkbox
+                    checked={Boolean(form.database.ssl)}
+                    onCheckedChange={(checked) =>
+                      updateDatabaseForm("ssl", checked === true)
+                    }
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold">
+                      Require SSL connection
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      Enable this for most managed databases such as Amazon RDS.
+                    </span>
+                  </span>
+                </label>
+              ) : null}
               <div
                 className={`mt-6 rounded-2xl border p-4 text-sm ${
-                  databaseMatchesActiveConnection
+                  databaseRestartRequired
+                    ? "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-200"
+                    : databaseMatchesActiveConnection
                     ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
                     : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-200"
                 }`}
               >
-                {databaseMatchesActiveConnection
+                {databaseRestartRequired
+                  ? "External database saved. Restart Docker with ./kasa restart dev, reopen the installer, and continue from this step."
+                  : databaseMatchesActiveConnection
                   ? "Database connection verified. The installer will create admin, settings, and demo content in this database."
-                  : "These details do not match the active app connection. Update .env.docker or .env.production, restart Docker, and reopen the installer."}
+                  : "Verify and save this database before continuing. External databases must already exist before Kasa can install tables and data."}
+              </div>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={testAndSaveDatabase}
+                  disabled={
+                    databaseTesting ||
+                    !form.database?.host ||
+                    !form.database?.name ||
+                    !form.database?.user ||
+                    (form.database?.mode === "external" &&
+                      !form.database?.password)
+                  }
+                >
+                  {databaseTesting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Database className="size-4" />
+                  )}
+                  Test and save database
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => window.location.reload()}
+                  disabled={!databaseRestartRequired}
+                >
+                  I restarted, recheck
+                </Button>
               </div>
               <WizardActions
                 onNext={goNext}
-                nextDisabled={!databaseMatchesActiveConnection}
+                nextDisabled={
+                  !databaseMatchesActiveConnection ||
+                  databaseRestartRequired ||
+                  (form.database?.mode === "external" &&
+                    !databaseSaved &&
+                    !databaseMatchesActiveConnection)
+                }
               />
             </section>
           ) : null}

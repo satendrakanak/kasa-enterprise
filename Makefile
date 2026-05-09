@@ -1,10 +1,13 @@
-.PHONY: install-dev install-app dev dev-down prod prod-down prod-logs dev-logs
+.PHONY: install-dev install-app reset-dev dev dev-down prod prod-down prod-logs dev-logs
 
 install-dev:
 	./scripts/install-dev.sh
 
 install-app:
 	./scripts/install-app.sh
+
+reset-dev:
+	./scripts/reset-dev.sh
 
 dev:
 	docker compose --env-file .env.docker up --build

@@ -8,6 +8,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomUUID } from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
+import { runtimeDatabaseConfigPath } from 'src/config/runtime-database.config';
 import { seedEmailTemplates } from 'src/database/seeds/email-template.seed';
 import { seedLocation } from 'src/database/seeds/location.seed';
 import { seedPermissions } from 'src/database/seeds/permission.seed';
@@ -20,6 +23,7 @@ import { User } from 'src/users/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CompleteInstallationDto } from './dtos/complete-installation.dto';
+import { DatabaseSetupDto } from './dtos/database-setup.dto';
 
 const INSTALLATION_STATUS_KEY = 'installation_status';
 const LICENSE_SETTINGS_KEY = 'license_settings';
@@ -77,12 +81,95 @@ export class InstallerService {
         this.configService.get<string>('NODE_ENV') !== 'production' &&
         !this.getConfiguredLicenseHash(),
       database: {
+        mode: this.configService.get<string>('database.source') || 'bundled',
         host: this.configService.get<string>('database.host'),
         port: this.configService.get<number>('database.port'),
         name: this.configService.get<string>('database.name'),
         user: this.configService.get<string>('database.user'),
+        ssl: Boolean(this.configService.get<boolean>('database.ssl')),
+        runtimeConfigPath: runtimeDatabaseConfigPath,
         connected: this.dataSource.isInitialized,
       },
+    };
+  }
+
+  async testDatabaseConnection(payload: DatabaseSetupDto) {
+    const probe = new DataSource({
+      type: 'postgres',
+      host: payload.host,
+      port: Number(payload.port || 5432),
+      username: payload.user,
+      password: payload.password || this.getActiveDatabasePassword(payload),
+      database: payload.name,
+      ssl: payload.ssl
+        ? { rejectUnauthorized: payload.rejectUnauthorized !== false }
+        : false,
+    });
+
+    try {
+      await probe.initialize();
+      await probe.query('select 1');
+      return {
+        connected: true,
+        message: 'Database connection verified',
+      };
+    } catch (error) {
+      throw new BadRequestException(
+        error instanceof Error
+          ? `Database connection failed: ${error.message}`
+          : 'Database connection failed',
+      );
+    } finally {
+      if (probe.isInitialized) {
+        await probe.destroy();
+      }
+    }
+  }
+
+  async saveDatabaseConfiguration(payload: DatabaseSetupDto) {
+    if (payload.mode === 'bundled') {
+      this.ensureRuntimeConfigDirectory();
+      fs.writeFileSync(
+        runtimeDatabaseConfigPath,
+        `${JSON.stringify({ mode: 'bundled' }, null, 2)}\n`,
+      );
+      return {
+        saved: true,
+        restartRequired:
+          this.configService.get<string>('database.source') !== 'bundled',
+        message: 'Bundled database selected',
+      };
+    }
+
+    if (!payload.password) {
+      throw new BadRequestException('Database password is required');
+    }
+
+    await this.testDatabaseConnection(payload);
+    this.ensureRuntimeConfigDirectory();
+    fs.writeFileSync(
+      runtimeDatabaseConfigPath,
+      `${JSON.stringify(
+        {
+          mode: 'external',
+          host: payload.host,
+          port: Number(payload.port || 5432),
+          name: payload.name,
+          user: payload.user,
+          password: payload.password,
+          ssl: Boolean(payload.ssl),
+          rejectUnauthorized: payload.rejectUnauthorized !== false,
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    return {
+      saved: true,
+      restartRequired: true,
+      message:
+        'External database verified and saved. Restart the stack, then continue installation.',
     };
   }
 
@@ -254,6 +341,31 @@ export class InstallerService {
         'Database details do not match the running application connection. Update the Docker/env database values, restart the stack, and run the installer again.',
       );
     }
+  }
+
+  private getActiveDatabasePassword(payload: DatabaseSetupDto) {
+    const activeDatabase = {
+      host: String(this.configService.get<string>('database.host') || ''),
+      port: Number(this.configService.get<number>('database.port') || 5432),
+      name: String(this.configService.get<string>('database.name') || ''),
+      user: String(this.configService.get<string>('database.user') || ''),
+    };
+
+    if (
+      payload.mode === 'bundled' &&
+      payload.host === activeDatabase.host &&
+      Number(payload.port) === activeDatabase.port &&
+      payload.name === activeDatabase.name &&
+      payload.user === activeDatabase.user
+    ) {
+      return String(this.configService.get<string>('database.password') || '');
+    }
+
+    return '';
+  }
+
+  private ensureRuntimeConfigDirectory() {
+    fs.mkdirSync(path.dirname(runtimeDatabaseConfigPath), { recursive: true });
   }
 
   private async createAdminUser(payload: CompleteInstallationDto) {

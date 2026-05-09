@@ -51,6 +51,7 @@ Thumbs.db
 
 # local config
 *.local
+.kasa/
 
 # misc
 .cache/

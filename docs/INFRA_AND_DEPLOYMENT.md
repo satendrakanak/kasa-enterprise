@@ -19,7 +19,7 @@ should not depend on fetching Google Fonts during build.
 Development should run everything locally through Docker Compose:
 
 ```bash
-make install-dev
+./kasa install dev
 ```
 
 Open:
@@ -65,7 +65,7 @@ Redis later if queue volume, uptime, or horizontal scaling grows.
 1. Create local env:
 
 ```bash
-make install-dev
+./kasa install dev
 ```
 
 2. Start all services:
@@ -103,8 +103,39 @@ make dev-down
 2. Create the local production env once:
 
 ```bash
-make install-app
+./kasa install app
 ```
+
+## Installer Database Modes
+
+The installer supports two database modes:
+
+1. **Bundled Docker database**
+   - Uses the Postgres service from Docker Compose.
+   - Best for local development, demos, and quick trials.
+   - Reset with:
+
+```bash
+./kasa install dev -r
+```
+
+2. **External PostgreSQL**
+   - Use this for local Postgres, a private database server, or Amazon RDS.
+   - Create the empty database before running installation.
+   - Enter the connection details in the installer and click **Test and save database**.
+   - Restart the app containers so the API boots from that database:
+
+```bash
+./kasa restart dev
+```
+
+For local production testing:
+
+```bash
+./kasa restart app
+```
+
+The runtime database selection is stored in `.kasa/database.json`. Keep this file out of Git.
 
 3. Build and start production containers locally:
 

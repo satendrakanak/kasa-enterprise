@@ -1,0 +1,54 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+cd "$ROOT_DIR"
+
+usage() {
+  cat <<'USAGE'
+Kasa Enterprise CLI
+
+Usage:
+  ./kasa install dev [-r|--reset]
+  ./kasa install app
+  ./kasa reset dev
+  ./kasa restart dev
+  ./kasa restart app
+
+Examples:
+  ./kasa install dev
+  ./kasa install dev -r
+  ./kasa install app
+USAGE
+}
+
+command="${1:-}"
+target="${2:-}"
+flag="${3:-}"
+
+case "$command:$target" in
+  install:dev)
+    if [ "$flag" = "-r" ] || [ "$flag" = "--reset" ]; then
+      ./scripts/reset-dev.sh
+    fi
+    ./scripts/install-dev.sh
+    ;;
+  install:app)
+    ./scripts/install-app.sh
+    ;;
+  reset:dev)
+    ./scripts/reset-dev.sh
+    ;;
+  restart:dev)
+    docker compose --env-file .env.docker restart server client
+    echo "Development stack restarted. Open http://localhost:3000/install"
+    ;;
+  restart:app)
+    docker compose --env-file .env.production.local -f docker-compose.prod.yml restart server client
+    echo "Production test stack restarted. Open http://localhost:3000/install"
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
