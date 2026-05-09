@@ -78,14 +78,13 @@ make dev
 3. Stop services:
 
 ```bash
-make dev-down
+kasa stop
 ```
 
 4. Reset local database:
 
 ```bash
-docker compose down -v
-make dev
+kasa install dev -r
 ```
 
 The development compose file mounts `./client` and `./server` into containers, so code changes hot reload without rebuilding images.
@@ -147,7 +146,7 @@ make prod
 4. Stop local production containers:
 
 ```bash
-make prod-down
+kasa stop
 ```
 
 This runs the same production Docker targets used by deployment, but with local

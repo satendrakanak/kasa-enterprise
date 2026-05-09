@@ -12,6 +12,7 @@ Usage:
   kasa install dev [-r|--reset]
   kasa install app
   kasa reset dev
+  kasa stop
   kasa restart dev
   kasa restart app
 
@@ -19,6 +20,7 @@ Examples:
   kasa install dev
   kasa install dev -r
   kasa install app
+  kasa stop
 USAGE
 }
 
@@ -38,6 +40,9 @@ case "$command:$target" in
     ;;
   reset:dev)
     ./scripts/reset-dev.sh
+    ;;
+  stop:)
+    ./scripts/stop.sh
     ;;
   restart:dev)
     docker compose --env-file .env.docker restart server client

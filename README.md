@@ -45,6 +45,7 @@ Short commands:
 kasa install dev
 kasa install dev -r
 kasa install app
+kasa stop
 kasa restart dev
 
 make install-dev
@@ -61,6 +62,7 @@ What they do:
 - `kasa install dev`: creates `.env.docker` if needed, starts the development stack, and prints setup URLs.
 - `kasa install dev -r`: resets the bundled Docker development database, then starts a fresh installer.
 - `kasa install app`: creates `.env.production.local` if needed, starts the local production-test stack, and prints setup URLs.
+- `kasa stop`: stops both development and local production-test stacks so ports are free.
 - `kasa restart dev`: restarts the app containers after changing installer database settings.
 - `make install-dev`: creates `.env.docker` if needed, starts the development stack, and prints setup URLs.
 - `make install-app`: creates `.env.production.local` if needed, starts the local production-test stack, and prints setup URLs.
