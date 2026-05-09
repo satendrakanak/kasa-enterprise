@@ -269,6 +269,21 @@ export function InstallationWizard() {
     form.database?.user === status?.database.user &&
     (form.database?.mode || "bundled") === (status?.database.mode || "bundled");
 
+  const databaseMatchesStatus = (
+    payload: DatabaseSetupPayload,
+    nextStatus: InstallerStatus,
+  ) =>
+    Boolean(nextStatus.database.connected) &&
+    databaseHostsMatch(
+      payload.host,
+      nextStatus.database.host,
+      payload.mode,
+    ) &&
+    Number(payload.port) === Number(nextStatus.database.port) &&
+    payload.name === nextStatus.database.name &&
+    payload.user === nextStatus.database.user &&
+    payload.mode === nextStatus.database.mode;
+
   const databasePayload = (): DatabaseSetupPayload => ({
     mode: form.database?.mode || "bundled",
     host: form.database?.host || "",
@@ -292,6 +307,9 @@ export function InstallationWizard() {
       setDatabaseRestartRequired(result.restartRequired);
       setDatabaseFeedback(result.message);
       toast.success(result.message);
+      if (result.restartRequired) {
+        await waitForRuntimeDatabase(payload);
+      }
     } catch (error) {
       setDatabaseSaved(false);
       setDatabaseRestartRequired(false);
@@ -302,6 +320,37 @@ export function InstallationWizard() {
     } finally {
       setDatabaseTesting(false);
     }
+  };
+
+  const waitForRuntimeDatabase = async (payload: DatabaseSetupPayload) => {
+    setDatabaseFeedback(
+      "Database saved. Kasa is reconnecting to the selected database...",
+    );
+
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 1500));
+
+      try {
+        const nextStatus = await installerClientService.getStatus();
+        setStatus(nextStatus);
+
+        if (databaseMatchesStatus(payload, nextStatus)) {
+          setDatabaseSaved(true);
+          setDatabaseRestartRequired(false);
+          setDatabaseFeedback(
+            "Database runtime connected. You can continue installation.",
+          );
+          toast.success("Database runtime connected");
+          return;
+        }
+      } catch {
+        // The API can be unavailable for a few seconds while Docker restarts it.
+      }
+    }
+
+    setDatabaseFeedback(
+      "Database saved, but Kasa has not reconnected yet. Run kasa restart dev and refresh this installer.",
+    );
   };
 
   if (installationProgress) {
@@ -711,7 +760,7 @@ export function InstallationWizard() {
               >
                 {databaseRestartRequired
                   ? databaseFeedback ||
-                    "Database selection saved. Restart Docker with kasa restart dev, reopen the installer, and continue from this step."
+                    "Database selection saved. Kasa is reconnecting to the selected database..."
                   : databaseMatchesActiveConnection
                   ? "Database connection verified. The installer will create admin, settings, and demo content in this database."
                   : databaseFeedback ||
@@ -740,14 +789,12 @@ export function InstallationWizard() {
                     ? "Use bundled database"
                     : "Test and save database"}
                 </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => window.location.reload()}
-                  disabled={!databaseRestartRequired}
-                >
-                  I restarted, recheck
-                </Button>
+                {databaseRestartRequired ? (
+                  <div className="flex items-center gap-2 rounded-xl border bg-muted/40 px-4 py-2 text-sm text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin" />
+                    Reconnecting database runtime
+                  </div>
+                ) : null}
               </div>
               <WizardActions
                 onNext={goNext}

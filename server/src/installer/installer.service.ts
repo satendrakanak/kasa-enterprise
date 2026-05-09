@@ -112,6 +112,7 @@ export class InstallerService {
     try {
       await probe.initialize();
       await probe.query('select 1');
+      await this.assertExternalPasswordIsEnforced(connectionPayload);
       return {
         connected: true,
         host: connectionPayload.host,
@@ -142,11 +143,15 @@ export class InstallerService {
       );
       const restartRequired =
         this.configService.get<string>('database.source') !== 'bundled';
+      if (restartRequired) {
+        this.scheduleDockerRestart();
+      }
       return {
         saved: true,
         restartRequired,
+        autoRestart: restartRequired && this.isRunningInsideDocker(),
         message: restartRequired
-          ? 'Bundled database selected. Restart Docker with kasa restart dev, then continue from this step.'
+          ? 'Bundled database selected. Kasa is restarting the API and will reconnect shortly.'
           : 'Bundled database selected and ready.',
       };
     }
@@ -176,13 +181,15 @@ export class InstallerService {
         2,
       )}\n`,
     );
+    this.scheduleDockerRestart();
 
     return {
       saved: true,
       restartRequired: true,
+      autoRestart: this.isRunningInsideDocker(),
       host: connectionPayload.host,
       message:
-        'External database verified and saved. Restart Docker with kasa restart dev, then continue from this step.',
+        'External database verified and saved. Kasa is restarting the API and will reconnect shortly.',
     };
   }
 
@@ -412,6 +419,46 @@ export class InstallerService {
 
   private isRunningInsideDocker() {
     return fs.existsSync('/.dockerenv') || process.env.KASA_DOCKER === 'true';
+  }
+
+  private async assertExternalPasswordIsEnforced(payload: DatabaseSetupDto) {
+    if (payload.mode !== 'external' || !payload.password) return;
+
+    const probe = new DataSource({
+      type: 'postgres',
+      host: payload.host,
+      port: Number(payload.port || 5432),
+      username: payload.user,
+      password: `kasa-invalid-${randomUUID()}`,
+      database: payload.name,
+      ssl: payload.ssl
+        ? { rejectUnauthorized: payload.rejectUnauthorized !== false }
+        : false,
+    });
+
+    try {
+      await probe.initialize();
+      await probe.query('select 1');
+      throw new BadRequestException(
+        'PostgreSQL accepted an incorrect password. Please disable trust authentication for this database/user, then test again.',
+      );
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+    } finally {
+      if (probe.isInitialized) {
+        await probe.destroy();
+      }
+    }
+  }
+
+  private scheduleDockerRestart() {
+    if (!this.isRunningInsideDocker()) return;
+
+    setTimeout(() => {
+      process.exit(0);
+    }, 750);
   }
 
   private ensureRuntimeConfigDirectory() {

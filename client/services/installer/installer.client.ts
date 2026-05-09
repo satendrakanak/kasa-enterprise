@@ -88,6 +88,7 @@ export const installerClientService = {
       ApiResponse<{
         saved: boolean;
         restartRequired: boolean;
+        autoRestart?: boolean;
         host?: string;
         message: string;
       }>
