@@ -97,7 +97,9 @@ services:
 
 volumes:
   postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:-kasa-enterprise-dev_postgres_data}
   redis_data:
+    name: ${REDIS_VOLUME_NAME:-kasa-enterprise-dev_redis_data}
   server_node_modules:
   client_node_modules:
   client_next_cache:
