@@ -1,16 +1,16 @@
-name: codewithkasa-dev
+name: kasa-enterprise-dev
 
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: codewithkasa-postgres-dev
+    container_name: kasa-enterprise-postgres-dev
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-codewithkasa}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codewithkasa}
       POSTGRES_DB: ${POSTGRES_DB:-kasa_enterprise}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,7 +23,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: codewithkasa-redis-dev
+    container_name: kasa-enterprise-redis-dev
     restart: unless-stopped
     volumes:
       - redis_data:/data
@@ -39,7 +39,7 @@ services:
     build:
       context: ./server
       target: development
-    container_name: codewithkasa-server-dev
+    container_name: kasa-enterprise-server-dev
     restart: unless-stopped
     env_file:
       - .env.docker
@@ -74,7 +74,7 @@ services:
     build:
       context: ./client
       target: development
-    container_name: codewithkasa-client-dev
+    container_name: kasa-enterprise-client-dev
     restart: unless-stopped
     stdin_open: true
     tty: true

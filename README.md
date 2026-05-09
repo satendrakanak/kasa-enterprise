@@ -35,6 +35,10 @@ KASA-DEMO-LICENSE-2026
 Database name is configurable in `.env.docker` through `POSTGRES_DB`. On a new
 Docker volume, PostgreSQL creates that database automatically.
 
+Local PostgreSQL is exposed on host port `5433` by default so it does not clash
+with Postgres already running on your machine. The app containers still connect
+to Postgres on container port `5432`.
+
 Short commands:
 
 ```bash
@@ -370,36 +374,12 @@ http://localhost:8000
 
 ## Environment Variables
 
-Create `.env` files inside both `client/` and `server/` folders.
+For Docker development, copy `.env.docker.example` to `.env.docker` and edit
+only local secrets or port overrides when needed. Runtime platform settings such
+as branding, storage, mail, payment gateway, live classes, and push keys are
+managed from the installer and site settings dashboard.
 
----
-
-### Client `.env`
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
----
-
-### Server `.env`
-
-```env
-PORT=8000
-
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_USER=postgres
-DATABASE_PASSWORD=your_postgres_password
-DATABASE_NAME=codewithkasa
-
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRE=7d
-
-CLIENT_URL=http://localhost:3000
-```
-
-> Real `.env` files should not be pushed to GitHub. Use `.env.example` files instead.
+Real `.env` files should not be pushed to GitHub.
 
 ---
 
