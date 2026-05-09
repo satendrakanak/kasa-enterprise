@@ -14,11 +14,18 @@ export type InstallerStatus = {
     host: string;
     port: number;
     name: string;
+    user: string;
     connected: boolean;
   };
 };
 
 export type CompleteInstallationPayload = {
+  database?: {
+    host: string;
+    port: number;
+    name: string;
+    user: string;
+  };
   siteName: string;
   siteTagline?: string;
   supportEmail?: string;

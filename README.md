@@ -11,8 +11,7 @@ It is designed as a production-style LMS platform with separate role-based dashb
 Fresh clone flow:
 
 ```bash
-cp .env.docker.example .env.docker
-docker compose --env-file .env.docker up --build
+make install-dev
 ```
 
 Then open:
@@ -42,6 +41,9 @@ to Postgres on container port `5432`.
 Short commands:
 
 ```bash
+make install-dev
+make install-app
+
 make dev
 make dev-down
 
@@ -51,6 +53,8 @@ make prod-down
 
 What they do:
 
+- `make install-dev`: creates `.env.docker` if needed, starts the development stack, and prints setup URLs.
+- `make install-app`: creates `.env.production.local` if needed, starts the local production-test stack, and prints setup URLs.
 - `make dev`: starts the development Docker stack with hot reload.
 - `make prod`: builds and starts the local production Docker stack for final testing.
 
@@ -62,6 +66,7 @@ docker compose --env-file .env.docker up --build
 ```
 
 Full infrastructure and CI/CD notes are in [docs/INFRA_AND_DEPLOYMENT.md](./docs/INFRA_AND_DEPLOYMENT.md).
+AWS S3 and CloudFront setup notes are in [docs/AWS_STORAGE_SETUP.md](./docs/AWS_STORAGE_SETUP.md).
 
 ---
 

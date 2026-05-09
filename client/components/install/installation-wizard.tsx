@@ -30,6 +30,7 @@ import {
 
 const steps = [
   { key: "system", label: "System check", icon: Database },
+  { key: "database", label: "Database", icon: Database },
   { key: "academy", label: "Academy details", icon: Sparkles },
   { key: "license", label: "Activation", icon: KeyRound },
   { key: "admin", label: "Admin account", icon: UserRoundCog },
@@ -38,6 +39,12 @@ const steps = [
 type StepKey = (typeof steps)[number]["key"];
 
 const initialForm: CompleteInstallationPayload = {
+  database: {
+    host: "",
+    port: 5432,
+    name: "",
+    user: "",
+  },
   siteName: "Kasa Enterprise",
   siteTagline: "Practical courses, live classes, and certificates in one platform.",
   supportEmail: "support@kasaenterprise.com",
@@ -59,6 +66,7 @@ export function InstallationWizard() {
     null,
   );
   const [loading, setLoading] = useState(true);
+  const [systemChecked, setSystemChecked] = useState(false);
   const [validating, setValidating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [installationJobId, setInstallationJobId] = useState<string | null>(null);
@@ -68,7 +76,18 @@ export function InstallationWizard() {
   useEffect(() => {
     installerClientService
       .getStatus()
-      .then(setStatus)
+      .then((result) => {
+        setStatus(result);
+        setForm((current) => ({
+          ...current,
+          database: {
+            host: result.database.host || "",
+            port: result.database.port || 5432,
+            name: result.database.name || "",
+            user: result.database.user || "",
+          },
+        }));
+      })
       .catch((error) => toast.error(error.message))
       .finally(() => setLoading(false));
   }, []);
@@ -83,6 +102,24 @@ export function InstallationWizard() {
     value: CompleteInstallationPayload[K],
   ) => {
     setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const updateDatabaseForm = <
+    K extends keyof NonNullable<CompleteInstallationPayload["database"]>,
+  >(
+    key: K,
+    value: NonNullable<CompleteInstallationPayload["database"]>[K],
+  ) => {
+    setForm((current) => ({
+      ...current,
+      database: {
+        host: current.database?.host || "",
+        port: current.database?.port || 5432,
+        name: current.database?.name || "",
+        user: current.database?.user || "",
+        [key]: value,
+      },
+    }));
   };
 
   const goNext = () => {
@@ -166,6 +203,13 @@ export function InstallationWizard() {
     0,
     Math.min(100, installationProgress?.progress || 0),
   );
+
+  const databaseMatchesActiveConnection =
+    Boolean(status?.database.connected) &&
+    form.database?.host === status?.database.host &&
+    Number(form.database?.port) === Number(status?.database.port) &&
+    form.database?.name === status?.database.name &&
+    form.database?.user === status?.database.user;
 
   if (installationProgress) {
     return (
@@ -339,27 +383,128 @@ export function InstallationWizard() {
               <SectionTitle
                 icon={Database}
                 title="System check"
-                description="The installer uses the database connection already configured in Docker or your server environment."
+                description="Run a quick readiness check before entering setup details."
+              />
+              <div className="mt-6 rounded-[1.5rem] border bg-muted/30 p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold">Application health</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      This checks the API, configured database connection, and
+                      installer state.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={systemChecked ? "secondary" : "default"}
+                    onClick={() => setSystemChecked(true)}
+                  >
+                    {systemChecked ? (
+                      <CheckCircle2 className="size-4" />
+                    ) : (
+                      <ShieldCheck className="size-4" />
+                    )}
+                    {systemChecked ? "System checked" : "Run system check"}
+                  </Button>
+                </div>
+              </div>
+              {systemChecked ? (
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  <InfoTile label="API" value="Reachable" tone="success" />
+                  <InfoTile
+                    label="Database"
+                    value={status?.database.connected ? "Connected" : "Not ready"}
+                    tone={status?.database.connected ? "success" : "danger"}
+                  />
+                  <InfoTile
+                    label="Admin account"
+                    value={status?.hasAdmin ? "Exists" : "Not created"}
+                  />
+                  <InfoTile
+                    label="Installer"
+                    value={status?.isInstalled ? "Complete" : "Ready"}
+                    tone={status?.isInstalled ? "success" : "default"}
+                  />
+                </div>
+              ) : null}
+              <div className="mt-6 rounded-2xl border bg-muted/40 p-4 text-sm text-muted-foreground">
+                If you want to use RDS or another external database, update the
+                Docker/env database values before starting the stack. The browser
+                wizard installs into the active database connection shown in the
+                next step.
+              </div>
+              <WizardActions
+                onNext={goNext}
+                nextDisabled={!systemChecked || !status?.database.connected}
+              />
+            </section>
+          ) : null}
+
+          {activeStep === "database" ? (
+            <section>
+              <SectionTitle
+                icon={Database}
+                title="Database details"
+                description="Review the active database connection. These values must match the running Docker/env configuration."
               />
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <InfoTile label="Database" value={status?.database.name || "-"} />
-                <InfoTile label="Host" value={status?.database.host || "-"} />
-                <InfoTile
-                  label="Port"
-                  value={String(status?.database.port || "-")}
-                />
-                <InfoTile
-                  label="Connection"
-                  value={status?.database.connected ? "Connected" : "Not ready"}
-                  tone={status?.database.connected ? "success" : "danger"}
-                />
+                <Field label="Host">
+                  <Input
+                    value={form.database?.host || ""}
+                    onChange={(event) =>
+                      updateDatabaseForm("host", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Port">
+                  <Input
+                    type="number"
+                    value={form.database?.port || 5432}
+                    onChange={(event) =>
+                      updateDatabaseForm("port", Number(event.target.value))
+                    }
+                  />
+                </Field>
+                <Field label="Database name">
+                  <Input
+                    value={form.database?.name || ""}
+                    onChange={(event) =>
+                      updateDatabaseForm("name", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Database user">
+                  <Input
+                    value={form.database?.user || ""}
+                    onChange={(event) =>
+                      updateDatabaseForm("user", event.target.value)
+                    }
+                  />
+                </Field>
+                <Field label="Database password">
+                  <Input
+                    value="Stored in Docker/env"
+                    type="password"
+                    disabled
+                    className="disabled:opacity-80"
+                  />
+                </Field>
               </div>
-              <div className="mt-6 rounded-2xl border bg-muted/40 p-4 text-sm text-muted-foreground">
-                Database credentials stay in environment/Docker config. Branding,
-                mail, storage, payment, live class, push, and other app settings
-                are managed from the dashboard after installation.
+              <div
+                className={`mt-6 rounded-2xl border p-4 text-sm ${
+                  databaseMatchesActiveConnection
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
+                    : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-200"
+                }`}
+              >
+                {databaseMatchesActiveConnection
+                  ? "Database connection verified. The installer will create admin, settings, and demo content in this database."
+                  : "These details do not match the active app connection. Update .env.docker or .env.production, restart Docker, and reopen the installer."}
               </div>
-              <WizardActions onNext={goNext} nextDisabled={!status?.database.connected} />
+              <WizardActions
+                onNext={goNext}
+                nextDisabled={!databaseMatchesActiveConnection}
+              />
             </section>
           ) : null}
 
@@ -514,7 +659,7 @@ export function InstallationWizard() {
                   />
                   <span>
                     <span className="block text-sm font-semibold">
-                      Import marketplace demo data
+                      Import marketplace demo data?
                     </span>
                     <span className="text-sm text-muted-foreground">
                       Adds demo courses, batches, class sessions, coupons,

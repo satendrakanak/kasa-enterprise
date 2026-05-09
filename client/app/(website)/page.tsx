@@ -16,6 +16,8 @@ import { Testimonial } from "@/types/testimonial";
 import { FeaturedTestimonialsSection } from "@/components/testimonials/featured-testimonials-section";
 import { User } from "@/types/user";
 import { buildMetadata } from "@/lib/seo";
+import { apiServer } from "@/lib/api/server";
+import { redirect } from "next/navigation";
 
 export const metadata = buildMetadata({
   path: "/",
@@ -25,6 +27,15 @@ export const metadata = buildMetadata({
 });
 
 export default async function Home() {
+  const installerStatus = await apiServer
+    .get<{ data: { isInstalled: boolean } }>("/installer/status")
+    .then((response) => response.data)
+    .catch(() => null);
+
+  if (installerStatus && !installerStatus.isInstalled) {
+    redirect("/install");
+  }
+
   let courses: Course[] = [];
   try {
     const response = await courseServerService.getPopularCourses();

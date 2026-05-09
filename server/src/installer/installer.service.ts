@@ -80,6 +80,7 @@ export class InstallerService {
         host: this.configService.get<string>('database.host'),
         port: this.configService.get<number>('database.port'),
         name: this.configService.get<string>('database.name'),
+        user: this.configService.get<string>('database.user'),
         connected: this.dataSource.isInitialized,
       },
     };
@@ -180,6 +181,7 @@ export class InstallerService {
     onProgress?: (progress: number, label: string) => void,
   ) {
     onProgress?.(5, 'Preparing permissions...');
+    this.assertDatabaseSelection(payload);
     await seedPermissions(this.dataSource);
     onProgress?.(14, 'Preparing roles...');
     await seedRoles(this.dataSource);
@@ -222,6 +224,36 @@ export class InstallerService {
       version: this.configService.get<string>('appConfig.apiVersion') || '0.1.1',
       demoDataImported: Boolean(payload.importDemoData),
     });
+  }
+
+  private assertDatabaseSelection(payload: CompleteInstallationDto) {
+    if (!payload.database) return;
+
+    const activeDatabase = {
+      host: String(this.configService.get<string>('database.host') || ''),
+      port: Number(this.configService.get<number>('database.port') || 5432),
+      name: String(this.configService.get<string>('database.name') || ''),
+      user: String(this.configService.get<string>('database.user') || ''),
+    };
+
+    const requestedDatabase = {
+      host: String(payload.database.host || ''),
+      port: Number(payload.database.port || 5432),
+      name: String(payload.database.name || ''),
+      user: String(payload.database.user || ''),
+    };
+
+    const matchesActiveConnection =
+      activeDatabase.host === requestedDatabase.host &&
+      activeDatabase.port === requestedDatabase.port &&
+      activeDatabase.name === requestedDatabase.name &&
+      activeDatabase.user === requestedDatabase.user;
+
+    if (!matchesActiveConnection) {
+      throw new BadRequestException(
+        'Database details do not match the running application connection. Update the Docker/env database values, restart the stack, and run the installer again.',
+      );
+    }
   }
 
   private async createAdminUser(payload: CompleteInstallationDto) {

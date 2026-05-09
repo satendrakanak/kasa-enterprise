@@ -1,12 +1,41 @@
 import {
   IsBoolean,
   IsEmail,
+  IsInt,
+  IsObject,
   IsOptional,
   IsString,
+  Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class InstallationDatabaseDto {
+  @IsString()
+  @MinLength(2)
+  host!: string;
+
+  @IsInt()
+  @Min(1)
+  port!: number;
+
+  @IsString()
+  @MinLength(1)
+  name!: string;
+
+  @IsString()
+  @MinLength(1)
+  user!: string;
+}
 
 export class CompleteInstallationDto {
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => InstallationDatabaseDto)
+  database?: InstallationDatabaseDto;
+
   @IsString()
   @MinLength(2)
   siteName!: string;

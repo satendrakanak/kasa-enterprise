@@ -19,8 +19,7 @@ should not depend on fetching Google Fonts during build.
 Development should run everything locally through Docker Compose:
 
 ```bash
-cp .env.docker.example .env.docker
-make dev
+make install-dev
 ```
 
 Open:
@@ -66,7 +65,7 @@ Redis later if queue volume, uptime, or horizontal scaling grows.
 1. Create local env:
 
 ```bash
-cp .env.docker.example .env.docker
+make install-dev
 ```
 
 2. Start all services:
@@ -104,7 +103,7 @@ make dev-down
 2. Create the local production env once:
 
 ```bash
-cp .env.production.local.example .env.production.local
+make install-app
 ```
 
 3. Build and start production containers locally:
