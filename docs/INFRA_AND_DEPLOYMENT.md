@@ -87,6 +87,10 @@ kasa stop
 kasa install dev -r
 ```
 
+This reset command stops the development stack with the current `.env.docker`,
+backs up that env file, recreates it from `.env.docker.example`, and removes the
+bundled Docker database data so the installer can run fresh.
+
 The development compose file mounts `./client` and `./server` into containers, so code changes hot reload without rebuilding images.
 
 ## Local Production Test
@@ -118,6 +122,9 @@ The installer supports two database modes:
 ```bash
 kasa install dev -r
 ```
+
+   - The reset also refreshes `.env.docker` from `.env.docker.example` after
+     backing up the existing file.
 
 2. **External PostgreSQL**
    - Use this for local Postgres, a private database server, or Amazon RDS.

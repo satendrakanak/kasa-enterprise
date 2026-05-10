@@ -62,7 +62,7 @@ make prod-down
 What they do:
 
 - `kasa install dev`: creates `.env.docker` if needed, starts the development stack, and prints setup URLs.
-- `kasa install dev -r`: resets the bundled Docker development database, then starts a fresh installer.
+- `kasa install dev -r`: stops the development stack, resets the bundled Docker database, backs up the current `.env.docker`, recreates `.env.docker` from `.env.docker.example`, then starts a fresh installer.
 - `kasa install app`: creates `.env.production.local` if needed, starts the local production-test stack, and prints setup URLs.
 - `kasa start dev`: starts an already-installed development stack without resetting setup.
 - `kasa start app`: starts an already-installed local production-test stack without resetting setup.
