@@ -95,6 +95,12 @@ export function InstallationWizard() {
   const [licenseFingerprint, setLicenseFingerprint] = useState<string | null>(
     null,
   );
+  const [licenseSummary, setLicenseSummary] = useState<{
+    plan: string;
+    expiresAt: string | null;
+    activeActivations: number;
+    maxActivations: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [systemChecked, setSystemChecked] = useState(false);
   const [databaseTesting, setDatabaseTesting] = useState(false);
@@ -187,10 +193,17 @@ export function InstallationWizard() {
         form.licenseKey,
       );
       setLicenseFingerprint(result.fingerprint);
+      setLicenseSummary({
+        plan: result.plan,
+        expiresAt: result.expiresAt,
+        activeActivations: result.activeActivations,
+        maxActivations: result.maxActivations,
+      });
       toast.success("License activated");
       setActiveStep("admin");
     } catch (error) {
       setLicenseFingerprint(null);
+      setLicenseSummary(null);
       toast.error(error instanceof Error ? error.message : "Invalid license key");
     } finally {
       setValidating(false);
@@ -870,26 +883,36 @@ export function InstallationWizard() {
                     onChange={(event) => {
                       updateForm("licenseKey", event.target.value);
                       setLicenseFingerprint(null);
+                      setLicenseSummary(null);
                     }}
-                    placeholder={
-                      status?.canUseDevLicense
-                        ? "KASA-DEMO-LICENSE-2026"
-                        : "Enter your license key"
-                    }
+                    placeholder="Enter the license key from Kasa Licence Portal"
                   />
                 </Field>
-                {status?.canUseDevLicense ? (
-                  <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-200">
-                    Development mode has a local demo license available:
-                    <span className="ml-1 font-semibold">
-                      KASA-DEMO-LICENSE-2026
-                    </span>
-                  </div>
-                ) : null}
                 {licenseFingerprint ? (
-                  <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-600">
-                    <BadgeCheck className="size-5" />
-                    License verified. Fingerprint {licenseFingerprint}
+                  <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-600">
+                    <div className="flex items-center gap-3">
+                      <BadgeCheck className="size-5" />
+                      <span className="font-semibold">
+                        License verified. Fingerprint {licenseFingerprint}
+                      </span>
+                    </div>
+                    {licenseSummary ? (
+                      <div className="mt-3 grid gap-2 text-xs text-emerald-700 dark:text-emerald-200 sm:grid-cols-3">
+                        <span>Plan: {licenseSummary.plan}</span>
+                        <span>
+                          Activations: {licenseSummary.activeActivations}/
+                          {licenseSummary.maxActivations}
+                        </span>
+                        <span>
+                          Expires:{" "}
+                          {licenseSummary.expiresAt
+                            ? new Date(licenseSummary.expiresAt).toLocaleDateString(
+                                "en-IN",
+                              )
+                            : "Lifetime"}
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

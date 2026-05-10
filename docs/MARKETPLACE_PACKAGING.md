@@ -150,20 +150,17 @@ Installer steps:
 
 1. System check verifies the configured database connection.
 2. Academy details collect the initial site name, tagline, and support contact.
-3. License activation validates the buyer key against `INSTALLER_LICENSE_HASH`.
+3. License activation validates the buyer key against the Kasa Licence Portal.
 4. Admin account creates the first administrator.
 5. Optional demo import loads marketplace-ready JSON demo content.
 
-For local development, the installer accepts `KASA-DEMO-LICENSE-2026` when
-`INSTALLER_LICENSE_HASH` is empty and `NODE_ENV` is not `production`.
+For local development, run the Kasa Licence Portal on port `5000`, issue a
+`kasa-enterprise` key, and point the app to it with
+`LICENSE_PORTAL_URL=http://host.docker.internal:5000` when running in Docker.
 
-For production, generate the hash once and store only the hash in the env file:
-
-```bash
-node -e "console.log(require('crypto').createHash('sha256').update('YOUR-LICENSE-KEY').digest('hex'))"
-```
-
-The real license key is entered only in the browser during installation.
+For production, point `LICENSE_PORTAL_URL` to the hosted licence portal. The real
+license key is entered only in the browser during installation; the installed
+app stores activation metadata and a non-secret fingerprint.
 
 ## Demo Data Policy
 

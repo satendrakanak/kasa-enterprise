@@ -3,11 +3,12 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  OnModuleInit,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { createHash, randomUUID } from 'crypto';
+import { randomUUID } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { runtimeDatabaseConfigPath } from 'src/config/runtime-database.config';
@@ -27,7 +28,8 @@ import { DatabaseSetupDto } from './dtos/database-setup.dto';
 
 const INSTALLATION_STATUS_KEY = 'installation_status';
 const LICENSE_SETTINGS_KEY = 'license_settings';
-const DEV_LICENSE_KEY = 'KASA-DEMO-LICENSE-2026';
+const LICENSE_INSTANCE_KEY = 'license_instance_settings';
+const LOCATION_BACKGROUND_STATUS_KEY = 'location_background_import_status';
 
 type InstallationJobStatus = 'queued' | 'running' | 'completed' | 'failed';
 
@@ -42,8 +44,31 @@ type InstallationJob = {
   updatedAt: string;
 };
 
+type LicensePortalActivationResponse =
+  | {
+      ok: true;
+      license: {
+        id: string;
+        product: string;
+        plan: string;
+        expiresAt: string | null;
+        maxActivations: number;
+        activeActivations: number;
+      };
+      activation: {
+        id: string;
+        status: string;
+      };
+      signature: string;
+    }
+  | {
+      ok: false;
+      code?: string;
+      message?: string;
+    };
+
 @Injectable()
-export class InstallerService {
+export class InstallerService implements OnModuleInit {
   private readonly installationJobs = new Map<string, InstallationJob>();
 
   constructor(
@@ -61,6 +86,20 @@ export class InstallerService {
     private readonly userRepository: Repository<User>,
   ) {}
 
+  async onModuleInit() {
+    const installation = await this.getInstallationRecord().catch(() => null);
+    const backgroundStatus = await this.appSettingRepository
+      .findOne({ where: { key: LOCATION_BACKGROUND_STATUS_KEY } })
+      .catch(() => null);
+
+    if (
+      installation?.valueJson?.isInstalled &&
+      backgroundStatus?.valueJson?.status !== 'completed'
+    ) {
+      this.startBackgroundLocationImport(5000);
+    }
+  }
+
   async getStatus() {
     const installation = await this.getInstallationRecord();
     const adminCount = await this.userRepository
@@ -77,9 +116,6 @@ export class InstallerService {
       installedAt: installation?.valueJson?.installedAt || null,
       hasAdmin: adminCount > 0,
       licenseRequired: true,
-      canUseDevLicense:
-        this.configService.get<string>('NODE_ENV') !== 'production' &&
-        !this.getConfiguredLicenseHash(),
       database: {
         mode: this.configService.get<string>('database.source') || 'bundled',
         host: this.configService.get<string>('database.host'),
@@ -194,11 +230,17 @@ export class InstallerService {
   }
 
   async validateLicense(licenseKey: string) {
-    this.assertLicense(licenseKey);
+    const activation = await this.activateLicense(licenseKey, {
+      instanceLabel: 'Kasa Enterprise installer',
+    });
 
     return {
       valid: true,
-      fingerprint: this.hashLicense(licenseKey).slice(0, 12).toUpperCase(),
+      fingerprint: this.getLicenseFingerprint(activation.signature),
+      plan: activation.license.plan,
+      expiresAt: activation.license.expiresAt,
+      activeActivations: activation.license.activeActivations,
+      maxActivations: activation.license.maxActivations,
     };
   }
 
@@ -209,7 +251,9 @@ export class InstallerService {
       throw new ConflictException('Installation is already completed');
     }
 
-    this.assertLicense(payload.licenseKey);
+    await this.activateLicense(payload.licenseKey, {
+      instanceLabel: `${payload.siteName} installation`,
+    });
 
     await this.runInstallationSteps(payload);
 
@@ -226,7 +270,9 @@ export class InstallerService {
       throw new ConflictException('Installation is already completed');
     }
 
-    this.assertLicense(payload.licenseKey);
+    await this.activateLicense(payload.licenseKey, {
+      instanceLabel: `${payload.siteName} installation`,
+    });
 
     const jobId = randomUUID();
     this.updateJob(jobId, {
@@ -294,8 +340,19 @@ export class InstallerService {
     await seedRoles(this.dataSource);
     onProgress?.(24, 'Preparing email templates...');
     await seedEmailTemplates(this.dataSource);
-    onProgress?.(34, 'Importing countries, states, and cities...');
-    await seedLocation(this.dataSource);
+    onProgress?.(34, 'Preparing countries, states, and India cities...');
+    await seedLocation(this.dataSource, {
+      cityCountryCodes: ['IN'],
+      cityChunkSize: 1000,
+      onProgress: (locationProgress) => {
+        const mappedProgress =
+          34 + Math.floor((locationProgress.progress / 100) * 13);
+        onProgress?.(
+          Math.min(47, mappedProgress),
+          locationProgress.label,
+        );
+      },
+    });
     onProgress?.(48, 'Creating the first admin account...');
     await this.createAdminUser(payload);
     onProgress?.(60, 'Saving academy settings...');
@@ -319,10 +376,21 @@ export class InstallerService {
     }
 
     onProgress?.(88, 'Activating license...');
+    const activation = await this.activateLicense(payload.licenseKey, {
+      instanceLabel: `${payload.siteName} production installation`,
+    });
     await this.saveSetting(LICENSE_SETTINGS_KEY, {
-      licenseHash: this.hashLicense(payload.licenseKey),
       activatedAt: new Date().toISOString(),
-      fingerprint: this.hashLicense(payload.licenseKey).slice(0, 12).toUpperCase(),
+      fingerprint: this.getLicenseFingerprint(activation.signature),
+      productSlug: activation.license.product,
+      plan: activation.license.plan,
+      expiresAt: activation.license.expiresAt,
+      maxActivations: activation.license.maxActivations,
+      activeActivations: activation.license.activeActivations,
+      activationId: activation.activation.id,
+      activationStatus: activation.activation.status,
+      signature: activation.signature,
+      portalUrl: this.getLicensePortalUrl(),
     });
     onProgress?.(95, 'Finalizing installation...');
     await this.saveSetting(INSTALLATION_STATUS_KEY, {
@@ -331,6 +399,66 @@ export class InstallerService {
       version: this.configService.get<string>('appConfig.apiVersion') || '0.1.1',
       demoDataImported: Boolean(payload.importDemoData),
     });
+    this.startBackgroundLocationImport();
+  }
+
+  private startBackgroundLocationImport(delayMs = 1000) {
+    setTimeout(() => {
+      void this.runBackgroundLocationImport();
+    }, delayMs);
+  }
+
+  private async runBackgroundLocationImport() {
+    let lastSavedProgress = -1;
+
+    try {
+      await this.saveSetting(LOCATION_BACKGROUND_STATUS_KEY, {
+        status: 'running',
+        progress: 0,
+        label: 'Preparing complete city directory...',
+        startedAt: new Date().toISOString(),
+      });
+
+      await seedLocation(this.dataSource, {
+        skipCountryStateSeed: true,
+        cityChunkSize: 2000,
+        onProgress: (progress) => {
+          const shouldPersist =
+            progress.progress === 100 ||
+            progress.progress >= lastSavedProgress + 5;
+
+          if (!shouldPersist) {
+            return;
+          }
+
+          lastSavedProgress = progress.progress;
+          void this.saveSetting(LOCATION_BACKGROUND_STATUS_KEY, {
+            status: progress.progress === 100 ? 'completed' : 'running',
+            progress: progress.progress,
+            label: progress.label,
+            updatedAt: new Date().toISOString(),
+          }).catch(() => undefined);
+        },
+      });
+
+      await this.saveSetting(LOCATION_BACKGROUND_STATUS_KEY, {
+        status: 'completed',
+        progress: 100,
+        label: 'Complete city directory is ready',
+        completedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      await this.saveSetting(LOCATION_BACKGROUND_STATUS_KEY, {
+        status: 'failed',
+        progress: lastSavedProgress > -1 ? lastSavedProgress : 0,
+        label: 'Complete city directory import failed',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Background city import failed',
+        failedAt: new Date().toISOString(),
+      }).catch(() => undefined);
+    }
   }
 
   private assertDatabaseSelection(payload: CompleteInstallationDto) {
@@ -509,37 +637,104 @@ export class InstallerService {
     );
   }
 
-  private assertLicense(licenseKey: string) {
+  private async activateLicense(
+    licenseKey: string,
+    options?: { instanceLabel?: string },
+  ) {
     const normalizedKey = licenseKey.trim();
-    const configuredHash = this.getConfiguredLicenseHash();
-    const hash = this.hashLicense(normalizedKey);
-
-    if (configuredHash) {
-      if (hash !== configuredHash) {
-        throw new BadRequestException('Invalid license key');
-      }
-
-      return;
+    if (!normalizedKey) {
+      throw new BadRequestException('License key is required');
     }
 
-    if (
-      this.configService.get<string>('NODE_ENV') !== 'production' &&
-      normalizedKey === DEV_LICENSE_KEY
-    ) {
-      return;
+    const portalUrl = this.getLicensePortalUrl();
+    const instanceId = await this.getOrCreateLicenseInstanceId();
+    const productSlug =
+      this.configService.get<string>('LICENSE_PRODUCT_SLUG')?.trim() ||
+      'kasa-enterprise';
+
+    let response: Response;
+    try {
+      response = await fetch(`${portalUrl}/api/v1/licenses/activate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          licenseKey: normalizedKey,
+          productSlug,
+          instanceId,
+          instanceLabel: options?.instanceLabel || 'Kasa Enterprise installation',
+          productVersion:
+            this.configService.get<string>('appConfig.apiVersion') || '0.1.1',
+          metadata: {
+            appUrl: this.configService.get<string>('appConfig.appUrl'),
+            frontEndUrl: this.configService.get<string>('appConfig.fronEndUrl'),
+            environment: this.configService.get<string>('appConfig.environment'),
+          },
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+    } catch (error) {
+      throw new ServiceUnavailableException(
+        error instanceof Error
+          ? `License portal is unreachable: ${error.message}`
+          : 'License portal is unreachable',
+      );
     }
 
-    throw new ServiceUnavailableException(
-      'License validation is not configured. Set INSTALLER_LICENSE_HASH before installation.',
-    );
+    const result = (await response.json().catch(() => null)) as
+      | LicensePortalActivationResponse
+      | null;
+
+    if (!response.ok || !result) {
+      throw new BadRequestException(
+        'License could not be activated. Please check the key and try again.',
+      );
+    }
+
+    if (!result.ok) {
+      throw new BadRequestException(
+        result.message ||
+          'License could not be activated. Please check the key and try again.',
+      );
+    }
+
+    return result;
   }
 
-  private hashLicense(licenseKey: string) {
-    return createHash('sha256').update(licenseKey.trim()).digest('hex');
+  private getLicensePortalUrl() {
+    const url = this.configService.get<string>('LICENSE_PORTAL_URL')?.trim();
+
+    if (!url) {
+      throw new ServiceUnavailableException(
+        'License portal is not configured. Set LICENSE_PORTAL_URL before installation.',
+      );
+    }
+
+    return url.replace(/\/+$/, '');
   }
 
-  private getConfiguredLicenseHash() {
-    return this.configService.get<string>('INSTALLER_LICENSE_HASH')?.trim();
+  private getLicenseFingerprint(signature: string) {
+    return signature.slice(-12).toUpperCase();
+  }
+
+  private async getOrCreateLicenseInstanceId() {
+    const existing = await this.appSettingRepository.findOne({
+      where: { key: LICENSE_INSTANCE_KEY },
+    });
+    const existingInstanceId = existing?.valueJson?.instanceId;
+
+    if (typeof existingInstanceId === 'string' && existingInstanceId.length >= 12) {
+      return existingInstanceId;
+    }
+
+    const instanceId = `kasa-${randomUUID()}`;
+    await this.saveSetting(LICENSE_INSTANCE_KEY, {
+      instanceId,
+      createdAt: new Date().toISOString(),
+    });
+
+    return instanceId;
   }
 
   private getInstallationRecord() {

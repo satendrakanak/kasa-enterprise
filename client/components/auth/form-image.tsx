@@ -28,17 +28,17 @@ export default function FormImage({
 
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.10)_1px,transparent_1px)] bg-[size:52px_52px] opacity-25 dark:opacity-10" />
 
-      <div className="absolute inset-x-0 bottom-0 p-8">
-        <div className="rounded-3xl border border-white/20 bg-white/14 p-5 text-white shadow-[0_20px_60px_rgba(2,6,23,0.25)] backdrop-blur-md">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/75">
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/55 via-slate-950/16 to-transparent p-8">
+        <div className="rounded-3xl border border-white/20 bg-slate-950/72 p-5 text-white shadow-[0_24px_70px_rgba(2,6,23,0.45)] backdrop-blur-md">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-100">
             Secure Learning
           </p>
 
-          <h2 className="mt-2 text-2xl font-semibold leading-tight">
+          <h2 className="mt-2 text-2xl font-semibold leading-tight text-white">
             Start where your progress continues.
           </h2>
 
-          <p className="mt-2 text-sm leading-6 text-white/75">
+          <p className="mt-2 text-sm leading-6 text-slate-100">
             Access courses, certificates, exams, and your academy dashboard from
             one protected account.
           </p>

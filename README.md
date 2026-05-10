@@ -23,14 +23,14 @@ Then open:
 - Swagger: http://localhost:8000/api
 
 The first run opens the installation wizard. It checks the database, asks for
-academy details, validates the license key, creates the first admin user, and
-can import the demo data with a live progress bar.
+academy details, activates the license key through the Kasa Licence Portal,
+creates the first admin user, and can import the demo data with a live progress
+bar.
 
-Default local development license:
-
-```text
-KASA-DEMO-LICENSE-2026
-```
+For local testing, run the Kasa Licence Portal on port `5000`, generate a
+`kasa-enterprise` key there, and keep `LICENSE_PORTAL_URL` set to
+`http://host.docker.internal:5000` in `.env.docker` so the API container can
+reach it.
 
 Database name is configurable in `.env.docker` through `POSTGRES_DB`. On a new
 Docker volume, PostgreSQL creates that database automatically.

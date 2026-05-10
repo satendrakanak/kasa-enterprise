@@ -17,6 +17,7 @@ import {
   Video,
   BellRing,
   Award,
+  Images,
   type LucideIcon,
 } from "lucide-react";
 
@@ -108,6 +109,13 @@ export const sidebarData = {
       url: "/admin/recordings",
       icon: Video,
       requiredPermissions: ["view_faculty_workspace"],
+    },
+
+    {
+      title: "Media",
+      url: "/admin/media",
+      icon: Images,
+      requiredPermissions: ["view_settings", "create_course", "update_course"],
     },
 
     {

@@ -9,7 +9,6 @@ export type InstallerStatus = {
   installedAt: string | null;
   hasAdmin: boolean;
   licenseRequired: boolean;
-  canUseDevLicense: boolean;
   database: {
     mode: "bundled" | "external";
     host: string;
@@ -71,7 +70,14 @@ export const installerClientService = {
 
   validateLicense: async (licenseKey: string) => {
     const response = await apiClient.post<
-      ApiResponse<{ valid: boolean; fingerprint: string }>
+      ApiResponse<{
+        valid: boolean;
+        fingerprint: string;
+        plan: string;
+        expiresAt: string | null;
+        activeActivations: number;
+        maxActivations: number;
+      }>
     >("/api/installer/validate-license", { licenseKey });
     return response.data;
   },
