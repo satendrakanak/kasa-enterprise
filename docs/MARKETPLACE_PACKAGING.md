@@ -156,7 +156,8 @@ Installer steps:
 
 For local development, run the Kasa Licence Portal on port `5000`, issue a
 `kasa-enterprise` key, and point the app to it with
-`LICENSE_PORTAL_URL=http://host.docker.internal:5000` when running in Docker.
+`LICENSE_PORTAL_URL=http://localhost:5000`. Docker installs automatically route
+that localhost URL to the host machine internally.
 
 For production, point `LICENSE_PORTAL_URL` to the hosted licence portal. The real
 license key is entered only in the browser during installation; the installed

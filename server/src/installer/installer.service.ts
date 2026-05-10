@@ -711,7 +711,21 @@ export class InstallerService implements OnModuleInit {
       );
     }
 
-    return url.replace(/\/+$/, '');
+    try {
+      const parsedUrl = new URL(url);
+      const isLocalHost =
+        parsedUrl.hostname === 'localhost' ||
+        parsedUrl.hostname === '127.0.0.1' ||
+        parsedUrl.hostname === '::1';
+
+      if (isLocalHost && this.isRunningInsideDocker()) {
+        parsedUrl.hostname = 'host.docker.internal';
+      }
+
+      return parsedUrl.toString().replace(/\/+$/, '');
+    } catch {
+      return url.replace(/\/+$/, '');
+    }
   }
 
   private getLicenseFingerprint(signature: string) {

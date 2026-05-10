@@ -28,9 +28,9 @@ creates the first admin user, and can import the demo data with a live progress
 bar.
 
 For local testing, run the Kasa Licence Portal on port `5000`, generate a
-`kasa-enterprise` key there, and keep `LICENSE_PORTAL_URL` set to
-`http://host.docker.internal:5000` in `.env.docker` so the API container can
-reach it.
+`kasa-enterprise` key there, and keep `LICENSE_PORTAL_URL=http://localhost:5000`.
+When Kasa Enterprise runs in Docker, it automatically routes that localhost URL
+to the host machine internally.
 
 Database name is configurable in `.env.docker` through `POSTGRES_DB`. On a new
 Docker volume, PostgreSQL creates that database automatically.

@@ -57,6 +57,8 @@ services:
       DATABASE_AUTO_LOAD: ${DATABASE_AUTO_LOAD:-true}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      LICENSE_PORTAL_URL: ${LICENSE_PORTAL_URL:-http://localhost:5000}
+      LICENSE_PRODUCT_SLUG: ${LICENSE_PRODUCT_SLUG:-kasa-enterprise}
     ports:
       - "${SERVER_PORT:-8000}:8000"
     extra_hosts:
