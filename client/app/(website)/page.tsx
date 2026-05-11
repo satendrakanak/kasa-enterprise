@@ -36,51 +36,38 @@ export default async function Home() {
     redirect("/install");
   }
 
-  let courses: Course[] = [];
   try {
-    const response = await courseServerService.getPopularCourses();
-    courses = response.data;
-  } catch (error) {
-    const message = getErrorMessage(error);
-    throw new Error(message);
-  }
+    const [
+      coursesResponse,
+      articlesResponse,
+      testimonialsResponse,
+      facultiesResponse,
+    ] = await Promise.all([
+      courseServerService.getPopularCourses(),
+      articleServerService.getAll(),
+      testimonialServerService.getFeatured(6),
+      userServerService.getFaculties(),
+    ]);
 
-  let articles: Article[] = [];
-  try {
-    const response = await articleServerService.getAll();
-    articles = response.data;
-  } catch (error) {
-    const message = getErrorMessage(error);
-    throw new Error(message);
-  }
+    const courses: Course[] = coursesResponse.data;
+    const articles: Article[] = articlesResponse.data;
+    const testimonials: Testimonial[] = testimonialsResponse.data;
+    const faculties: User[] = facultiesResponse.data;
 
-  let testimonials: Testimonial[] = [];
-  try {
-    const response = await testimonialServerService.getFeatured(6);
-    testimonials = response.data;
+    return (
+      <div>
+        <Hero courses={courses} />
+        <StatsTimeline />
+        <WhyJoinOurCourses />
+        <PopularCourses courses={courses} />
+        <HowItWorks />
+        <FeaturedTestimonialsSection testimonials={testimonials} />
+        <Faculty faculties={faculties} />
+        <ArticlesSection articles={articles} />
+      </div>
+    );
   } catch (error) {
     const message = getErrorMessage(error);
     throw new Error(message);
   }
-
-  let faculties: User[] = [];
-  try {
-    const response = await userServerService.getFaculties();
-    faculties = response.data;
-  } catch (error) {
-    const message = getErrorMessage(error);
-    throw new Error(message);
-  }
-  return (
-    <div>
-      <Hero courses={courses} />
-      <StatsTimeline />
-      <WhyJoinOurCourses />
-      <PopularCourses courses={courses} />
-      <HowItWorks />
-      <FeaturedTestimonialsSection testimonials={testimonials} />
-      <Faculty faculties={faculties} />
-      <ArticlesSection articles={articles} />
-    </div>
-  );
 }

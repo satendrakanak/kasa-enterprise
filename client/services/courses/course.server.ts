@@ -2,6 +2,8 @@ import { apiServer } from "@/lib/api/server";
 import { ApiResponse } from "@/types/api";
 import { Course } from "@/types/course";
 
+const PUBLIC_REVALIDATE_SECONDS = 60;
+
 type DateRangeQuery = {
   startDate?: string;
   endDate?: string;
@@ -31,10 +33,14 @@ export const courseServerService = {
     ),
 
   getPopularCourses: () =>
-    apiServer.get<ApiResponse<Course[]>>("/courses/featured"),
+    apiServer.get<ApiResponse<Course[]>>("/courses/featured", {
+      next: { revalidate: PUBLIC_REVALIDATE_SECONDS },
+    }),
 
   getRealtedCourses: (id: number) =>
-    apiServer.get<ApiResponse<Course[]>>(`/courses/related/${id}`),
+    apiServer.get<ApiResponse<Course[]>>(`/courses/related/${id}`, {
+      next: { revalidate: PUBLIC_REVALIDATE_SECONDS },
+    }),
 
   getById: (id: number) => apiServer.get<ApiResponse<Course>>(`/courses/${id}`),
   getBySlug: (slug: string) =>

@@ -29,6 +29,7 @@ services:
       retries: 5
 
   server:
+    image: ${SERVER_IMAGE:-kasa-enterprise-live-server}
     build:
       context: ../../server
       target: production
@@ -60,6 +61,7 @@ services:
         condition: service_healthy
 
   client:
+    image: ${CLIENT_IMAGE:-kasa-enterprise-live-client}
     build:
       context: ../../client
       target: production

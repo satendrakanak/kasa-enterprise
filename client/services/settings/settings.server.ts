@@ -12,6 +12,8 @@ import {
   SocialAuthProvider,
 } from "@/types/settings";
 
+const PUBLIC_REVALIDATE_SECONDS = 60;
+
 export const settingsServerService = {
   getGatewaysInfo: () =>
     apiServer.get<ApiResponse<Gateway[]>>("/settings/gateways/active"),
@@ -41,5 +43,7 @@ export const settingsServerService = {
     ),
 
   getPublicSettingsBundle: () =>
-    apiServer.get<ApiResponse<PublicSettingsBundle>>("/settings/public"),
+    apiServer.get<ApiResponse<PublicSettingsBundle>>("/settings/public", {
+      next: { revalidate: PUBLIC_REVALIDATE_SECONDS },
+    }),
 };

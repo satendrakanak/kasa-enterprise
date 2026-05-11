@@ -2,6 +2,8 @@ import { apiServer } from "@/lib/api/server";
 import { ApiResponse, Paginated } from "@/types/api";
 import { Testimonial, TestimonialType } from "@/types/testimonial";
 
+const PUBLIC_REVALIDATE_SECONDS = 60;
+
 type PublicTestimonialsQuery = {
   type?: TestimonialType;
   courseId?: number;
@@ -30,11 +32,13 @@ export const testimonialServerService = {
 
     return apiServer.get<ApiResponse<Paginated<Testimonial>>>(
       `/testimonials/public${queryString ? `?${queryString}` : ""}`,
+      { next: { revalidate: PUBLIC_REVALIDATE_SECONDS } },
     );
   },
 
   getFeatured: (limit = 6) =>
     apiServer.get<ApiResponse<Testimonial[]>>(
       `/testimonials/featured?limit=${limit}`,
+      { next: { revalidate: PUBLIC_REVALIDATE_SECONDS } },
     ),
 };

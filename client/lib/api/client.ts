@@ -1,5 +1,7 @@
 type Method = "GET" | "POST" | "PATCH" | "DELETE";
 
+const DEFAULT_TIMEOUT_MS = 15000;
+
 async function request<T>(
   endpoint: string,
   method: Method,
@@ -7,6 +9,13 @@ async function request<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const isFormData = body instanceof FormData;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => {
+    controller.abort();
+  }, DEFAULT_TIMEOUT_MS);
+
+  const forwardAbort = () => controller.abort();
+  options.signal?.addEventListener("abort", forwardAbort, { once: true });
 
   let response: Response;
   try {
@@ -23,24 +32,36 @@ async function request<T>(
           }
         : {}),
       ...options,
+      signal: controller.signal,
     });
   } catch (networkError) {
     console.error("NETWORK ERROR:", networkError);
+    if (controller.signal.aborted) {
+      throw new Error("Request timed out. Please try again.");
+    }
+
     throw new Error("Network error. Please check your connection.");
+  } finally {
+    window.clearTimeout(timeout);
+    options.signal?.removeEventListener("abort", forwardAbort);
   }
 
   // 🔴 Handle non-OK responses
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
-    let errorBody: any = null;
-
     try {
-      errorBody = await response.json();
+      const errorBody: unknown = await response.json();
+      const messageValue =
+        errorBody &&
+        typeof errorBody === "object" &&
+        "message" in errorBody
+          ? errorBody.message
+          : null;
 
-      if (Array.isArray(errorBody?.message)) {
-        message = errorBody.message.join(", ");
-      } else if (typeof errorBody?.message === "string") {
-        message = errorBody.message;
+      if (Array.isArray(messageValue)) {
+        message = messageValue.join(", ");
+      } else if (typeof messageValue === "string") {
+        message = messageValue;
       }
     } catch {
       // fallback

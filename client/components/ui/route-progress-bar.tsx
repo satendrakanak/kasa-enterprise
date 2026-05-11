@@ -11,22 +11,47 @@ export function RouteProgressBar() {
   const [active, setActive] = useState(false);
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<number | null>(null);
+  const pendingUrlRef = useRef<string | null>(null);
+  const watchdogRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const start = () => {
+    const clearTimers = () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      if (watchdogRef.current) window.clearTimeout(watchdogRef.current);
+      timerRef.current = null;
+      watchdogRef.current = null;
+    };
+
+    const start = (nextUrl: URL) => {
+      pendingUrlRef.current = `${nextUrl.pathname}${nextUrl.search}`;
       setActive(true);
       setProgress(18);
 
-      if (timerRef.current) window.clearInterval(timerRef.current);
+      clearTimers();
       timerRef.current = window.setInterval(() => {
         setProgress((current) => {
-          if (current >= 82) return current;
-          return current + Math.max(3, (84 - current) * 0.12);
+          if (current >= 88) return current;
+          return current + Math.max(2, (90 - current) * 0.08);
         });
       }, 180);
+
+      watchdogRef.current = window.setTimeout(() => {
+        setProgress((current) => Math.max(current, 92));
+      }, 2500);
     };
 
     const clickHandler = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        event.button !== 0
+      ) {
+        return;
+      }
+
       const target = event.target as HTMLElement | null;
       const anchor = target?.closest("a");
 
@@ -48,6 +73,7 @@ export function RouteProgressBar() {
         const currentUrl = new URL(window.location.href);
 
         if (nextUrl.origin !== currentUrl.origin) return;
+        if (anchor.target && anchor.target !== "_self") return;
         if (
           nextUrl.pathname === currentUrl.pathname &&
           nextUrl.search === currentUrl.search
@@ -55,7 +81,7 @@ export function RouteProgressBar() {
           return;
         }
 
-        start();
+        start(nextUrl);
       } catch {
         return;
       }
@@ -64,12 +90,15 @@ export function RouteProgressBar() {
     document.addEventListener("click", clickHandler);
     return () => {
       document.removeEventListener("click", clickHandler);
-      if (timerRef.current) window.clearInterval(timerRef.current);
+      clearTimers();
     };
   }, []);
 
   useEffect(() => {
     if (!active) return;
+
+    const currentUrl = `${pathname}?${searchParams.toString()}`.replace(/\?$/, "");
+    if (pendingUrlRef.current && pendingUrlRef.current !== currentUrl) return;
 
     const finishFrame = window.requestAnimationFrame(() => {
       setProgress(100);
@@ -78,9 +107,11 @@ export function RouteProgressBar() {
     const timeout = window.setTimeout(() => {
       setActive(false);
       setProgress(0);
+      pendingUrlRef.current = null;
     }, 240);
 
     if (timerRef.current) window.clearInterval(timerRef.current);
+    if (watchdogRef.current) window.clearTimeout(watchdogRef.current);
 
     return () => {
       window.cancelAnimationFrame(finishFrame);

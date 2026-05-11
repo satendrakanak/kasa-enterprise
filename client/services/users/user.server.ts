@@ -9,6 +9,8 @@ import {
   WeeklyProgress,
 } from "@/types/user";
 
+const PUBLIC_REVALIDATE_SECONDS = 60;
+
 const buildUsersQuery = (params?: UsersQueryParams) => {
   const searchParams = new URLSearchParams();
 
@@ -46,9 +48,14 @@ export const userServerService = {
 
   getMe: () => apiServer.get<ApiResponse<User>>("/users/me"),
 
-  getFaculties: () => apiServer.get<ApiResponse<User[]>>("/users/all-faculty"),
+  getFaculties: () =>
+    apiServer.get<ApiResponse<User[]>>("/users/all-faculty", {
+      next: { revalidate: PUBLIC_REVALIDATE_SECONDS },
+    }),
   getFacultyProfile: (facultyId: number) =>
-    apiServer.get<ApiResponse<User>>(`/users/faculty-profile/${facultyId}`),
+    apiServer.get<ApiResponse<User>>(`/users/faculty-profile/${facultyId}`, {
+      next: { revalidate: PUBLIC_REVALIDATE_SECONDS },
+    }),
   getPublicProfile: (username: string) =>
     apiServer.get<ApiResponse<PublicProfileBundle | null>>(
       `/users/public-profile/${username}`,
