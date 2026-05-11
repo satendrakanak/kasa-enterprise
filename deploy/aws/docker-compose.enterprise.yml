@@ -1,0 +1,84 @@
+name: kasa-enterprise-live
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ../../server
+      target: production
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      APP_PORT: 8000
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: ${POSTGRES_DB}
+      DATABASE_SYNC: "false"
+      DATABASE_AUTO_LOAD: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      LICENSE_PORTAL_URL: ${LICENSE_PORTAL_URL}
+      LICENSE_PRODUCT_SLUG: ${LICENSE_PRODUCT_SLUG}
+    volumes:
+      - ../../.kasa:/app/.kasa
+    ports:
+      - "${SERVER_PORT:-8100}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  client:
+    build:
+      context: ../../client
+      target: production
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        NEXT_PUBLIC_API_BASE_URL: http://server:8000
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      NEXT_PUBLIC_API_BASE_URL: http://server:8000
+    ports:
+      - "${CLIENT_PORT:-3100}:3000"
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:-kasa-enterprise-live_postgres_data}
+  redis_data:
+    name: ${REDIS_VOLUME_NAME:-kasa-enterprise-live_redis_data}

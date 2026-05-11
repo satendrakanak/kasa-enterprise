@@ -16,6 +16,7 @@ CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
 
 FROM base AS builder
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--max-old-space-size=2048
 ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}

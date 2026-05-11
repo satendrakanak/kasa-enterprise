@@ -38,6 +38,7 @@ CMD ["npm", "run", "start:dev"]
 FROM base AS builder
 
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--max-old-space-size=2048
 
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
