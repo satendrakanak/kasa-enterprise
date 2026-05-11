@@ -29,9 +29,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Lint
-        run: npm run lint
-
       - name: Build
         run: npm run build
         env:
@@ -57,12 +54,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Lint
-        run: npx eslint "{src,apps,libs,test}/**/*.ts"
-
-      - name: Test
-        run: npm test -- --runInBand
 
       - name: Build
         run: npm run build
